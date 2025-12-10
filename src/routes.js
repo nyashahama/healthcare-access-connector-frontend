@@ -1,54 +1,179 @@
 import React from "react";
 
-// Admin Imports
-import MainDashboard from "views/admin/default";
-import NFTMarketplace from "views/admin/marketplace";
-import Profile from "views/admin/profile";
-import DataTables from "views/admin/tables";
-import RTLDefault from "views/rtl/default";
+// Patient Views
+import PatientDashboard from "views/patient/dashboard";
+import FindClinic from "views/patient/find-clinic";
+import SymptomChecker from "views/patient/symptom-checker";
+import TelemedicineChat from "views/patient/telemedicine-chat";
+import NutritionLibrary from "views/patient/nutrition-library";
+import PatientProfile from "views/patient/profile";
 
-// Auth Imports
+// Provider Views
+import ProviderDashboard from "views/provider/dashboard";
+import AppointmentCalendar from "views/provider/appointments";
+import PatientQueue from "views/provider/queue";
+import ClinicManagement from "views/provider/clinic-management";
+import ProviderProfile from "views/provider/profile";
+
+// Admin Views
+import SystemDashboard from "views/admin/dashboard";
+import ClinicVerification from "views/admin/clinic-verification";
+import UserManagement from "views/admin/user-management";
+import ContentManagement from "views/admin/content-management";
+import Analytics from "views/admin/analytics";
+
+// Auth Views
 import SignIn from "views/auth/SignIn";
+import SignUp from "views/auth/SignUp";
+import ForgotPassword from "views/auth/ForgotPassword";
 
 // Icon Imports
 import {
   MdHome,
-  MdOutlineShoppingCart,
-  MdBarChart,
+  MdLocationOn,
+  MdLocalHospital,
+  MdChat,
+  MdRestaurant,
   MdPerson,
+  MdCalendarToday,
+  MdGroups,
+  MdBusiness,
+  MdDashboard,
+  MdVerifiedUser,
+  MdPeople,
+  MdLibraryBooks,
+  MdAnalytics,
   MdLock,
 } from "react-icons/md";
+import { FaStethoscope } from "react-icons/fa";
 
-const routes = [
+// Patient Routes
+export const patientRoutes = [
   {
-    name: "Main Dashboard",
-    layout: "/admin",
-    path: "default",
+    name: "Dashboard",
+    layout: "/patient",
+    path: "dashboard",
     icon: <MdHome className="h-6 w-6" />,
-    component: <MainDashboard />,
+    component: <PatientDashboard />,
   },
   {
-    name: "NFT Marketplace",
-    layout: "/admin",
-    path: "nft-marketplace",
-    icon: <MdOutlineShoppingCart className="h-6 w-6" />,
-    component: <NFTMarketplace />,
-    secondary: true,
+    name: "Find Clinic",
+    layout: "/patient",
+    path: "find-clinic",
+    icon: <MdLocationOn className="h-6 w-6" />,
+    component: <FindClinic />,
   },
   {
-    name: "Data Tables",
-    layout: "/admin",
-    icon: <MdBarChart className="h-6 w-6" />,
-    path: "data-tables",
-    component: <DataTables />,
+    name: "Symptom Checker",
+    layout: "/patient",
+    path: "symptom-checker",
+    icon: <FaStethoscope className="h-6 w-6" />,
+    component: <SymptomChecker />,
+  },
+  {
+    name: "Telemedicine",
+    layout: "/patient",
+    path: "telemedicine",
+    icon: <MdChat className="h-6 w-6" />,
+    component: <TelemedicineChat />,
+  },
+  {
+    name: "Nutrition",
+    layout: "/patient",
+    path: "nutrition",
+    icon: <MdRestaurant className="h-6 w-6" />,
+    component: <NutritionLibrary />,
   },
   {
     name: "Profile",
-    layout: "/admin",
+    layout: "/patient",
     path: "profile",
     icon: <MdPerson className="h-6 w-6" />,
-    component: <Profile />,
+    component: <PatientProfile />,
   },
+];
+
+// Provider Routes
+export const providerRoutes = [
+  {
+    name: "Dashboard",
+    layout: "/provider",
+    path: "dashboard",
+    icon: <MdHome className="h-6 w-6" />,
+    component: <ProviderDashboard />,
+  },
+  {
+    name: "Appointments",
+    layout: "/provider",
+    path: "appointments",
+    icon: <MdCalendarToday className="h-6 w-6" />,
+    component: <AppointmentCalendar />,
+  },
+  {
+    name: "Patient Queue",
+    layout: "/provider",
+    path: "queue",
+    icon: <MdGroups className="h-6 w-6" />,
+    component: <PatientQueue />,
+    secondary: true,
+  },
+  {
+    name: "Clinic Management",
+    layout: "/provider",
+    path: "clinic-management",
+    icon: <MdBusiness className="h-6 w-6" />,
+    component: <ClinicManagement />,
+  },
+  {
+    name: "Profile",
+    layout: "/provider",
+    path: "profile",
+    icon: <MdPerson className="h-6 w-6" />,
+    component: <ProviderProfile />,
+  },
+];
+
+// Admin Routes
+export const adminRoutes = [
+  {
+    name: "System Dashboard",
+    layout: "/admin",
+    path: "dashboard",
+    icon: <MdDashboard className="h-6 w-6" />,
+    component: <SystemDashboard />,
+  },
+  {
+    name: "Clinic Verification",
+    layout: "/admin",
+    path: "clinic-verification",
+    icon: <MdVerifiedUser className="h-6 w-6" />,
+    component: <ClinicVerification />,
+  },
+  {
+    name: "User Management",
+    layout: "/admin",
+    path: "user-management",
+    icon: <MdPeople className="h-6 w-6" />,
+    component: <UserManagement />,
+  },
+  {
+    name: "Content Management",
+    layout: "/admin",
+    path: "content-management",
+    icon: <MdLibraryBooks className="h-6 w-6" />,
+    component: <ContentManagement />,
+  },
+  {
+    name: "Analytics & Reports",
+    layout: "/admin",
+    path: "analytics",
+    icon: <MdAnalytics className="h-6 w-6" />,
+    component: <Analytics />,
+  },
+];
+
+// Auth Routes
+export const authRoutes = [
   {
     name: "Sign In",
     layout: "/auth",
@@ -57,11 +182,17 @@ const routes = [
     component: <SignIn />,
   },
   {
-    name: "RTL Admin",
-    layout: "/rtl",
-    path: "rtl",
-    icon: <MdHome className="h-6 w-6" />,
-    component: <RTLDefault />,
+    name: "Sign Up",
+    layout: "/auth",
+    path: "sign-up",
+    icon: <MdLock className="h-6 w-6" />,
+    component: <SignUp />,
+  },
+  {
+    name: "Forgot Password",
+    layout: "/auth",
+    path: "forgot-password",
+    icon: <MdLock className="h-6 w-6" />,
+    component: <ForgotPassword />,
   },
 ];
-export default routes;

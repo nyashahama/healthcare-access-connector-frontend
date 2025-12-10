@@ -1,15 +1,15 @@
 import React from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
-import AdminNavbar from "components/navbar/AdminNavbar";
-import AdminSidebar from "components/sidebar/AdminSidebar";
+import PatientNavbar from "components/navbar/PatientNavbar";
+import PatientSidebar from "components/sidebar/PatientSidebar";
 import Footer from "components/footer/Footer";
-import { adminRoutes } from "routes.js";
+import { patientRoutes } from "routes.js";
 
-export default function AdminLayout(props) {
+export default function PatientLayout(props) {
   const { ...rest } = props;
   const location = useLocation();
   const [open, setOpen] = React.useState(true);
-  const [currentRoute, setCurrentRoute] = React.useState("System Dashboard");
+  const [currentRoute, setCurrentRoute] = React.useState("Dashboard");
 
   React.useEffect(() => {
     window.addEventListener("resize", () =>
@@ -17,11 +17,11 @@ export default function AdminLayout(props) {
     );
   }, []);
   React.useEffect(() => {
-    getActiveRoute(adminRoutes);
+    getActiveRoute(patientRoutes);
   }, [location.pathname]);
 
   const getActiveRoute = (routes) => {
-    let activeRoute = "System Dashboard";
+    let activeRoute = "Dashboard";
     for (let i = 0; i < routes.length; i++) {
       if (
         window.location.href.indexOf(
@@ -36,7 +36,7 @@ export default function AdminLayout(props) {
 
   const getRoutes = (routes) => {
     return routes.map((prop, key) => {
-      if (prop.layout === "/admin") {
+      if (prop.layout === "/patient") {
         return (
           <Route path={`/${prop.path}`} element={prop.component} key={key} />
         );
@@ -48,24 +48,24 @@ export default function AdminLayout(props) {
 
   return (
     <div className="flex h-full w-full">
-      <AdminSidebar open={open} onClose={() => setOpen(false)} />
+      <PatientSidebar open={open} onClose={() => setOpen(false)} />
       <div className="h-full w-full bg-lightPrimary dark:!bg-navy-900">
         <main
           className={`mx-[12px] h-full flex-none transition-all md:pr-2 xl:ml-[313px]`}
         >
           <div className="h-full">
-            <AdminNavbar
+            <PatientNavbar
               onOpenSidenav={() => setOpen(true)}
-              logoText={"Healthcare Admin Portal"}
+              logoText={"Healthcare Access Connector"}
               brandText={currentRoute}
               {...rest}
             />
             <div className="pt-5s mx-auto mb-auto h-full min-h-[84vh] p-2 md:pr-2">
               <Routes>
-                {getRoutes(adminRoutes)}
+                {getRoutes(patientRoutes)}
                 <Route
                   path="/"
-                  element={<Navigate to="/admin/dashboard" replace />}
+                  element={<Navigate to="/patient/dashboard" replace />}
                 />
               </Routes>
             </div>
