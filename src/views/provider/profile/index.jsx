@@ -1,4 +1,3 @@
-// views/provider/profile/index.jsx
 import React from "react";
 import Card from "components/card";
 import ClinicBanner from "./components/ClinicBanner";
@@ -12,31 +11,47 @@ import PerformanceMetrics from "./components/PerformanceMetrics";
 
 const ProviderProfile = () => {
   return (
-    <div className="flex w-full flex-col gap-5">
+    <div className="flex h-full w-full flex-col">
       {/* Clinic Banner */}
-      <div className="mt-3 w-full">
+      <div className="w-full">
         <ClinicBanner />
       </div>
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
-        {/* Left Column - Clinic Details */}
-        <div className="space-y-5">
-          <ClinicInformation />
-          <OperatingHours />
-          <ServicesOffered />
-        </div>
+      <div className="flex-1 overflow-y-auto">
+        <div className="grid grid-cols-1 gap-5 py-5 lg:grid-cols-3">
+          {/* Left Column - Clinic Details */}
+          <div className="space-y-5">
+            <div className="h-fit">
+              <ClinicInformation />
+            </div>
+            <div className="h-fit">
+              <OperatingHours />
+            </div>
+            <div className="h-fit">
+              <ServicesOffered />
+            </div>
+          </div>
 
-        {/* Middle Column - Staff & Credentials */}
-        <div className="space-y-5">
-          <MedicalStaff />
-          <Credentials />
-        </div>
+          {/* Middle Column - Staff & Credentials */}
+          <div className="space-y-5">
+            <div className="h-fit">
+              <MedicalStaff />
+            </div>
+            <div className="h-fit">
+              <Credentials />
+            </div>
+          </div>
 
-        {/* Right Column - Settings & Metrics */}
-        <div className="space-y-5">
-          <AppointmentSettings />
-          <PerformanceMetrics />
+          {/* Right Column - Settings & Metrics */}
+          <div className="space-y-5">
+            <div className="h-fit">
+              <AppointmentSettings />
+            </div>
+            <div className="h-fit">
+              <PerformanceMetrics />
+            </div>
+          </div>
         </div>
       </div>
     </div>

@@ -49,18 +49,18 @@ export default function AdminLayout(props) {
   return (
     <div className="flex h-full w-full">
       <AdminSidebar open={open} onClose={() => setOpen(false)} />
-      <div className="h-full w-full bg-lightPrimary dark:!bg-navy-900">
+      <div className="flex h-full w-full flex-col bg-lightPrimary dark:!bg-navy-900">
         <main
-          className={`mx-[12px] h-full flex-none transition-all md:pr-2 xl:ml-[313px]`}
+          className={`mx-[12px] flex h-full flex-col transition-all md:pr-2 xl:ml-[313px]`}
         >
-          <div className="h-full">
+          <div className="flex h-full flex-col">
             <AdminNavbar
               onOpenSidenav={() => setOpen(true)}
               logoText={"Healthcare Admin Portal"}
               brandText={currentRoute}
               {...rest}
             />
-            <div className="pt-5s mx-auto mb-auto h-full min-h-[84vh] p-2 md:pr-2">
+            <div className="flex-1 overflow-y-auto p-2 md:pr-2">
               <Routes>
                 {getRoutes(adminRoutes)}
                 <Route
@@ -69,7 +69,7 @@ export default function AdminLayout(props) {
                 />
               </Routes>
             </div>
-            <div className="p-3">
+            <div className="shrink-0 p-3">
               <Footer />
             </div>
           </div>
