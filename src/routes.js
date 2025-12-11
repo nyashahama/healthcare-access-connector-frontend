@@ -14,6 +14,7 @@ import AppointmentCalendar from "views/provider/appointments";
 import PatientQueue from "views/provider/queue";
 import ClinicManagement from "views/provider/clinic-management";
 import ProviderProfile from "views/provider/profile";
+import StaffManagement from "views/provider/staff-management";
 
 // Admin Views
 import SystemDashboard from "views/admin/dashboard";
@@ -93,14 +94,15 @@ export const patientRoutes = [
   },
 ];
 
-// Provider Routes
+// Provider Routes (Clinic Admin sees different dashboard than Doctor)
 export const providerRoutes = [
   {
     name: "Dashboard",
     layout: "/provider",
     path: "dashboard",
     icon: <MdHome className="h-6 w-6" />,
-    component: <ProviderDashboard />,
+    component: <ProviderDashboard />, // Shows different dashboard based on role
+    roles: ["clinic_admin", "doctor"], // Both can see but content differs
   },
   {
     name: "Appointments",
@@ -108,6 +110,7 @@ export const providerRoutes = [
     path: "appointments",
     icon: <MdCalendarToday className="h-6 w-6" />,
     component: <AppointmentCalendar />,
+    roles: ["clinic_admin", "doctor"],
   },
   {
     name: "Patient Queue",
@@ -116,6 +119,7 @@ export const providerRoutes = [
     icon: <MdGroups className="h-6 w-6" />,
     component: <PatientQueue />,
     secondary: true,
+    roles: ["clinic_admin", "doctor"],
   },
   {
     name: "Clinic Management",
@@ -123,6 +127,15 @@ export const providerRoutes = [
     path: "clinic-management",
     icon: <MdBusiness className="h-6 w-6" />,
     component: <ClinicManagement />,
+    roles: ["clinic_admin"], // Only clinic admin can see
+  },
+  {
+    name: "Staff Management",
+    layout: "/provider",
+    path: "staff",
+    icon: <MdPeople className="h-6 w-6" />,
+    component: <StaffManagement />, // New component for managing staff
+    roles: ["clinic_admin"], // Only clinic admin can see
   },
   {
     name: "Profile",
@@ -130,6 +143,7 @@ export const providerRoutes = [
     path: "profile",
     icon: <MdPerson className="h-6 w-6" />,
     component: <ProviderProfile />,
+    roles: ["clinic_admin", "doctor"],
   },
 ];
 
