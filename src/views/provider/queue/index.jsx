@@ -1,42 +1,47 @@
-import React from "react";
-import { MdTimer, MdPeople, MdHistory } from "react-icons/md";
+import React, { useState, useEffect } from "react";
+import {
+  MdTimer,
+  MdPeople,
+  MdHistory,
+  MdFilterList,
+  MdDownload,
+  MdRefresh,
+  MdAdd,
+} from "react-icons/md";
 import Card from "components/card";
 import PatientQueue from "../components/PatientQueue";
 
 const Queue = () => {
-  const queueStats = [
-    {
-      title: "Total Waiting",
-      value: "12",
-      change: "+3",
-      icon: <MdPeople className="h-6 w-6" />,
-      color: "text-blue-600",
-      bgColor: "bg-blue-100 dark:bg-blue-900/30",
-    },
-    {
-      title: "Avg. Wait Time",
-      value: "18 min",
-      change: "-2 min",
-      icon: <MdTimer className="h-6 w-6" />,
-      color: "text-green-600",
-      bgColor: "bg-green-100 dark:bg-green-900/30",
-    },
-    {
-      title: "Completed Today",
-      value: "24",
-      change: "+5",
-      icon: <MdHistory className="h-6 w-6" />,
-      color: "text-purple-600",
-      bgColor: "bg-purple-100 dark:bg-purple-900/30",
-    },
-  ];
+  const [queueStats, setQueueStats] = useState({
+    totalWaiting: 12,
+    avgWaitTime: "18 min",
+    completedToday: 24,
+  });
 
-  const queueFilters = [
-    { label: "All", count: 12 },
-    { label: "High Priority", count: 3 },
-    { label: "Telemedicine", count: 4 },
-    { label: "Walk-ins", count: 5 },
-  ];
+  const [queueFilters, setQueueFilters] = useState([
+    { label: "All", count: 12, active: true },
+    { label: "High Priority", count: 3, active: false },
+    { label: "Telemedicine", count: 4, active: false },
+    { label: "Walk-ins", count: 5, active: false },
+    { label: "My Patients", count: 6, active: false },
+  ]);
+
+  const handleFilterClick = (index) => {
+    const updatedFilters = queueFilters.map((filter, i) => ({
+      ...filter,
+      active: i === index,
+    }));
+    setQueueFilters(updatedFilters);
+  };
+
+  const refreshQueue = () => {
+    // Simulate API call
+    setQueueStats({
+      totalWaiting: Math.floor(Math.random() * 20) + 1,
+      avgWaitTime: `${Math.floor(Math.random() * 30) + 5} min`,
+      completedToday: Math.floor(Math.random() * 30) + 10,
+    });
+  };
 
   return (
     <div className="h-full">
@@ -50,53 +55,107 @@ const Queue = () => {
           </p>
         </div>
         <div className="flex space-x-3">
-          <button className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium hover:bg-gray-50 dark:border-navy-600 dark:bg-navy-700 dark:hover:bg-navy-600">
+          <button
+            onClick={refreshQueue}
+            className="flex items-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium hover:bg-gray-50 dark:border-navy-600 dark:bg-navy-700 dark:hover:bg-navy-600"
+          >
+            <MdRefresh className="mr-2" />
+            Refresh
+          </button>
+          <button className="flex items-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium hover:bg-gray-50 dark:border-navy-600 dark:bg-navy-700 dark:hover:bg-navy-600">
+            <MdDownload className="mr-2" />
             Export List
           </button>
-          <button className="linear rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white transition duration-200 hover:bg-brand-600">
-            Add Patient to Queue
+          <button className="linear flex items-center rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white transition duration-200 hover:bg-brand-600">
+            <MdAdd className="mr-2" />
+            Add Patient
           </button>
         </div>
       </div>
 
       {/* Stats Overview */}
       <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
-        {queueStats.map((stat, index) => (
-          <Card key={index} extra="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">{stat.title}</p>
-                <div className="mt-1 flex items-baseline">
-                  <p className="text-2xl font-bold text-navy-700 dark:text-white">
-                    {stat.value}
-                  </p>
-                  <span
-                    className={`ml-2 text-sm font-medium ${
-                      stat.change.includes("+")
-                        ? "text-green-600"
-                        : "text-red-600"
-                    }`}
-                  >
-                    {stat.change}
-                  </span>
-                </div>
-              </div>
-              <div className={`rounded-full p-3 ${stat.bgColor} ${stat.color}`}>
-                {stat.icon}
+        <Card extra="p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">Total Waiting</p>
+              <div className="mt-1 flex items-baseline">
+                <p className="text-2xl font-bold text-navy-700 dark:text-white">
+                  {queueStats.totalWaiting}
+                </p>
+                <span className="ml-2 text-sm font-medium text-green-600">
+                  +3
+                </span>
               </div>
             </div>
-          </Card>
-        ))}
+            <div className="rounded-full bg-blue-100 p-3 text-blue-600 dark:bg-blue-900/30 dark:text-blue-300">
+              <MdPeople className="h-6 w-6" />
+            </div>
+          </div>
+        </Card>
+
+        <Card extra="p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">Avg. Wait Time</p>
+              <div className="mt-1 flex items-baseline">
+                <p className="text-2xl font-bold text-navy-700 dark:text-white">
+                  {queueStats.avgWaitTime}
+                </p>
+                <span className="ml-2 text-sm font-medium text-green-600">
+                  -2 min
+                </span>
+              </div>
+            </div>
+            <div className="rounded-full bg-green-100 p-3 text-green-600 dark:bg-green-900/30 dark:text-green-300">
+              <MdTimer className="h-6 w-6" />
+            </div>
+          </div>
+        </Card>
+
+        <Card extra="p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">Completed Today</p>
+              <div className="mt-1 flex items-baseline">
+                <p className="text-2xl font-bold text-navy-700 dark:text-white">
+                  {queueStats.completedToday}
+                </p>
+                <span className="ml-2 text-sm font-medium text-green-600">
+                  +5
+                </span>
+              </div>
+            </div>
+            <div className="rounded-full bg-purple-100 p-3 text-purple-600 dark:bg-purple-900/30 dark:text-purple-300">
+              <MdHistory className="h-6 w-6" />
+            </div>
+          </div>
+        </Card>
       </div>
 
       {/* Queue Filters */}
       <div className="mb-6">
+        <div className="mb-2 flex items-center justify-between">
+          <h4 className="text-lg font-bold text-navy-700 dark:text-white">
+            Filter Queue
+          </h4>
+          <div className="flex items-center text-sm text-gray-600">
+            <MdFilterList className="mr-1" />
+            Sort by:
+            <select className="bg-transparent ml-2 rounded-lg border border-gray-300 p-1 text-sm dark:border-navy-600">
+              <option>Priority</option>
+              <option>Wait Time</option>
+              <option>Name</option>
+            </select>
+          </div>
+        </div>
         <div className="flex flex-wrap gap-2">
           {queueFilters.map((filter, index) => (
             <button
               key={index}
+              onClick={() => handleFilterClick(index)}
               className={`rounded-full px-4 py-2 text-sm font-medium transition ${
-                index === 0
+                filter.active
                   ? "bg-brand-500 text-white"
                   : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-navy-700 dark:text-gray-300 dark:hover:bg-navy-600"
               }`}
