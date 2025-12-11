@@ -1,46 +1,26 @@
-// Appointments/index.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   MdCalendarToday,
   MdAdd,
   MdFilterList,
   MdSearch,
   MdDownload,
+  MdRefresh,
 } from "react-icons/md";
 import Card from "components/card";
 import TodaySchedule from "../components/TodaySchedule";
-import AppointmentSettings from "../profile/components/AppointmentSettings";
 
 const Appointments = () => {
   const [view, setView] = useState("day");
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [searchTerm, setSearchTerm] = useState("");
 
-  const appointmentStats = [
-    {
-      title: "Today's Appointments",
-      value: "12",
-      change: "+2",
-      color: "text-blue-600",
-    },
-    {
-      title: "Scheduled This Week",
-      value: "48",
-      change: "+8",
-      color: "text-green-600",
-    },
-    {
-      title: "Cancellations",
-      value: "3",
-      change: "-1",
-      color: "text-red-600",
-    },
-    {
-      title: "No-Shows",
-      value: "1",
-      change: "0",
-      color: "text-yellow-600",
-    },
-  ];
+  const [appointmentStats, setAppointmentStats] = useState({
+    today: 12,
+    thisWeek: 48,
+    cancellations: 3,
+    noShows: 1,
+  });
 
   const appointmentTypes = [
     { type: "Consultation", count: 24, color: "bg-blue-500" },
@@ -49,7 +29,7 @@ const Appointments = () => {
     { type: "Check-up", count: 8, color: "bg-yellow-500" },
   ];
 
-  const upcomingAppointments = [
+  const [upcomingAppointments, setUpcomingAppointments] = useState([
     {
       id: 1,
       patient: "John Doe",
@@ -57,6 +37,7 @@ const Appointments = () => {
       type: "Consultation",
       doctor: "Dr. Smith",
       status: "confirmed",
+      patientId: "P00123",
     },
     {
       id: 2,
@@ -65,6 +46,7 @@ const Appointments = () => {
       type: "Vaccination",
       doctor: "Nurse Johnson",
       status: "confirmed",
+      patientId: "P00124",
     },
     {
       id: 3,
@@ -73,6 +55,7 @@ const Appointments = () => {
       type: "Follow-up",
       doctor: "Dr. Nkosi",
       status: "pending",
+      patientId: "P00125",
     },
     {
       id: 4,
@@ -81,8 +64,24 @@ const Appointments = () => {
       type: "Check-up",
       doctor: "Dr. Smith",
       status: "confirmed",
+      patientId: "P00126",
     },
-  ];
+  ]);
+
+  const refreshAppointments = () => {
+    // Simulate API call
+    setAppointmentStats({
+      today: Math.floor(Math.random() * 20) + 5,
+      thisWeek: Math.floor(Math.random() * 60) + 30,
+      cancellations: Math.floor(Math.random() * 5),
+      noShows: Math.floor(Math.random() * 3),
+    });
+  };
+
+  const handleStartAppointment = (id) => {
+    alert(`Starting appointment ${id}`);
+    // Navigate to consultation page or open chat
+  };
 
   return (
     <div className="h-full">
@@ -96,6 +95,13 @@ const Appointments = () => {
           </p>
         </div>
         <div className="flex space-x-3">
+          <button
+            onClick={refreshAppointments}
+            className="flex items-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium hover:bg-gray-50 dark:border-navy-600 dark:bg-navy-700 dark:hover:bg-navy-600"
+          >
+            <MdRefresh className="mr-2" />
+            Refresh
+          </button>
           <button className="flex items-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium hover:bg-gray-50 dark:border-navy-600 dark:bg-navy-700 dark:hover:bg-navy-600">
             <MdFilterList className="mr-2" />
             Filter
@@ -109,27 +115,45 @@ const Appointments = () => {
 
       {/* Stats Overview */}
       <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-4">
-        {appointmentStats.map((stat, index) => (
-          <Card key={index} extra="p-4">
-            <p className="text-sm text-gray-600">{stat.title}</p>
-            <div className="mt-1 flex items-baseline">
-              <p className="text-2xl font-bold text-navy-700 dark:text-white">
-                {stat.value}
-              </p>
-              <span
-                className={`ml-2 text-sm font-medium ${
-                  stat.change.includes("+")
-                    ? "text-green-600"
-                    : stat.change === "0"
-                    ? "text-gray-600"
-                    : "text-red-600"
-                }`}
-              >
-                {stat.change}
-              </span>
-            </div>
-          </Card>
-        ))}
+        <Card extra="p-4">
+          <p className="text-sm text-gray-600">Today's Appointments</p>
+          <div className="mt-1 flex items-baseline">
+            <p className="text-2xl font-bold text-navy-700 dark:text-white">
+              {appointmentStats.today}
+            </p>
+            <span className="ml-2 text-sm font-medium text-green-600">+2</span>
+          </div>
+        </Card>
+
+        <Card extra="p-4">
+          <p className="text-sm text-gray-600">Scheduled This Week</p>
+          <div className="mt-1 flex items-baseline">
+            <p className="text-2xl font-bold text-navy-700 dark:text-white">
+              {appointmentStats.thisWeek}
+            </p>
+            <span className="ml-2 text-sm font-medium text-green-600">+8</span>
+          </div>
+        </Card>
+
+        <Card extra="p-4">
+          <p className="text-sm text-gray-600">Cancellations</p>
+          <div className="mt-1 flex items-baseline">
+            <p className="text-2xl font-bold text-navy-700 dark:text-white">
+              {appointmentStats.cancellations}
+            </p>
+            <span className="ml-2 text-sm font-medium text-red-600">-1</span>
+          </div>
+        </Card>
+
+        <Card extra="p-4">
+          <p className="text-sm text-gray-600">No-Shows</p>
+          <div className="mt-1 flex items-baseline">
+            <p className="text-2xl font-bold text-navy-700 dark:text-white">
+              {appointmentStats.noShows}
+            </p>
+            <span className="ml-2 text-sm font-medium text-gray-600">0</span>
+          </div>
+        </Card>
       </div>
 
       {/* Main Content */}
@@ -177,6 +201,8 @@ const Appointments = () => {
                     type="text"
                     placeholder="Search appointments..."
                     className="rounded-lg border border-gray-300 bg-white py-2 pl-10 pr-4 text-sm dark:border-navy-600 dark:bg-navy-700"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
                   />
                 </div>
                 <button className="flex items-center rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm hover:bg-gray-50 dark:border-navy-600 dark:bg-navy-700 dark:hover:bg-navy-600">
@@ -190,16 +216,40 @@ const Appointments = () => {
             <div className="mb-6 rounded-lg border border-gray-200 p-4 dark:border-navy-600">
               <div className="mb-4 flex items-center justify-between">
                 <h4 className="font-bold text-navy-700 dark:text-white">
-                  November 2024
+                  {selectedDate.toLocaleDateString("en-US", {
+                    month: "long",
+                    year: "numeric",
+                  })}
                 </h4>
                 <div className="flex space-x-2">
-                  <button className="rounded-lg p-2 hover:bg-gray-100 dark:hover:bg-navy-600">
+                  <button
+                    onClick={() =>
+                      setSelectedDate(
+                        new Date(
+                          selectedDate.setDate(selectedDate.getDate() - 1)
+                        )
+                      )
+                    }
+                    className="rounded-lg p-2 hover:bg-gray-100 dark:hover:bg-navy-600"
+                  >
                     ←
                   </button>
-                  <button className="rounded-lg bg-gray-100 px-4 py-2 text-sm dark:bg-navy-600">
+                  <button
+                    onClick={() => setSelectedDate(new Date())}
+                    className="rounded-lg bg-gray-100 px-4 py-2 text-sm dark:bg-navy-600"
+                  >
                     Today
                   </button>
-                  <button className="rounded-lg p-2 hover:bg-gray-100 dark:hover:bg-navy-600">
+                  <button
+                    onClick={() =>
+                      setSelectedDate(
+                        new Date(
+                          selectedDate.setDate(selectedDate.getDate() + 1)
+                        )
+                      )
+                    }
+                    className="rounded-lg p-2 hover:bg-gray-100 dark:hover:bg-navy-600"
+                  >
                     →
                   </button>
                 </div>
@@ -216,11 +266,16 @@ const Appointments = () => {
                 {Array.from({ length: 30 }, (_, i) => i + 1).map((day) => (
                   <div
                     key={day}
-                    className={`rounded-lg p-2 text-center ${
-                      day === 15
+                    className={`cursor-pointer rounded-lg p-2 text-center ${
+                      day === selectedDate.getDate()
                         ? "bg-brand-500 text-white"
                         : "hover:bg-gray-100 dark:hover:bg-navy-600"
                     }`}
+                    onClick={() => {
+                      const newDate = new Date(selectedDate);
+                      newDate.setDate(day);
+                      setSelectedDate(newDate);
+                    }}
                   >
                     {day}
                   </div>
@@ -242,9 +297,12 @@ const Appointments = () => {
         <div className="space-y-6">
           {/* Upcoming Appointments */}
           <Card extra="p-6">
-            <h4 className="mb-4 text-lg font-bold text-navy-700 dark:text-white">
-              Upcoming
-            </h4>
+            <div className="mb-4 flex items-center justify-between">
+              <h4 className="text-lg font-bold text-navy-700 dark:text-white">
+                Upcoming
+              </h4>
+              <span className="text-sm text-gray-600">Next 2 hours</span>
+            </div>
             <div className="space-y-4">
               {upcomingAppointments.map((apt) => (
                 <div
@@ -256,7 +314,9 @@ const Appointments = () => {
                       <h5 className="font-medium text-navy-700 dark:text-white">
                         {apt.patient}
                       </h5>
-                      <p className="text-sm text-gray-600">{apt.doctor}</p>
+                      <p className="text-sm text-gray-600">
+                        ID: {apt.patientId} • {apt.doctor}
+                      </p>
                     </div>
                     <span
                       className={`rounded-full px-2 py-1 text-xs font-medium ${
@@ -276,7 +336,10 @@ const Appointments = () => {
                     <span className="text-gray-600">{apt.type}</span>
                   </div>
                   <div className="mt-3 grid grid-cols-2 gap-2">
-                    <button className="rounded-lg bg-brand-500 py-1.5 text-sm text-white hover:bg-brand-600">
+                    <button
+                      onClick={() => handleStartAppointment(apt.id)}
+                      className="rounded-lg bg-brand-500 py-1.5 text-sm text-white hover:bg-brand-600"
+                    >
                       Start
                     </button>
                     <button className="rounded-lg border border-gray-300 py-1.5 text-sm hover:bg-gray-50 dark:border-navy-600">
@@ -321,30 +384,42 @@ const Appointments = () => {
             </div>
           </Card>
 
-          {/* Quick Settings */}
+          {/* Quick Actions */}
           <Card extra="p-6">
             <h4 className="mb-4 text-lg font-bold text-navy-700 dark:text-white">
-              Quick Settings
+              Quick Actions
             </h4>
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">Auto-confirm</span>
                 <label className="relative inline-flex cursor-pointer items-center">
-                  <input type="checkbox" className="peer sr-only" checked />
+                  <input
+                    type="checkbox"
+                    className="peer sr-only"
+                    defaultChecked
+                  />
                   <div className="peer h-6 w-11 rounded-full bg-gray-200 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-brand-500 peer-checked:after:translate-x-full peer-checked:after:border-white dark:border-gray-600 dark:bg-gray-700"></div>
                 </label>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">Send reminders</span>
                 <label className="relative inline-flex cursor-pointer items-center">
-                  <input type="checkbox" className="peer sr-only" checked />
+                  <input
+                    type="checkbox"
+                    className="peer sr-only"
+                    defaultChecked
+                  />
                   <div className="peer h-6 w-11 rounded-full bg-gray-200 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-brand-500 peer-checked:after:translate-x-full peer-checked:after:border-white dark:border-gray-600 dark:bg-gray-700"></div>
                 </label>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">Allow walk-ins</span>
                 <label className="relative inline-flex cursor-pointer items-center">
-                  <input type="checkbox" className="peer sr-only" checked />
+                  <input
+                    type="checkbox"
+                    className="peer sr-only"
+                    defaultChecked
+                  />
                   <div className="peer h-6 w-11 rounded-full bg-gray-200 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-brand-500 peer-checked:after:translate-x-full peer-checked:after:border-white dark:border-gray-600 dark:bg-gray-700"></div>
                 </label>
               </div>
