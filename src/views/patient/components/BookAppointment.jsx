@@ -1,4 +1,3 @@
-// views/patient/components/BookAppointment.jsx
 import React, { useState } from "react";
 import {
   MdCalendarToday,
