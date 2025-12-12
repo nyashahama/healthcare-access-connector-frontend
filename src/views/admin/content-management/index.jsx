@@ -15,13 +15,38 @@ import {
   MdChildCare,
   MdWarning,
   MdCheckCircle,
+  MdCancel,
+  MdDescription,
+  MdInfo,
+  MdTag,
+  MdTranslate,
+  MdPerson,
+  MdCalendarToday,
 } from "react-icons/md";
 import { FaFileMedical, FaLanguage, FaDownload } from "react-icons/fa";
 import Card from "components/card";
+import Modal from "components/modal/Modal";
+import { useToast } from "hooks/useToast";
 
 const ContentManagement = () => {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const { showToast } = useToast();
+
+  // Modal states
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [publishModalOpen, setPublishModalOpen] = useState(false);
+  const [previewModalOpen, setPreviewModalOpen] = useState(false);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [selectedArticle, setSelectedArticle] = useState(null);
+  const [articleForm, setArticleForm] = useState({
+    title: "",
+    category: "nutrition",
+    status: "draft",
+    tags: [],
+    language: ["en"],
+  });
 
   const contentStats = [
     {
@@ -98,6 +123,7 @@ const ContentManagement = () => {
       author: "Dr. Sarah Johnson",
       tags: ["infants", "breastfeeding", "nutrition"],
       featured: true,
+      content: "Lorem ipsum dolor sit amet, consectetur adipiscing elit...",
     },
     {
       id: 2,
@@ -110,6 +136,7 @@ const ContentManagement = () => {
       author: "Dr. Michael Chen",
       tags: ["malaria", "symptoms", "emergency"],
       featured: true,
+      content: "Malaria is a serious disease caused by parasites...",
     },
     {
       id: 3,
@@ -122,6 +149,7 @@ const ContentManagement = () => {
       author: "Dr. Amina Hassan",
       tags: ["diabetes", "pregnancy", "management"],
       featured: false,
+      content: "Diabetes management during pregnancy requires...",
     },
     {
       id: 4,
@@ -134,6 +162,7 @@ const ContentManagement = () => {
       author: "Nutrition Team",
       tags: ["protein", "affordable", "family"],
       featured: true,
+      content: "Protein is essential for growth and repair...",
     },
     {
       id: 5,
@@ -146,6 +175,7 @@ const ContentManagement = () => {
       author: "Public Health Dept",
       tags: ["tuberculosis", "prevention", "treatment"],
       featured: false,
+      content: "Tuberculosis (TB) is an infectious disease...",
     },
     {
       id: 6,
@@ -158,19 +188,105 @@ const ContentManagement = () => {
       author: "Emergency Response Team",
       tags: ["first aid", "burns", "emergency"],
       featured: false,
+      content: "Immediate first aid for burns can significantly...",
     },
   ];
 
-  const handleEditArticle = (articleId) => {
-    console.log(`Editing article ${articleId}`);
+  // Modal handlers
+  const handleEditClick = (article) => {
+    setSelectedArticle(article);
+    setArticleForm({
+      title: article.title,
+      category: article.category,
+      status: article.status,
+      tags: [...article.tags],
+      language: [...article.language],
+    });
+    setEditModalOpen(true);
   };
 
-  const handleDeleteArticle = (articleId) => {
-    console.log(`Deleting article ${articleId}`);
+  const handleDeleteClick = (article) => {
+    setSelectedArticle(article);
+    setDeleteModalOpen(true);
   };
 
-  const handlePublishArticle = (articleId) => {
-    console.log(`Publishing article ${articleId}`);
+  const handlePublishClick = (article) => {
+    setSelectedArticle(article);
+    setPublishModalOpen(true);
+  };
+
+  const handlePreviewClick = (article) => {
+    setSelectedArticle(article);
+    setPreviewModalOpen(true);
+  };
+
+  const handleCreateClick = () => {
+    setArticleForm({
+      title: "",
+      category: "nutrition",
+      status: "draft",
+      tags: [],
+      language: ["en"],
+    });
+    setCreateModalOpen(true);
+  };
+
+  // Action confirmations
+  const confirmEdit = () => {
+    console.log(`Editing article ${selectedArticle.id}`, articleForm);
+    setEditModalOpen(false);
+    showToast("Article updated successfully!", "success");
+  };
+
+  const confirmDelete = () => {
+    console.log(`Deleting article ${selectedArticle.id}`);
+    setDeleteModalOpen(false);
+    showToast("Article deleted successfully!", "error");
+  };
+
+  const confirmPublish = () => {
+    console.log(`Publishing article ${selectedArticle.id}`);
+    setPublishModalOpen(false);
+    showToast("Article published successfully!", "success");
+  };
+
+  const confirmCreate = () => {
+    console.log("Creating new article", articleForm);
+    setCreateModalOpen(false);
+    showToast("New article created successfully!", "success");
+  };
+
+  // Form handlers
+  const handleFormChange = (field, value) => {
+    setArticleForm((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  const handleTagAdd = (tag) => {
+    if (tag && !articleForm.tags.includes(tag)) {
+      setArticleForm((prev) => ({
+        ...prev,
+        tags: [...prev.tags, tag],
+      }));
+    }
+  };
+
+  const handleTagRemove = (tagToRemove) => {
+    setArticleForm((prev) => ({
+      ...prev,
+      tags: prev.tags.filter((tag) => tag !== tagToRemove),
+    }));
+  };
+
+  const handleLanguageToggle = (langCode) => {
+    setArticleForm((prev) => {
+      const newLanguages = prev.language.includes(langCode)
+        ? prev.language.filter((l) => l !== langCode)
+        : [...prev.language, langCode];
+      return { ...prev, language: newLanguages };
+    });
   };
 
   const getStatusBadge = (status) => {
@@ -231,6 +347,396 @@ const ContentManagement = () => {
 
   return (
     <div className="h-full">
+      {/* Modals */}
+      {/* Edit Article Modal */}
+      <Modal
+        isOpen={editModalOpen}
+        onClose={() => setEditModalOpen(false)}
+        title="Edit Article"
+        size="lg"
+      >
+        {selectedArticle && (
+          <div className="space-y-6">
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Article Title
+              </label>
+              <input
+                type="text"
+                value={articleForm.title}
+                onChange={(e) => handleFormChange("title", e.target.value)}
+                className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
+                placeholder="Enter article title"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div>
+                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Category
+                </label>
+                <select
+                  value={articleForm.category}
+                  onChange={(e) => handleFormChange("category", e.target.value)}
+                  className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
+                >
+                  {categories
+                    .filter((c) => c.id !== "all")
+                    .map((cat) => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </option>
+                    ))}
+                </select>
+              </div>
+              <div>
+                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Status
+                </label>
+                <select
+                  value={articleForm.status}
+                  onChange={(e) => handleFormChange("status", e.target.value)}
+                  className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
+                >
+                  <option value="draft">Draft</option>
+                  <option value="pending">Pending Review</option>
+                  <option value="published">Published</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Tags
+              </label>
+              <div className="mb-3 flex flex-wrap gap-2">
+                {articleForm.tags.map((tag, index) => (
+                  <span
+                    key={index}
+                    className="flex items-center gap-1 rounded-full bg-blue-100 px-3 py-1 text-sm text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
+                  >
+                    {tag}
+                    <button
+                      onClick={() => handleTagRemove(tag)}
+                      className="ml-1 hover:text-blue-900"
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Add a tag"
+                  className="flex-1 rounded-lg border border-gray-300 p-2 dark:border-gray-600 dark:bg-navy-700"
+                  onKeyPress={(e) => {
+                    if (e.key === "Enter") {
+                      handleTagAdd(e.target.value);
+                      e.target.value = "";
+                    }
+                  }}
+                />
+                <button
+                  onClick={() => {
+                    const input = document.querySelector(
+                      'input[placeholder="Add a tag"]'
+                    );
+                    if (input.value) {
+                      handleTagAdd(input.value);
+                      input.value = "";
+                    }
+                  }}
+                  className="rounded-lg bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
+                >
+                  Add
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Languages
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {languages.map((lang) => (
+                  <button
+                    key={lang.code}
+                    type="button"
+                    onClick={() => handleLanguageToggle(lang.code)}
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 ${
+                      articleForm.language.includes(lang.code)
+                        ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
+                        : "bg-gray-100 text-gray-700 dark:bg-navy-700 dark:text-gray-300"
+                    }`}
+                  >
+                    <MdTranslate className="h-4 w-4" />
+                    {lang.name}
+                    {articleForm.language.includes(lang.code) && (
+                      <MdCheckCircle className="h-4 w-4 text-green-500" />
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setEditModalOpen(false)}
+                className="rounded-lg border border-gray-300 px-6 py-3 font-medium hover:bg-gray-50 dark:border-gray-600"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmEdit}
+                className="rounded-lg bg-green-500 px-6 py-3 font-medium text-white hover:bg-green-600"
+              >
+                Save Changes
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        title="Delete Article"
+        size="md"
+      >
+        <div className="space-y-6">
+          <div className="flex items-start">
+            <div className="mr-3 rounded-full bg-red-100 p-2 dark:bg-red-900">
+              <MdWarning className="h-6 w-6 text-red-600 dark:text-red-300" />
+            </div>
+            <div>
+              <h4 className="font-bold text-navy-700 dark:text-white">
+                Delete "{selectedArticle?.title}"?
+              </h4>
+              <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
+                This action cannot be undone. The article will be permanently
+                removed from the system.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3">
+            <button
+              onClick={() => setDeleteModalOpen(false)}
+              className="rounded-lg border border-gray-300 px-6 py-3 font-medium hover:bg-gray-50 dark:border-gray-600"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={confirmDelete}
+              className="rounded-lg bg-red-500 px-6 py-3 font-medium text-white hover:bg-red-600"
+            >
+              Delete Article
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Publish Confirmation Modal */}
+      <Modal
+        isOpen={publishModalOpen}
+        onClose={() => setPublishModalOpen(false)}
+        title="Publish Article"
+        size="md"
+      >
+        <div className="space-y-6">
+          <div className="flex items-center justify-center">
+            <div className="rounded-full bg-green-100 p-4 dark:bg-green-900">
+              <MdPublic className="h-8 w-8 text-green-600 dark:text-green-300" />
+            </div>
+          </div>
+
+          <div className="text-center">
+            <h4 className="mb-2 text-xl font-bold text-navy-700 dark:text-white">
+              Publish "{selectedArticle?.title}"?
+            </h4>
+            <p className="text-sm text-gray-600 dark:text-gray-300">
+              This article will be made publicly available to all users.
+            </p>
+          </div>
+
+          <div className="rounded-lg bg-blue-50 p-4 dark:bg-blue-900/20">
+            <div className="flex items-start">
+              <MdInfo className="mr-2 mt-0.5 h-5 w-5 text-blue-500" />
+              <p className="text-sm text-blue-700 dark:text-blue-300">
+                Make sure to review all content and translations before
+                publishing.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3">
+            <button
+              onClick={() => setPublishModalOpen(false)}
+              className="rounded-lg border border-gray-300 px-6 py-3 font-medium hover:bg-gray-50 dark:border-gray-600"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={confirmPublish}
+              className="rounded-lg bg-green-500 px-6 py-3 font-medium text-white hover:bg-green-600"
+            >
+              Publish Now
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Preview Modal */}
+      <Modal
+        isOpen={previewModalOpen}
+        onClose={() => setPreviewModalOpen(false)}
+        title="Article Preview"
+        size="xl"
+      >
+        {selectedArticle && (
+          <div className="space-y-6">
+            <div className="border-b border-gray-200 pb-6 dark:border-gray-700">
+              <h2 className="text-2xl font-bold text-navy-700 dark:text-white">
+                {selectedArticle.title}
+              </h2>
+              <div className="mt-2 flex flex-wrap items-center gap-4 text-sm text-gray-600 dark:text-gray-300">
+                <span className="flex items-center">
+                  <MdPerson className="mr-1 h-4 w-4" />
+                  {selectedArticle.author}
+                </span>
+                <span className="flex items-center">
+                  <MdCalendarToday className="mr-1 h-4 w-4" />
+                  {selectedArticle.lastUpdated}
+                </span>
+                <span className="flex items-center">
+                  <MdTag className="mr-1 h-4 w-4" />
+                  {selectedArticle.category}
+                </span>
+                <span className="flex items-center">
+                  <MdTranslate className="mr-1 h-4 w-4" />
+                  {selectedArticle.language.length} languages
+                </span>
+              </div>
+            </div>
+
+            <div className="prose dark:prose-invert max-w-none">
+              <p>{selectedArticle.content}</p>
+              <p>
+                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do
+                eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
+                enim ad minim veniam, quis nostrud exercitation ullamco laboris
+                nisi ut aliquip ex ea commodo consequat.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              {selectedArticle.tags.map((tag, index) => (
+                <span
+                  key={index}
+                  className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700 dark:bg-navy-700 dark:text-gray-300"
+                >
+                  #{tag}
+                </span>
+              ))}
+            </div>
+
+            <div className="flex justify-end">
+              <button
+                onClick={() => setPreviewModalOpen(false)}
+                className="rounded-lg bg-brand-500 px-6 py-3 font-medium text-white hover:bg-brand-600"
+              >
+                Close Preview
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Create Article Modal */}
+      <Modal
+        isOpen={createModalOpen}
+        onClose={() => setCreateModalOpen(false)}
+        title="Create New Article"
+        size="lg"
+      >
+        <div className="space-y-6">
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Article Title *
+            </label>
+            <input
+              type="text"
+              value={articleForm.title}
+              onChange={(e) => handleFormChange("title", e.target.value)}
+              className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
+              placeholder="Enter article title"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Category *
+              </label>
+              <select
+                value={articleForm.category}
+                onChange={(e) => handleFormChange("category", e.target.value)}
+                className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
+              >
+                {categories
+                  .filter((c) => c.id !== "all")
+                  .map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </option>
+                  ))}
+              </select>
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Status *
+              </label>
+              <select
+                value={articleForm.status}
+                onChange={(e) => handleFormChange("status", e.target.value)}
+                className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
+              >
+                <option value="draft">Draft</option>
+                <option value="pending">Pending Review</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Content
+            </label>
+            <textarea
+              rows="8"
+              className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
+              placeholder="Write article content here..."
+            />
+          </div>
+
+          <div className="flex justify-end gap-3">
+            <button
+              onClick={() => setCreateModalOpen(false)}
+              className="rounded-lg border border-gray-300 px-6 py-3 font-medium hover:bg-gray-50 dark:border-gray-600"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={confirmCreate}
+              className="rounded-lg bg-green-500 px-6 py-3 font-medium text-white hover:bg-green-600"
+            >
+              Create Article
+            </button>
+          </div>
+        </div>
+      </Modal>
+
       {/* Header */}
       <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
@@ -246,7 +752,10 @@ const ContentManagement = () => {
             <MdFilterList className="mr-2 h-4 w-4" />
             Filter
           </button>
-          <button className="linear flex items-center justify-center rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white transition duration-200 hover:bg-brand-600 active:bg-brand-700">
+          <button
+            onClick={handleCreateClick}
+            className="linear flex items-center justify-center rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white transition duration-200 hover:scale-105 hover:bg-brand-600 active:scale-95 active:bg-brand-700"
+          >
             <MdAdd className="mr-2 h-4 w-4" />
             Create New Article
           </button>
@@ -258,7 +767,7 @@ const ContentManagement = () => {
         {contentStats.map((stat, index) => (
           <div
             key={index}
-            className={`rounded-xl border border-gray-200 p-4 dark:border-gray-700 ${
+            className={`rounded-xl border border-gray-200 p-4 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg dark:border-gray-700 ${
               stat.color === "blue"
                 ? "bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-900/10"
                 : stat.color === "green"
@@ -298,7 +807,7 @@ const ContentManagement = () => {
               <input
                 type="text"
                 placeholder="Search articles by title, content, or tags..."
-                className="w-full rounded-lg border border-gray-300 bg-white py-2 pl-10 pr-4 dark:border-gray-600 dark:bg-navy-700"
+                className="w-full rounded-lg border border-gray-300 bg-white py-2 pl-10 pr-4 transition-all duration-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-200 dark:border-gray-600 dark:bg-navy-700"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -333,7 +842,7 @@ const ContentManagement = () => {
                 <button
                   key={category.id}
                   onClick={() => setSelectedCategory(category.id)}
-                  className={`flex w-full items-center justify-between rounded-lg p-3 text-left ${
+                  className={`flex w-full items-center justify-between rounded-lg p-3 text-left transition-all duration-200 hover:scale-[1.02] ${
                     selectedCategory === category.id
                       ? "bg-brand-50 text-brand-600 dark:bg-brand-500/20 dark:text-brand-300"
                       : "hover:bg-gray-50 dark:hover:bg-navy-700"
@@ -370,7 +879,7 @@ const ContentManagement = () => {
                     </div>
                     <div className="h-1 w-full rounded-full bg-gray-200">
                       <div
-                        className="h-1 rounded-full bg-blue-500"
+                        className="h-1 rounded-full bg-blue-500 transition-all duration-500"
                         style={{
                           width: `${(lang.articles / 1245) * 100}%`,
                         }}
@@ -401,7 +910,7 @@ const ContentManagement = () => {
                   <option>Most Viewed</option>
                   <option>Alphabetical</option>
                 </select>
-                <button className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium dark:border-gray-600">
+                <button className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium transition-all duration-200 hover:scale-105 hover:bg-gray-50 dark:border-gray-600">
                   <FaDownload className="h-4 w-4" />
                 </button>
               </div>
@@ -412,7 +921,7 @@ const ContentManagement = () => {
               {contentArticles.map((article) => (
                 <div
                   key={article.id}
-                  className="rounded-lg border border-gray-200 p-4 hover:border-brand-200 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-navy-700"
+                  className="rounded-lg border border-gray-200 p-4 transition-all duration-300 hover:scale-[1.005] hover:border-brand-200 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-navy-700"
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
@@ -474,29 +983,32 @@ const ContentManagement = () => {
                     <div>{getStatusBadge(article.status)}</div>
                     <div className="flex space-x-3">
                       <button
-                        onClick={() => handleEditArticle(article.id)}
-                        className="flex items-center rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-300"
+                        onClick={() => handleEditClick(article)}
+                        className="flex items-center rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-all duration-200 hover:scale-105 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-300"
                       >
                         <MdEdit className="mr-2 h-4 w-4" />
                         Edit
                       </button>
                       <button
-                        onClick={() => handleDeleteArticle(article.id)}
-                        className="flex items-center rounded-lg border border-red-300 bg-red-50 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-100 dark:border-red-700 dark:bg-red-900/20 dark:text-red-300"
+                        onClick={() => handleDeleteClick(article)}
+                        className="flex items-center rounded-lg border border-red-300 bg-red-50 px-4 py-2 text-sm font-medium text-red-700 transition-all duration-200 hover:scale-105 hover:bg-red-100 dark:border-red-700 dark:bg-red-900/20 dark:text-red-300"
                       >
                         <MdDelete className="mr-2 h-4 w-4" />
                         Delete
                       </button>
                       {article.status !== "published" && (
                         <button
-                          onClick={() => handlePublishArticle(article.id)}
-                          className="flex items-center rounded-lg bg-green-500 px-4 py-2 text-sm font-medium text-white hover:bg-green-600"
+                          onClick={() => handlePublishClick(article)}
+                          className="flex items-center rounded-lg bg-green-500 px-4 py-2 text-sm font-medium text-white transition-all duration-200 hover:scale-105 hover:bg-green-600"
                         >
                           <MdPublic className="mr-2 h-4 w-4" />
                           Publish
                         </button>
                       )}
-                      <button className="flex items-center rounded-lg border border-brand-300 bg-brand-50 px-4 py-2 text-sm font-medium text-brand-700 hover:bg-brand-100 dark:border-brand-700 dark:bg-brand-900/20 dark:text-brand-300">
+                      <button
+                        onClick={() => handlePreviewClick(article)}
+                        className="flex items-center rounded-lg border border-brand-300 bg-brand-50 px-4 py-2 text-sm font-medium text-brand-700 transition-all duration-200 hover:scale-105 hover:bg-brand-100 dark:border-brand-700 dark:bg-brand-900/20 dark:text-brand-300"
+                      >
                         <MdVisibility className="mr-2 h-4 w-4" />
                         Preview
                       </button>
@@ -512,16 +1024,16 @@ const ContentManagement = () => {
                 Showing 1-6 of {contentArticles.length} articles
               </div>
               <div className="flex items-center space-x-2">
-                <button className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm dark:border-gray-600">
+                <button className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm transition-all duration-200 hover:scale-105 hover:bg-gray-50 dark:border-gray-600">
                   Previous
                 </button>
-                <button className="rounded-lg bg-brand-500 px-3 py-1.5 text-sm text-white">
+                <button className="rounded-lg bg-brand-500 px-3 py-1.5 text-sm text-white transition-all duration-200 hover:scale-105 hover:bg-brand-600">
                   1
                 </button>
-                <button className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm dark:border-gray-600">
+                <button className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm transition-all duration-200 hover:scale-105 hover:bg-gray-50 dark:border-gray-600">
                   2
                 </button>
-                <button className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm dark:border-gray-600">
+                <button className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm transition-all duration-200 hover:scale-105 hover:bg-gray-50 dark:border-gray-600">
                   Next
                 </button>
               </div>
@@ -542,7 +1054,7 @@ const ContentManagement = () => {
                   .map((article) => (
                     <div
                       key={article.id}
-                      className="flex items-center justify-between"
+                      className="flex items-center justify-between transition-all duration-300 hover:scale-[1.02]"
                     >
                       <div className="flex-1">
                         <div className="font-medium text-navy-700 dark:text-white">
@@ -579,7 +1091,7 @@ const ContentManagement = () => {
                     </div>
                     <div className="h-2 w-full rounded-full bg-gray-200">
                       <div
-                        className="h-2 rounded-full bg-purple-500"
+                        className="h-2 rounded-full bg-purple-500 transition-all duration-1000"
                         style={{
                           width: `${(lang.articles / 1245) * 100}%`,
                         }}
@@ -594,7 +1106,7 @@ const ContentManagement = () => {
       </div>
 
       {/* Footer Note */}
-      <div className="mt-6 rounded-lg bg-green-50 p-4 text-center text-sm text-green-800 dark:bg-green-900/20 dark:text-green-300">
+      <div className="mt-6 rounded-lg bg-green-50 p-4 text-center text-sm text-green-800 transition-all duration-300 hover:scale-[1.01] dark:bg-green-900/20 dark:text-green-300">
         <p>
           📚 <strong>Note:</strong> All health content is reviewed by certified
           medical professionals and updated quarterly to ensure accuracy and
