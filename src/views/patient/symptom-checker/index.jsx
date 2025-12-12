@@ -1,4 +1,3 @@
-// views/patient/symptom-checker/index.jsx - COMPLETE VERSION
 import React, { useState } from "react";
 import {
   MdArrowBack,
