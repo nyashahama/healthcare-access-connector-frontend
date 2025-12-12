@@ -1,9 +1,11 @@
+// views/patient/dashboard/index.jsx - ENHANCED VERSION
 import { IoMdCalendar, IoMdMedical, IoMdChatbubbles } from "react-icons/io";
 import { FaStethoscope, FaMapMarkerAlt, FaAppleAlt } from "react-icons/fa";
 import Widget from "components/widget/Widget";
 import UpcomingAppointments from "../components/UpcomingAppointments";
 import QuickActions from "../components/QuickActions";
 import ClinicSuggestions from "../components/ClinicSuggestions";
+import HealthTipsCarousel from "../components/HealthTipsCarousel";
 
 const PatientDashboard = () => {
   return (
@@ -25,24 +27,28 @@ const PatientDashboard = () => {
           title={"Upcoming Appointments"}
           subtitle={"3"}
           link="/patient/appointments"
+          bgColor="bg-blue-500"
         />
         <Widget
           icon={<IoMdMedical className="h-7 w-7" />}
           title={"Health Score"}
           subtitle={"Good"}
           link="/patient/health-tracker"
+          bgColor="bg-green-500"
         />
         <Widget
           icon={<IoMdChatbubbles className="h-7 w-7" />}
           title={"Unread Messages"}
           subtitle={"2"}
           link="/patient/telemedicine"
+          bgColor="bg-purple-500"
         />
         <Widget
           icon={<FaAppleAlt className="h-7 w-7" />}
           title={"Nutrition Tips"}
           subtitle={"5 new"}
           link="/patient/nutrition"
+          bgColor="bg-orange-500"
         />
       </div>
 
@@ -52,6 +58,11 @@ const PatientDashboard = () => {
           Quick Actions
         </h4>
         <QuickActions />
+      </div>
+
+      {/* Health Tips Carousel */}
+      <div className="mt-6">
+        <HealthTipsCarousel />
       </div>
 
       {/* Main Content Grid */}
@@ -68,14 +79,19 @@ const PatientDashboard = () => {
           <div className="rounded-[20px] bg-gradient-to-r from-blue-500 to-brand-400 p-6 text-white">
             <div className="flex items-center justify-between">
               <div>
-                <h5 className="text-xl font-bold">Need Help?</h5>
+                <h5 className="text-xl font-bold">Symptom Checker</h5>
                 <p className="mt-2 text-blue-100">
-                  Check symptoms and get advice instantly
+                  Check symptoms and get instant health advice
                 </p>
               </div>
               <FaStethoscope className="h-12 w-12 opacity-80" />
             </div>
-            <button className="linear mt-4 w-full rounded-xl bg-white py-3 font-medium text-brand-500 transition duration-200 hover:bg-gray-100">
+            <button
+              onClick={() =>
+                (window.location.href = "/patient/symptom-checker")
+              }
+              className="linear mt-4 w-full rounded-xl bg-white py-3 font-medium text-brand-500 transition duration-200 hover:bg-gray-100"
+            >
               Start Symptom Check
             </button>
           </div>
@@ -101,6 +117,12 @@ const PatientDashboard = () => {
                   Poison Control
                 </span>
                 <span className="font-bold">0861 555 777</span>
+              </li>
+              <li className="flex justify-between">
+                <span className="text-gray-600 dark:text-gray-300">
+                  Mental Health Crisis
+                </span>
+                <span className="font-bold">0800 567 567</span>
               </li>
             </ul>
           </div>
