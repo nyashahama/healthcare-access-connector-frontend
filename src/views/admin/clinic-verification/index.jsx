@@ -9,13 +9,23 @@ import {
   MdVerified,
   MdPendingActions,
   MdWarning,
+  MdCalendarToday,
+  MdPhone,
 } from "react-icons/md";
-import { FaFileMedical, FaClinicMedical } from "react-icons/fa";
+import { FaFileMedical, FaClinicMedical, FaRegFilePdf } from "react-icons/fa";
 import Card from "components/card";
+import Modal from "components/modal/Modal";
 
 const ClinicVerification = () => {
   const [selectedTab, setSelectedTab] = useState("pending");
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Modal states
+  const [viewModalOpen, setViewModalOpen] = useState(false);
+  const [approveModalOpen, setApproveModalOpen] = useState(false);
+  const [rejectModalOpen, setRejectModalOpen] = useState(false);
+  const [selectedClinic, setSelectedClinic] = useState(null);
+  const [rejectionReason, setRejectionReason] = useState("");
 
   const verificationStats = [
     {
@@ -166,19 +176,51 @@ const ClinicVerification = () => {
     },
   ];
 
-  const handleApprove = (clinicId) => {
-    console.log(`Approving clinic ${clinicId}`);
-    // API call to approve clinic
+  // Modal-opening handlers
+  const handleViewDetails = (clinic) => {
+    setSelectedClinic(clinic);
+    setViewModalOpen(true);
   };
 
-  const handleReject = (clinicId) => {
-    console.log(`Rejecting clinic ${clinicId}`);
-    // API call to reject clinic
+  const handleApproveClick = (clinic) => {
+    setSelectedClinic(clinic);
+    setApproveModalOpen(true);
   };
 
-  const handleViewDetails = (clinicId) => {
-    console.log(`Viewing details for clinic ${clinicId}`);
-    // Navigate to clinic details
+  const handleRejectClick = (clinic) => {
+    setSelectedClinic(clinic);
+    setRejectionReason("");
+    setRejectModalOpen(true);
+  };
+
+  // Confirm actions
+  const confirmApprove = () => {
+    if (!selectedClinic) return;
+    console.log(`Approving clinic ${selectedClinic.id}`);
+    // TODO: API call to approve clinic
+    setApproveModalOpen(false);
+    setSelectedClinic(null);
+    showToast("success", "Clinic approved successfully!");
+  };
+
+  const confirmReject = () => {
+    if (!rejectionReason.trim()) {
+      showToast("error", "Please provide a rejection reason");
+      return;
+    }
+    if (!selectedClinic) return;
+    console.log(
+      `Rejecting clinic ${selectedClinic.id} with reason: ${rejectionReason}`
+    );
+    // TODO: API call to reject clinic
+    setRejectModalOpen(false);
+    setSelectedClinic(null);
+    showToast("warning", "Clinic has been rejected.");
+  };
+
+  const showToast = (type, message) => {
+    // This would typically be handled by a toast notification system
+    console.log(`${type}: ${message}`);
   };
 
   const DocumentStatus = ({ documents }) => {
@@ -215,6 +257,192 @@ const ClinicVerification = () => {
 
   return (
     <div className="h-full">
+      {/* Modals */}
+      {/* View Details Modal */}
+      <Modal
+        isOpen={viewModalOpen}
+        onClose={() => setViewModalOpen(false)}
+        title="Clinic Details"
+        size="lg"
+      >
+        {selectedClinic && (
+          <div className="space-y-6">
+            {/* Clinic Header */}
+            <div className="flex items-start justify-between">
+              <div>
+                <h4 className="text-2xl font-bold text-navy-700 dark:text-white">
+                  {selectedClinic.name}
+                </h4>
+                <div className="mt-2 flex items-center text-gray-600 dark:text-gray-300">
+                  <MdLocationOn className="mr-2 h-5 w-5" />
+                  {selectedClinic.location}
+                </div>
+              </div>
+              <span className="rounded-full bg-blue-100 px-4 py-2 text-sm font-bold text-blue-800 dark:bg-blue-900 dark:text-blue-300">
+                {selectedClinic.type}
+              </span>
+            </div>
+
+            {/* Clinic Info Grid */}
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="space-y-3">
+                <div className="flex items-center">
+                  <MdCalendarToday className="mr-3 h-5 w-5 text-gray-400" />
+                  <div>
+                    <div className="text-sm text-gray-500">Submitted</div>
+                    <div className="font-medium">
+                      {selectedClinic.submitted}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center">
+                  <MdPhone className="mr-3 h-5 w-5 text-gray-400" />
+                  <div>
+                    <div className="text-sm text-gray-500">Contact</div>
+                    <div className="font-medium">{selectedClinic.contact}</div>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <div className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Services Offered
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {selectedClinic.services.map((service, index) => (
+                    <span
+                      key={index}
+                      className="rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-800 dark:bg-green-900 dark:text-green-300"
+                    >
+                      {service}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Documents Section */}
+            <div>
+              <h5 className="mb-3 text-lg font-semibold text-navy-700 dark:text-white">
+                Documents
+              </h5>
+              <div className="space-y-3">
+                {selectedClinic.documents.map((doc, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center justify-between rounded-lg border border-gray-200 p-4 dark:border-gray-700"
+                  >
+                    <div className="flex items-center">
+                      <FaRegFilePdf className="mr-3 h-6 w-6 text-red-500" />
+                      <div>
+                        <div className="font-medium">{doc.name}</div>
+                        <div
+                          className={`text-sm ${
+                            doc.verified ? "text-green-600" : "text-red-600"
+                          }`}
+                        >
+                          {doc.verified ? "✓ Verified" : "✗ Pending"}
+                        </div>
+                      </div>
+                    </div>
+                    <button className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50 dark:border-gray-600">
+                      View
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Approve Confirmation Modal */}
+      <Modal
+        isOpen={approveModalOpen}
+        onClose={() => setApproveModalOpen(false)}
+        title="Approve Clinic"
+        size="md"
+      >
+        <div className="text-center">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
+            <MdCheckCircle className="h-8 w-8 text-green-600" />
+          </div>
+          <h4 className="mb-2 text-xl font-bold text-navy-700 dark:text-white">
+            Approve {selectedClinic?.name}?
+          </h4>
+          <p className="mb-6 text-gray-600 dark:text-gray-300">
+            This clinic will be verified and become active in the system. This
+            action cannot be undone.
+          </p>
+          <div className="flex justify-center space-x-4">
+            <button
+              onClick={() => setApproveModalOpen(false)}
+              className="rounded-lg border border-gray-300 px-6 py-3 font-medium hover:bg-gray-50 dark:border-gray-600"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={confirmApprove}
+              className="transform rounded-lg bg-green-500 px-6 py-3 font-medium text-white transition-all duration-200 hover:scale-105 hover:bg-green-600"
+            >
+              Yes, Approve Clinic
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Reject Confirmation Modal */}
+      <Modal
+        isOpen={rejectModalOpen}
+        onClose={() => setRejectModalOpen(false)}
+        title="Reject Clinic"
+        size="md"
+      >
+        <div className="space-y-6">
+          <div className="flex items-start">
+            <div className="mr-3 rounded-full bg-red-100 p-2">
+              <MdWarning className="h-6 w-6 text-red-600" />
+            </div>
+            <div>
+              <h4 className="font-bold text-navy-700 dark:text-white">
+                Reject {selectedClinic?.name}?
+              </h4>
+              <p className="text-sm text-gray-600 dark:text-gray-300">
+                This clinic will be rejected and removed from the pending list.
+              </p>
+            </div>
+          </div>
+
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Reason for rejection *
+            </label>
+            <textarea
+              value={rejectionReason}
+              onChange={(e) => setRejectionReason(e.target.value)}
+              className="w-full rounded-lg border border-gray-300 p-3 focus:border-red-500 focus:ring-red-500 dark:border-gray-600 dark:bg-navy-700"
+              rows="3"
+              placeholder="Please provide a reason for rejection..."
+            />
+          </div>
+
+          <div className="flex justify-end space-x-4">
+            <button
+              onClick={() => setRejectModalOpen(false)}
+              className="rounded-lg border border-gray-300 px-6 py-3 font-medium hover:bg-gray-50 dark:border-gray-600"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={confirmReject}
+              className="rounded-lg bg-red-500 px-6 py-3 font-medium text-white transition-all duration-200 hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={!rejectionReason.trim()}
+            >
+              Reject Clinic
+            </button>
+          </div>
+        </div>
+      </Modal>
+
       {/* Header */}
       <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
@@ -382,21 +610,21 @@ const ClinicVerification = () => {
 
                   <div className="mt-4 flex justify-end space-x-3 border-t border-gray-100 pt-4 dark:border-gray-700">
                     <button
-                      onClick={() => handleViewDetails(clinic.id)}
+                      onClick={() => handleViewDetails(clinic)}
                       className="flex items-center rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-300"
                     >
                       <MdVisibility className="mr-2 h-4 w-4" />
                       View Details
                     </button>
                     <button
-                      onClick={() => handleReject(clinic.id)}
+                      onClick={() => handleRejectClick(clinic)}
                       className="flex items-center rounded-lg border border-red-300 bg-red-50 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-100 dark:border-red-700 dark:bg-red-900/20 dark:text-red-300"
                     >
                       <MdCancel className="mr-2 h-4 w-4" />
                       Reject
                     </button>
                     <button
-                      onClick={() => handleApprove(clinic.id)}
+                      onClick={() => handleApproveClick(clinic)}
                       className="flex items-center rounded-lg bg-green-500 px-4 py-2 text-sm font-medium text-white hover:bg-green-600"
                     >
                       <MdCheckCircle className="mr-2 h-4 w-4" />
