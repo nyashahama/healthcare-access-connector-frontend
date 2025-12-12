@@ -16,10 +16,16 @@ import {
 } from "react-icons/md";
 import { FaUserMd, FaUserInjured, FaShieldAlt } from "react-icons/fa";
 import Card from "components/card";
+import Modal from "components/modal/Modal";
 
 const UserManagement = () => {
   const [activeTab, setActiveTab] = useState("patients");
   const [searchQuery, setSearchQuery] = useState("");
+
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [suspendModalOpen, setSuspendModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
 
   const userStats = [
     {
@@ -201,6 +207,43 @@ const UserManagement = () => {
       verification: "Level 2",
     },
   ];
+  const showToast = (type, message) => {
+    // This would typically be handled by a toast notification system
+    console.log(`${type}: ${message}`);
+  };
+
+  const handleEditClick = (user, type) => {
+    setSelectedUser({ ...user, type });
+    setEditModalOpen(true);
+  };
+
+  const handleSuspendClick = (user, type) => {
+    setSelectedUser({ ...user, type });
+    setSuspendModalOpen(true);
+  };
+
+  const handleDeleteClick = (user, type) => {
+    setSelectedUser({ ...user, type });
+    setDeleteModalOpen(true);
+  };
+
+  const confirmEdit = () => {
+    console.log(`Editing ${selectedUser.type} with ID: ${selectedUser.id}`);
+    setEditModalOpen(false);
+    showToast("success", `${selectedUser.name} updated successfully!`);
+  };
+
+  const confirmSuspend = () => {
+    console.log(`Suspending ${selectedUser.type} with ID: ${selectedUser.id}`);
+    setSuspendModalOpen(false);
+    showToast("warning", `${selectedUser.name} has been suspended.`);
+  };
+
+  const confirmDelete = () => {
+    console.log(`Deleting ${selectedUser.type} with ID: ${selectedUser.id}`);
+    setDeleteModalOpen(false);
+    showToast("error", `${selectedUser.name} has been deleted.`);
+  };
 
   const handleEditUser = (userId, type) => {
     console.log(`Editing ${type} with ID: ${userId}`);
@@ -495,21 +538,21 @@ const UserManagement = () => {
                   <td className="py-4">
                     <div className="flex items-center space-x-2">
                       <button
-                        onClick={() => handleEditUser(user.id, activeTab)}
+                        onClick={() => handleEditClick(user.id, activeTab)}
                         className="rounded-lg p-2 text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-navy-600"
                         title="Edit"
                       >
                         <MdEdit className="h-4 w-4" />
                       </button>
                       <button
-                        onClick={() => handleSuspendUser(user.id, activeTab)}
+                        onClick={() => handleSuspendClick(user.id, activeTab)}
                         className="rounded-lg p-2 text-yellow-600 hover:bg-yellow-50 dark:text-yellow-400 dark:hover:bg-yellow-900/20"
                         title="Suspend/Activate"
                       >
                         <MdBlock className="h-4 w-4" />
                       </button>
                       <button
-                        onClick={() => handleDeleteUser(user.id, activeTab)}
+                        onClick={() => handleDeleteClick(user.id, activeTab)}
                         className="rounded-lg p-2 text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
                         title="Delete"
                       >
