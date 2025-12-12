@@ -47,6 +47,7 @@ import {
   MdLock,
 } from "react-icons/md";
 import { FaStethoscope } from "react-icons/fa";
+import ProviderTelemedicine from "views/provider/telemedicine";
 
 // Patient Routes
 export const patientRoutes = [
@@ -128,6 +129,14 @@ export const providerRoutes = [
     icon: <MdBusiness className="h-6 w-6" />,
     component: <ClinicManagement />,
     roles: ["clinic_admin"], // Only clinic admin can see
+  },
+  {
+    name: "Telemedicine",
+    layout: "/provider",
+    path: "telemedicine",
+    icon: <MdChat className="h-6 w-6" />,
+    component: <ProviderTelemedicine />,
+    roles: ["clinic_admin", "doctor", "nurse"],
   },
   {
     name: "Staff Management",
