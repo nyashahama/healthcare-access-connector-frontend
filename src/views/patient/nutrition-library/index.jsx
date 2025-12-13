@@ -429,6 +429,85 @@ Downloaded from HealthConnect Nutrition Library
           </div>
         )}
       </Modal>
+
+      {/* SMS Subscription Modal */}
+      <Modal
+        isOpen={smsSubscribeModalOpen}
+        onClose={() => setSmsSubscribeModalOpen(false)}
+        title="📱 SMS Nutrition Tips"
+        size="md"
+      >
+        <div className="space-y-6">
+          <div className="text-center">
+            <FaAppleAlt className="mx-auto mb-4 h-12 w-12 text-green-600" />
+            <h4 className="mb-2 text-xl font-bold text-navy-700 dark:text-white">
+              Get Daily Nutrition Tips
+            </h4>
+            <p className="text-gray-600 dark:text-gray-300">
+              Receive age-appropriate nutrition advice via SMS
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Child's Age
+              </label>
+              <select className="w-full rounded-lg border border-gray-300 p-2 dark:border-gray-600 dark:bg-navy-700">
+                <option value="">Select age group</option>
+                <option value="0-6">0-6 months</option>
+                <option value="6-12">6-12 months</option>
+                <option value="1-3">1-3 years</option>
+                <option value="4-12">4-12 years</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Phone Number
+              </label>
+              <input
+                type="tel"
+                placeholder="+27 72 123 4567"
+                className="w-full rounded-lg border border-gray-300 p-2 dark:border-gray-600 dark:bg-navy-700"
+              />
+            </div>
+
+            <div className="flex items-start">
+              <input type="checkbox" className="mr-3 mt-1 h-4 w-4 rounded" />
+              <label className="text-sm text-gray-600 dark:text-gray-300">
+                I agree to receive daily nutrition tips via SMS. Standard SMS
+                rates apply.
+              </label>
+            </div>
+          </div>
+
+          <div className="rounded-lg bg-blue-50 p-4 dark:bg-blue-900/20">
+            <div className="flex items-start">
+              <MdInfo className="mr-2 mt-0.5 h-5 w-5 text-blue-600" />
+              <p className="text-sm text-blue-700 dark:text-blue-300">
+                You'll receive 1 SMS per day with practical nutrition tips.
+                Reply STOP to unsubscribe anytime.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3">
+            <button
+              onClick={() => setSmsSubscribeModalOpen(false)}
+              className="rounded-lg border border-gray-300 px-6 py-2 font-medium hover:bg-gray-50 dark:border-gray-600"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={confirmSMSSubscription}
+              className="rounded-lg bg-green-500 px-6 py-2 font-medium text-white hover:bg-green-600"
+            >
+              Subscribe Now
+            </button>
+          </div>
+        </div>
+      </Modal>
       {/* Header */}
       <div className="mb-6">
         <h3 className="text-2xl font-bold text-navy-700 dark:text-white">
