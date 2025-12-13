@@ -13,11 +13,21 @@ import {
 } from "react-icons/md";
 import { FaBaby, FaAppleAlt, FaUtensils } from "react-icons/fa";
 import Card from "components/card";
+import Modal from "components/modal/Modal";
+import { useToast } from "hooks/useToast";
 
 const NutritionLibrary = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [bookmarkedArticles, setBookmarkedArticles] = useState([1, 3]);
+  const { showToast } = useToast();
+
+  // Modal states
+  const [viewArticleModalOpen, setViewArticleModalOpen] = useState(false);
+  const [saveOfflineModalOpen, setSaveOfflineModalOpen] = useState(false);
+  const [shareArticleModalOpen, setShareArticleModalOpen] = useState(false);
+  const [smsSubscribeModalOpen, setSmsSubscribeModalOpen] = useState(false);
+  const [selectedArticle, setSelectedArticle] = useState(null);
 
   const categories = [
     { id: "all", name: "All Topics", icon: <MdLocalDining />, count: 24 },
@@ -140,22 +150,38 @@ const NutritionLibrary = () => {
         ? prev.filter((id) => id !== articleId)
         : [...prev, articleId]
     );
+    const article = articles.find((a) => a.id === articleId);
+    showToast(
+      bookmarkedArticles.includes(articleId)
+        ? "Removed from bookmarks"
+        : "Saved to bookmarks",
+      bookmarkedArticles.includes(articleId) ? "info" : "success"
+    );
+  };
+
+  const handleViewArticle = (article) => {
+    setSelectedArticle(article);
+    setViewArticleModalOpen(true);
+  };
+
+  const handleSaveOffline = (article) => {
+    setSelectedArticle(article);
+    setSaveOfflineModalOpen(true);
+  };
+
+  const confirmSaveOffline = () => {
+    setSaveOfflineModalOpen(false);
+    showToast(`${selectedArticle.title} saved for offline reading`, "success");
   };
 
   const handleShareArticle = (article) => {
-    if (navigator.share) {
-      navigator.share({
-        title: article.title,
-        text: article.content.substring(0, 100) + "...",
-        url: window.location.href,
-      });
-    } else {
-      // Fallback for browsers that don't support Web Share API
-      navigator.clipboard.writeText(
-        article.title + " - " + window.location.href
-      );
-      alert("Article link copied to clipboard!");
-    }
+    setSelectedArticle(article);
+    setShareArticleModalOpen(true);
+  };
+
+  const confirmShareArticle = (method) => {
+    setShareArticleModalOpen(false);
+    showToast(`Article shared via ${method}`, "success");
   };
 
   const handleDownloadArticle = (article) => {
@@ -181,10 +207,111 @@ Downloaded from HealthConnect Nutrition Library
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+    showToast("Article downloaded successfully", "success");
+  };
+
+  const handleSubscribeSMS = () => {
+    setSmsSubscribeModalOpen(true);
+  };
+
+  const confirmSMSSubscription = () => {
+    setSmsSubscribeModalOpen(false);
+    showToast("Subscribed to daily nutrition tips via SMS", "success");
   };
 
   return (
     <div className="h-full">
+      {/* Modals */}
+      {/* View Article Modal */}
+      <Modal
+        isOpen={viewArticleModalOpen}
+        onClose={() => setViewArticleModalOpen(false)}
+        title={selectedArticle?.title}
+        size="xl"
+      >
+        {selectedArticle && (
+          <div className="space-y-6">
+            <div className="rounded-lg bg-gray-50 p-4 dark:bg-navy-700">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <span className="rounded-full bg-brand-100 px-3 py-1 text-sm font-medium text-brand-600 dark:bg-brand-900/30">
+                    {selectedArticle.category}
+                  </span>
+                  <span className="flex items-center text-sm text-gray-600 dark:text-gray-300">
+                    <MdAccessTime className="mr-1 h-4 w-4" />
+                    {selectedArticle.readTime} read
+                  </span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => toggleBookmark(selectedArticle.id)}
+                    className="text-gray-500 hover:text-yellow-500"
+                  >
+                    {bookmarkedArticles.includes(selectedArticle.id) ? (
+                      <MdBookmark className="h-5 w-5 text-yellow-500" />
+                    ) : (
+                      <MdBookmarkBorder className="h-5 w-5" />
+                    )}
+                  </button>
+                  <button
+                    onClick={() => handleShareArticle(selectedArticle)}
+                    className="text-gray-500 hover:text-brand-500"
+                  >
+                    <MdShare className="h-5 w-5" />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="prose dark:prose-invert max-w-none">
+              <p className="text-lg">{selectedArticle.content}</p>
+
+              <h3 className="mt-6 text-xl font-bold">Key Tips:</h3>
+              <ul className="mt-3 space-y-3">
+                {selectedArticle.tips.map((tip, index) => (
+                  <li key={index} className="flex items-start">
+                    <div className="mr-3 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-green-100 text-green-600">
+                      {index + 1}
+                    </div>
+                    <span>{tip}</span>
+                  </li>
+                ))}
+              </ul>
+
+              {selectedArticle.category === "infants" && (
+                <div className="mt-6 rounded-lg bg-blue-50 p-4 dark:bg-blue-900/20">
+                  <h4 className="font-bold text-blue-800 dark:text-blue-300">
+                    🍼 Infant Feeding Guidelines
+                  </h4>
+                  <p className="mt-2 text-blue-700 dark:text-blue-400">
+                    Always consult with a healthcare provider for personalized
+                    infant feeding advice. WHO recommends exclusive
+                    breastfeeding for the first 6 months.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => handleSaveOffline(selectedArticle)}
+                className="rounded-lg border border-gray-300 px-4 py-2 hover:bg-gray-50 dark:border-gray-600"
+              >
+                Save Offline
+              </button>
+              <button
+                onClick={() => {
+                  handleDownloadArticle(selectedArticle);
+                  setViewArticleModalOpen(false);
+                }}
+                className="rounded-lg bg-brand-500 px-4 py-2 text-white hover:bg-brand-600"
+              >
+                Download PDF
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
       {/* Header */}
       <div className="mb-6">
         <h3 className="text-2xl font-bold text-navy-700 dark:text-white">
