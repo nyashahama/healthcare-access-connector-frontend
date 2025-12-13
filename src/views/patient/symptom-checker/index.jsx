@@ -5,14 +5,25 @@ import {
   MdCheckCircle,
   MdWarning,
   MdLocalHospital,
+  MdEmergency,
+  MdInfo,
 } from "react-icons/md";
 import { FaBaby, FaUser, FaHeartbeat } from "react-icons/fa";
 import Card from "components/card";
+import { useToast } from "hooks/useToast";
+import Modal from "components/modal/Modal";
 
 const SymptomChecker = () => {
   const [step, setStep] = useState(1);
   const [responses, setResponses] = useState({});
   const [result, setResult] = useState(null);
+  const { showToast } = useToast();
+
+  // Modal states
+  const [emergencyModalOpen, setEmergencyModalOpen] = useState(false);
+  const [saveResultModalOpen, setSaveResultModalOpen] = useState(false);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [selfCareModalOpen, setSelfCareModalOpen] = useState(false);
 
   const questions = [
     {
@@ -198,33 +209,73 @@ const SymptomChecker = () => {
 
     if (mainSymptom === "breathing" || mainSymptom === "pain") {
       severity = "high";
+      showToast("⚠️ Urgent symptoms detected!", "warning");
     } else if (fever === "high" || otherSymptoms.includes("breathing")) {
       severity = "high";
+      showToast("⚠️ Urgent symptoms detected!", "warning");
     } else if (fever === "moderate" || otherSymptoms.length > 1) {
       severity = "medium";
+      showToast("Moderate symptoms detected", "info");
+    } else {
+      showToast("Mild symptoms detected", "success");
     }
 
     setResult(results[severity]);
     setStep(questions.length + 1);
   };
 
+  const handleEmergencyCall = () => {
+    setEmergencyModalOpen(true);
+  };
+
+  const confirmEmergencyCall = () => {
+    setEmergencyModalOpen(false);
+    window.location.href = "tel:10177";
+    showToast("Dialing emergency services...", "error");
+  };
+
+  const handleSaveResult = () => {
+    setSaveResultModalOpen(true);
+  };
+
+  const confirmSaveResult = () => {
+    console.log("Saving result to medical history:", result);
+    setSaveResultModalOpen(false);
+    showToast("Result saved to your medical history", "success");
+  };
+
+  const handleShareResult = () => {
+    setShareModalOpen(true);
+  };
+
+  const confirmShareResult = (method) => {
+    setShareModalOpen(false);
+    showToast(`Shared via ${method}`, "success");
+  };
+
+  const handleShowSelfCareTips = () => {
+    setSelfCareModalOpen(true);
+  };
+
   const handleAction = (actionType) => {
     switch (actionType) {
       case "emergency":
-        window.location.href = "tel:10177";
+        handleEmergencyCall();
         break;
       case "clinic":
         window.location.href = "/patient/find-clinic?emergency=true";
+        showToast("Finding nearest clinics...", "info");
         break;
       case "book":
         window.location.href = "/patient/find-clinic";
+        showToast("Opening appointment booking...", "info");
         break;
       case "chat":
         window.location.href = "/patient/telemedicine";
+        showToast("Opening telemedicine...", "info");
         break;
       case "self-care":
-        // Show self-care modal or redirect
-        console.log("Show self-care tips");
+        handleShowSelfCareTips();
         break;
     }
   };
@@ -233,6 +284,62 @@ const SymptomChecker = () => {
 
   return (
     <div className="h-full">
+      {/* Modals */}
+      {/* Emergency Call Modal */}
+      <Modal
+        isOpen={emergencyModalOpen}
+        onClose={() => setEmergencyModalOpen(false)}
+        title="🚨 Emergency Call"
+        size="md"
+      >
+        <div className="space-y-6">
+          <div className="text-center">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-100 dark:bg-red-900">
+              <MdEmergency className="h-8 w-8 text-red-600 dark:text-red-300" />
+            </div>
+            <h4 className="mb-2 text-xl font-bold text-navy-700 dark:text-white">
+              Call Emergency Services?
+            </h4>
+            <p className="text-gray-600 dark:text-gray-300">
+              Based on your symptoms, immediate medical attention is
+              recommended.
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex items-center rounded-lg bg-red-50 p-3 dark:bg-red-900/20">
+              <MdInfo className="mr-3 h-5 w-5 text-red-600" />
+              <div>
+                <div className="font-medium text-red-800 dark:text-red-300">
+                  Available Emergency Numbers
+                </div>
+                <div className="mt-1 text-sm text-red-600 dark:text-red-400">
+                  • Ambulance: 10177
+                  <br />
+                  • Police: 10111
+                  <br />• Cellphone Emergency: 112
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3">
+            <button
+              onClick={() => setEmergencyModalOpen(false)}
+              className="rounded-lg border border-gray-300 px-6 py-3 font-medium hover:bg-gray-50 dark:border-gray-600"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={confirmEmergencyCall}
+              className="rounded-lg bg-red-500 px-6 py-3 font-medium text-white hover:bg-red-600"
+            >
+              Call 10177 Now
+            </button>
+          </div>
+        </div>
+      </Modal>
+
       {/* Header */}
       <div className="mb-6">
         <h3 className="text-2xl font-bold text-navy-700 dark:text-white">
