@@ -474,6 +474,81 @@ const SymptomChecker = () => {
         </div>
       </Modal>
 
+      {/* Self-Care Tips Modal */}
+      <Modal
+        isOpen={selfCareModalOpen}
+        onClose={() => setSelfCareModalOpen(false)}
+        title="🏥 Self-Care Recommendations"
+        size="lg"
+      >
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="rounded-lg bg-blue-50 p-4 dark:bg-blue-900/20">
+              <h5 className="mb-2 font-bold text-blue-800 dark:text-blue-300">
+                💊 Fever Management
+              </h5>
+              <ul className="space-y-2 text-sm text-blue-700 dark:text-blue-400">
+                <li>• Rest in a cool, comfortable room</li>
+                <li>• Drink plenty of fluids (water, broth)</li>
+                <li>• Use lukewarm sponge baths if needed</li>
+                <li>• Wear lightweight clothing</li>
+              </ul>
+            </div>
+            <div className="rounded-lg bg-green-50 p-4 dark:bg-green-900/20">
+              <h5 className="mb-2 font-bold text-green-800 dark:text-green-300">
+                🤒 Symptom Relief
+              </h5>
+              <ul className="space-y-2 text-sm text-green-700 dark:text-green-400">
+                <li>• Use over-the-counter fever reducers</li>
+                <li>• Gargle with salt water for sore throat</li>
+                <li>• Use honey for cough (not for infants)</li>
+                <li>• Elevate head while sleeping</li>
+              </ul>
+            </div>
+            <div className="rounded-lg bg-purple-50 p-4 dark:bg-purple-900/20">
+              <h5 className="mb-2 font-bold text-purple-800 dark:text-purple-300">
+                👶 Child-Specific Care
+              </h5>
+              <ul className="space-y-2 text-sm text-purple-700 dark:text-purple-400">
+                <li>• Monitor temperature every 4 hours</li>
+                <li>• Watch for signs of dehydration</li>
+                <li>• Offer small, frequent meals</li>
+                <li>• Keep up with normal sleep routines</li>
+              </ul>
+            </div>
+            <div className="rounded-lg bg-yellow-50 p-4 dark:bg-yellow-900/20">
+              <h5 className="mb-2 font-bold text-yellow-800 dark:text-yellow-300">
+                ⚠️ When to Seek Help
+              </h5>
+              <ul className="space-y-2 text-sm text-yellow-700 dark:text-yellow-400">
+                <li>• Fever above 39°C (102°F)</li>
+                <li>• Symptoms worsen after 48 hours</li>
+                <li>• Difficulty breathing</li>
+                <li>• Refusing fluids for 8+ hours</li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3">
+            <button
+              onClick={() => setSelfCareModalOpen(false)}
+              className="rounded-lg border border-gray-300 px-6 py-3 font-medium hover:bg-gray-50 dark:border-gray-600"
+            >
+              Close
+            </button>
+            <button
+              onClick={() => {
+                showToast("Self-care guide saved", "success");
+                setSelfCareModalOpen(false);
+              }}
+              className="rounded-lg bg-brand-500 px-6 py-3 font-medium text-white hover:bg-brand-600"
+            >
+              Save Guide
+            </button>
+          </div>
+        </div>
+      </Modal>
+
       {/* Header */}
       <div className="mb-6">
         <h3 className="text-2xl font-bold text-navy-700 dark:text-white">
