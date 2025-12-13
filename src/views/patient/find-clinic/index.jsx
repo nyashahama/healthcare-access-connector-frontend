@@ -10,6 +10,7 @@ import {
   MdList,
   MdDirections,
   MdInfo,
+  MdShareLocation,
 } from "react-icons/md";
 import {
   FaFilter,
@@ -489,6 +490,102 @@ const FindClinic = () => {
               className="rounded-lg border border-gray-300 px-6 py-3 font-medium hover:bg-gray-50 dark:border-gray-600"
             >
               Use Default Location
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Filter Modal */}
+      <Modal
+        isOpen={filterModalOpen}
+        onClose={() => setFilterModalOpen(false)}
+        title="Filter Clinics"
+        size="md"
+      >
+        <div className="space-y-6">
+          <div>
+            <h5 className="mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">
+              Services
+            </h5>
+            <div className="space-y-2">
+              {Object.entries(selectedFilters).map(([key, value]) => {
+                const labels = {
+                  freeServices: "Free Services",
+                  childHealth: "Child Health",
+                  openNow: "Open Now",
+                  vaccinations: "Vaccinations",
+                  emergency: "Emergency",
+                };
+
+                return (
+                  <label key={key} className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={value}
+                      onChange={(e) =>
+                        setSelectedFilters((prev) => ({
+                          ...prev,
+                          [key]: e.target.checked,
+                        }))
+                      }
+                      className="mr-3 h-4 w-4 rounded border-gray-300"
+                    />
+                    <span>{labels[key]}</span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+
+          <div>
+            <h5 className="mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">
+              Distance
+            </h5>
+            <div className="space-y-2">
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  name="distance"
+                  className="mr-3"
+                  defaultChecked
+                />
+                <span>Within 5 km</span>
+              </label>
+              <label className="flex items-center">
+                <input type="radio" name="distance" className="mr-3" />
+                <span>Within 10 km</span>
+              </label>
+              <label className="flex items-center">
+                <input type="radio" name="distance" className="mr-3" />
+                <span>Any distance</span>
+              </label>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3">
+            <button
+              onClick={() => {
+                setSelectedFilters({
+                  freeServices: false,
+                  childHealth: false,
+                  openNow: false,
+                  vaccinations: false,
+                  emergency: false,
+                });
+                showToast("Filters cleared", "info");
+              }}
+              className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50 dark:border-gray-600"
+            >
+              Clear All
+            </button>
+            <button
+              onClick={() => {
+                setFilterModalOpen(false);
+                showToast("Filters applied", "success");
+              }}
+              className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600"
+            >
+              Apply Filters
             </button>
           </div>
         </div>
