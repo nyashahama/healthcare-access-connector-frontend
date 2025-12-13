@@ -1,6 +1,7 @@
 import React from "react";
-import LineChart from "./charts/LineChart";
-import BarChart from "./charts/BarChart";
+import LineChart from "components/charts/LineChart";
+
+import BarChart from "components/charts/BarChart";
 
 const AnalyticsChart = () => {
   // Sample data for charts
