@@ -340,6 +340,63 @@ const SymptomChecker = () => {
         </div>
       </Modal>
 
+      {/* Save Result Modal */}
+      <Modal
+        isOpen={saveResultModalOpen}
+        onClose={() => setSaveResultModalOpen(false)}
+        title="Save Assessment Result"
+        size="md"
+      >
+        <div className="space-y-6">
+          <div className="text-center">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900">
+              <MdCheckCircle className="h-8 w-8 text-blue-600 dark:text-blue-300" />
+            </div>
+            <h4 className="mb-2 text-xl font-bold text-navy-700 dark:text-white">
+              Save to Medical History?
+            </h4>
+            <p className="text-gray-600 dark:text-gray-300">
+              This assessment will be saved to your health records for future
+              reference.
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                className="mr-3 h-4 w-4 rounded"
+                defaultChecked
+              />
+              <span className="text-sm">Include symptom details</span>
+            </label>
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                className="mr-3 h-4 w-4 rounded"
+                defaultChecked
+              />
+              <span className="text-sm">Share with my healthcare provider</span>
+            </label>
+          </div>
+
+          <div className="flex justify-end gap-3">
+            <button
+              onClick={() => setSaveResultModalOpen(false)}
+              className="rounded-lg border border-gray-300 px-6 py-3 font-medium hover:bg-gray-50 dark:border-gray-600"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={confirmSaveResult}
+              className="rounded-lg bg-brand-500 px-6 py-3 font-medium text-white hover:bg-brand-600"
+            >
+              Save Result
+            </button>
+          </div>
+        </div>
+      </Modal>
+
       {/* Header */}
       <div className="mb-6">
         <h3 className="text-2xl font-bold text-navy-700 dark:text-white">
