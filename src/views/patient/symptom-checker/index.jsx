@@ -775,6 +775,22 @@ const SymptomChecker = () => {
               </div>
             </div>
 
+            {/* Additional Action Buttons */}
+            <div className="mt-6 flex w-full flex-wrap justify-center gap-3">
+              <button
+                onClick={handleSaveResult}
+                className="rounded-lg border border-gray-300 bg-white px-4 py-2 font-medium hover:bg-gray-50 dark:border-gray-600"
+              >
+                Save Result
+              </button>
+              <button
+                onClick={handleShareResult}
+                className="rounded-lg border border-gray-300 bg-white px-4 py-2 font-medium hover:bg-gray-50 dark:border-gray-600"
+              >
+                Share
+              </button>
+            </div>
+
             {/* Action Buttons */}
             <div className="mt-8 grid w-full grid-cols-1 gap-3 sm:grid-cols-2">
               {result.actions.map((action, idx) => (
@@ -794,6 +810,7 @@ const SymptomChecker = () => {
                 setStep(1);
                 setResponses({});
                 setResult(null);
+                showToast("Assessment reset", "info");
               }}
               className="linear mt-6 rounded-lg border border-gray-300 bg-white px-6 py-2 font-medium text-gray-700 transition duration-200 hover:bg-gray-50 dark:border-gray-600 dark:bg-navy-700 dark:text-gray-300"
             >
