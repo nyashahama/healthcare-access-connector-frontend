@@ -10,6 +10,7 @@ import {
   MdLocalDining,
   MdChildCare,
   MdPregnantWoman,
+  MdInfo,
 } from "react-icons/md";
 import { FaBaby, FaAppleAlt, FaUtensils } from "react-icons/fa";
 import Card from "components/card";
@@ -307,6 +308,67 @@ Downloaded from HealthConnect Nutrition Library
                 className="rounded-lg bg-brand-500 px-4 py-2 text-white hover:bg-brand-600"
               >
                 Download PDF
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Save Offline Modal */}
+      <Modal
+        isOpen={saveOfflineModalOpen}
+        onClose={() => setSaveOfflineModalOpen(false)}
+        title="Save for Offline Reading"
+        size="md"
+      >
+        {selectedArticle && (
+          <div className="space-y-6">
+            <div className="text-center">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900">
+                <MdDownload className="h-8 w-8 text-green-600 dark:text-green-300" />
+              </div>
+              <h4 className="mb-2 text-xl font-bold text-navy-700 dark:text-white">
+                Save "{selectedArticle.title}"?
+              </h4>
+              <p className="text-gray-600 dark:text-gray-300">
+                This article will be available offline without internet
+                connection.
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-center rounded-lg border border-gray-200 p-3 dark:border-gray-700">
+                <MdInfo className="mr-3 h-5 w-5 text-blue-600" />
+                <div>
+                  <div className="font-medium">Storage: ~2.3 MB</div>
+                  <div className="text-sm text-gray-500">
+                    Will use device storage
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center rounded-lg border border-gray-200 p-3 dark:border-gray-700">
+                <MdAccessTime className="mr-3 h-5 w-5 text-green-600" />
+                <div>
+                  <div className="font-medium">Available Offline</div>
+                  <div className="text-sm text-gray-500">
+                    Access anytime, anywhere
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setSaveOfflineModalOpen(false)}
+                className="rounded-lg border border-gray-300 px-6 py-2 font-medium hover:bg-gray-50 dark:border-gray-600"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmSaveOffline}
+                className="rounded-lg bg-brand-500 px-6 py-2 font-medium text-white hover:bg-brand-600"
+              >
+                Save Article
               </button>
             </div>
           </div>
