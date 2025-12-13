@@ -11,9 +11,13 @@ import {
   MdSchedule,
   MdHistory,
   MdMessage,
+  MdInfo,
+  MdCheckCircle,
 } from "react-icons/md";
 import { FaUserMd, FaUserInjured, FaStethoscope } from "react-icons/fa";
 import Card from "components/card";
+import Modal from "components/modal/Modal";
+import { useToast } from "hooks/useToast";
 
 const ProviderTelemedicine = () => {
   const [activeChats, setActiveChats] = useState([]);
@@ -24,6 +28,30 @@ const ProviderTelemedicine = () => {
   const [consultationNotes, setConsultationNotes] = useState("");
   const [isRecording, setIsRecording] = useState(false);
   const messagesEndRef = useRef(null);
+
+  const { showToast } = useToast();
+
+  // modal states
+  const [endConsultationModalOpen, setEndConsultationModalOpen] =
+    useState(false);
+  const [prescriptionModalOpen, setPrescriptionModalOpen] = useState(false);
+  const [followUpModalOpen, setFollowUpModalOpen] = useState(false);
+  const [sendSummaryModalOpen, setSendSummaryModalOpen] = useState(false);
+
+  const [prescriptionForm, setPrescriptionForm] = useState({
+    medication: "",
+    dosage: "",
+    frequency: "",
+    duration: "",
+    instructions: "",
+  });
+
+  const [followUpForm, setFollowUpForm] = useState({
+    date: "",
+    time: "",
+    type: "telemedicine",
+    reason: "",
+  });
 
   // Mock data - in production, this would come from WebSocket/Socket.io
   useEffect(() => {
@@ -168,7 +196,7 @@ const ProviderTelemedicine = () => {
       medications: [],
     };
 
-    alert(`Consultation ended. Summary prepared for ${patient?.name}`);
+    showToast(`Consultation ended. Summary prepared for ${patient?.name}`);
 
     // Move to completed consultations
     setActiveChats((prev) =>
@@ -183,6 +211,7 @@ const ProviderTelemedicine = () => {
   };
 
   const handlePrescribeMedication = () => {
+    setPrescriptionModalOpen(true);
     if (!selectedPatient) return;
 
     const medication = {
@@ -203,10 +232,11 @@ const ProviderTelemedicine = () => {
     };
 
     setMessages([...messages, message]);
-    alert(`Medication prescribed for ${selectedPatient.name}`);
+    showToast(`Medication prescribed for ${selectedPatient.name}`);
   };
 
   const handleScheduleFollowUp = () => {
+    setFollowUpModalOpen(true);
     if (!selectedPatient) return;
 
     const followUpDate = new Date();
@@ -223,7 +253,140 @@ const ProviderTelemedicine = () => {
     };
 
     setMessages([...messages, message]);
-    alert(`Follow-up scheduled for ${selectedPatient.name}`);
+    showToast(`Follow-up scheduled for ${selectedPatient.name}`);
+  };
+
+  const handleEndConsultationModal = () => {
+    if (!consultationNotes.trim()) {
+      showToast("Please add consultation notes before ending", "warning");
+      return;
+    }
+    setEndConsultationModalOpen(true);
+  };
+
+  const confirmEndConsultation = () => {
+    console.log(`Ending consultation for ${selectedPatient?.name}`);
+    const summary = {
+      patientId: selectedPatient?.id,
+      patientName: selectedPatient?.name,
+      notes: consultationNotes,
+      endTime: new Date().toLocaleTimeString(),
+    };
+
+    // Move to completed consultations
+    setActiveChats((prev) =>
+      prev.filter((chat) => chat.patient.id !== selectedPatient?.id)
+    );
+
+    setSelectedPatient(null);
+    setMessages([]);
+    setConsultationNotes("");
+    setIsRecording(false);
+
+    setEndConsultationModalOpen(false);
+    showToast(`Consultation with ${summary.patientName} completed!`, "success");
+  };
+
+  const confirmPrescription = () => {
+    if (!prescriptionForm.medication || !prescriptionForm.dosage) {
+      showToast("Please fill in medication and dosage", "error");
+      return;
+    }
+
+    const prescriptionMsg = {
+      id: messages.length + 1,
+      text: `Prescribed: ${prescriptionForm.medication} ${prescriptionForm.dosage}, ${prescriptionForm.frequency} for ${prescriptionForm.duration}. Instructions: ${prescriptionForm.instructions}`,
+      sender: "system",
+      time: new Date().toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+    };
+
+    setMessages([...messages, prescriptionMsg]);
+
+    // Update active chat
+    const updatedChats = activeChats.map((chat) => {
+      if (chat.patient.id === selectedPatient.id) {
+        return {
+          ...chat,
+          messages: [...chat.messages, prescriptionMsg],
+        };
+      }
+      return chat;
+    });
+    setActiveChats(updatedChats);
+
+    setPrescriptionModalOpen(false);
+    showToast("Medication prescribed successfully!", "success");
+
+    // Reset form
+    setPrescriptionForm({
+      medication: "",
+      dosage: "",
+      frequency: "",
+      duration: "",
+      instructions: "",
+    });
+  };
+
+  const confirmFollowUp = () => {
+    if (!followUpForm.date || !followUpForm.time) {
+      showToast("Please select date and time", "error");
+      return;
+    }
+
+    const followUpMsg = {
+      id: messages.length + 1,
+      text: `Follow-up scheduled for ${followUpForm.date} at ${
+        followUpForm.time
+      } (${followUpForm.type}). Reason: ${
+        followUpForm.reason || "Routine check"
+      }`,
+      sender: "system",
+      time: new Date().toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+    };
+
+    setMessages([...messages, followUpMsg]);
+
+    const updatedChats = activeChats.map((chat) => {
+      if (chat.patient.id === selectedPatient.id) {
+        return {
+          ...chat,
+          messages: [...chat.messages, followUpMsg],
+        };
+      }
+      return chat;
+    });
+    setActiveChats(updatedChats);
+
+    setFollowUpModalOpen(false);
+    showToast("Follow-up scheduled successfully!", "success");
+
+    // Reset form
+    setFollowUpForm({
+      date: "",
+      time: "",
+      type: "telemedicine",
+      reason: "",
+    });
+  };
+
+  const handleSendSummary = () => {
+    if (!consultationNotes.trim()) {
+      showToast("Please add consultation notes before sending", "warning");
+      return;
+    }
+    setSendSummaryModalOpen(true);
+  };
+
+  const confirmSendSummary = () => {
+    console.log(`Sending summary to ${selectedPatient?.name}`);
+    setSendSummaryModalOpen(false);
+    showToast("Consultation summary sent to patient!", "success");
   };
 
   const MessageBubble = ({ message }) => {
@@ -264,6 +427,322 @@ const ProviderTelemedicine = () => {
 
   return (
     <div className="h-full">
+      {/* End Consultation Modal */}
+      <Modal
+        isOpen={endConsultationModalOpen}
+        onClose={() => setEndConsultationModalOpen(false)}
+        title="End Consultation"
+        size="md"
+      >
+        <div className="space-y-6">
+          <div className="flex items-start">
+            <div className="mr-3 rounded-full bg-blue-100 p-2 dark:bg-blue-900">
+              <MdInfo className="h-6 w-6 text-blue-600 dark:text-blue-300" />
+            </div>
+            <div>
+              <h4 className="font-bold text-navy-700 dark:text-white">
+                End consultation with {selectedPatient?.name}?
+              </h4>
+              <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
+                This will complete the consultation and save all notes and
+                prescriptions.
+              </p>
+            </div>
+          </div>
+
+          <div className="rounded-lg bg-green-50 p-4 dark:bg-green-900/20">
+            <div className="flex items-start">
+              <MdCheckCircle className="mr-2 mt-0.5 h-5 w-5 text-green-500" />
+              <p className="text-sm text-green-700 dark:text-green-300">
+                Consultation notes will be saved to patient's medical record.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3">
+            <button
+              onClick={() => setEndConsultationModalOpen(false)}
+              className="rounded-lg border border-gray-300 px-6 py-3 font-medium hover:bg-gray-50 dark:border-gray-600"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={confirmEndConsultation}
+              className="rounded-lg bg-brand-500 px-6 py-3 font-medium text-white hover:bg-brand-600"
+            >
+              End Consultation
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Prescription Modal */}
+      <Modal
+        isOpen={prescriptionModalOpen}
+        onClose={() => setPrescriptionModalOpen(false)}
+        title="Prescribe Medication"
+        size="lg"
+      >
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Medication Name *
+              </label>
+              <input
+                type="text"
+                value={prescriptionForm.medication}
+                onChange={(e) =>
+                  setPrescriptionForm((prev) => ({
+                    ...prev,
+                    medication: e.target.value,
+                  }))
+                }
+                className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
+                placeholder="e.g., Paracetamol, Amoxicillin"
+              />
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Dosage *
+              </label>
+              <input
+                type="text"
+                value={prescriptionForm.dosage}
+                onChange={(e) =>
+                  setPrescriptionForm((prev) => ({
+                    ...prev,
+                    dosage: e.target.value,
+                  }))
+                }
+                className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
+                placeholder="e.g., 500mg, 250mg/5ml"
+              />
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Frequency *
+              </label>
+              <select
+                value={prescriptionForm.frequency}
+                onChange={(e) =>
+                  setPrescriptionForm((prev) => ({
+                    ...prev,
+                    frequency: e.target.value,
+                  }))
+                }
+                className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
+              >
+                <option value="">Select frequency</option>
+                <option value="Once daily">Once daily</option>
+                <option value="Twice daily">Twice daily</option>
+                <option value="Three times daily">Three times daily</option>
+                <option value="Every 6 hours">Every 6 hours</option>
+                <option value="As needed">As needed</option>
+              </select>
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Duration *
+              </label>
+              <input
+                type="text"
+                value={prescriptionForm.duration}
+                onChange={(e) =>
+                  setPrescriptionForm((prev) => ({
+                    ...prev,
+                    duration: e.target.value,
+                  }))
+                }
+                className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
+                placeholder="e.g., 7 days, 2 weeks"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Additional Instructions
+            </label>
+            <textarea
+              value={prescriptionForm.instructions}
+              onChange={(e) =>
+                setPrescriptionForm((prev) => ({
+                  ...prev,
+                  instructions: e.target.value,
+                }))
+              }
+              className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
+              placeholder="e.g., Take with food, Avoid alcohol"
+              rows="3"
+            />
+          </div>
+
+          <div className="flex justify-end gap-3">
+            <button
+              onClick={() => setPrescriptionModalOpen(false)}
+              className="rounded-lg border border-gray-300 px-6 py-3 font-medium hover:bg-gray-50 dark:border-gray-600"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={confirmPrescription}
+              className="rounded-lg bg-green-500 px-6 py-3 font-medium text-white hover:bg-green-600"
+            >
+              Prescribe Medication
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Schedule Follow-up Modal */}
+      <Modal
+        isOpen={followUpModalOpen}
+        onClose={() => setFollowUpModalOpen(false)}
+        title="Schedule Follow-up"
+        size="md"
+      >
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Date *
+              </label>
+              <input
+                type="date"
+                value={followUpForm.date}
+                onChange={(e) =>
+                  setFollowUpForm((prev) => ({ ...prev, date: e.target.value }))
+                }
+                className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
+                min={new Date().toISOString().split("T")[0]}
+              />
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Time *
+              </label>
+              <select
+                value={followUpForm.time}
+                onChange={(e) =>
+                  setFollowUpForm((prev) => ({ ...prev, time: e.target.value }))
+                }
+                className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
+              >
+                <option value="">Select time</option>
+                <option value="09:00 AM">09:00 AM</option>
+                <option value="10:00 AM">10:00 AM</option>
+                <option value="11:00 AM">11:00 AM</option>
+                <option value="02:00 PM">02:00 PM</option>
+                <option value="03:00 PM">03:00 PM</option>
+                <option value="04:00 PM">04:00 PM</option>
+              </select>
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Type *
+              </label>
+              <select
+                value={followUpForm.type}
+                onChange={(e) =>
+                  setFollowUpForm((prev) => ({ ...prev, type: e.target.value }))
+                }
+                className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
+              >
+                <option value="telemedicine">Telemedicine</option>
+                <option value="in-person">In-person</option>
+                <option value="phone">Phone Call</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Reason for Follow-up
+            </label>
+            <textarea
+              value={followUpForm.reason}
+              onChange={(e) =>
+                setFollowUpForm((prev) => ({ ...prev, reason: e.target.value }))
+              }
+              className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
+              placeholder="e.g., Review lab results, Check progress"
+              rows="3"
+            />
+          </div>
+
+          <div className="flex justify-end gap-3">
+            <button
+              onClick={() => setFollowUpModalOpen(false)}
+              className="rounded-lg border border-gray-300 px-6 py-3 font-medium hover:bg-gray-50 dark:border-gray-600"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={confirmFollowUp}
+              className="rounded-lg bg-brand-500 px-6 py-3 font-medium text-white hover:bg-brand-600"
+            >
+              Schedule Follow-up
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Send Summary Modal */}
+      <Modal
+        isOpen={sendSummaryModalOpen}
+        onClose={() => setSendSummaryModalOpen(false)}
+        title="Send Consultation Summary"
+        size="md"
+      >
+        <div className="space-y-6">
+          <div className="text-center">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
+              <MdMessage className="h-8 w-8 text-green-600" />
+            </div>
+            <h4 className="mb-2 text-xl font-bold text-navy-700 dark:text-white">
+              Send summary to {selectedPatient?.name}?
+            </h4>
+            <p className="text-gray-600 dark:text-gray-300">
+              A summary of this consultation will be sent to the patient's email
+              and SMS.
+            </p>
+          </div>
+
+          <div className="rounded-lg bg-blue-50 p-4 dark:bg-blue-900/20">
+            <div className="flex items-start">
+              <MdInfo className="mr-2 mt-0.5 h-5 w-5 text-blue-500" />
+              <div>
+                <p className="text-sm text-blue-700 dark:text-blue-300">
+                  The summary will include:
+                </p>
+                <ul className="mt-1 list-inside list-disc text-xs text-blue-600 dark:text-blue-400">
+                  <li>Consultation notes</li>
+                  <li>Prescribed medications</li>
+                  <li>Follow-up instructions</li>
+                  <li>Next steps</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3">
+            <button
+              onClick={() => setSendSummaryModalOpen(false)}
+              className="rounded-lg border border-gray-300 px-6 py-3 font-medium hover:bg-gray-50 dark:border-gray-600"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={confirmSendSummary}
+              className="rounded-lg bg-brand-500 px-6 py-3 font-medium text-white hover:bg-brand-600"
+            >
+              Send Summary
+            </button>
+          </div>
+        </div>
+      </Modal>
+
       <div className="mb-6">
         <h3 className="text-2xl font-bold text-navy-700 dark:text-white">
           Telemedicine Consultations
