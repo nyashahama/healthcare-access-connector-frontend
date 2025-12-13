@@ -621,6 +621,19 @@ const FindClinic = () => {
         {/* View Toggle */}
         <div className="flex items-center justify-end gap-2">
           <button
+            onClick={handleUpdateLocation}
+            className="flex items-center rounded-lg bg-blue-100 px-3 py-2 text-blue-600 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-300"
+          >
+            <MdLocationOn className="h-4 w-4" />
+          </button>
+          <button
+            onClick={() => setFilterModalOpen(true)}
+            className="flex items-center rounded-lg bg-gray-100 px-4 py-2 hover:bg-gray-200 dark:bg-navy-700 dark:text-gray-300"
+          >
+            <MdFilterList className="mr-2 h-4 w-4" />
+            Filters
+          </button>
+          <button
             onClick={() => setViewMode("map")}
             className={`flex items-center rounded-lg px-4 py-2 ${
               viewMode === "map"
@@ -707,6 +720,22 @@ const FindClinic = () => {
                 <p className="mt-2 text-gray-600">
                   Try adjusting your filters or search terms
                 </p>
+                <button
+                  onClick={() => {
+                    setSelectedFilters({
+                      freeServices: false,
+                      childHealth: false,
+                      openNow: false,
+                      vaccinations: false,
+                      emergency: false,
+                    });
+                    setSearchQuery("");
+                    showToast("Filters cleared", "info");
+                  }}
+                  className="linear mt-4 rounded-lg bg-brand-500 px-4 py-2 text-white hover:bg-brand-600"
+                >
+                  Clear All Filters
+                </button>
               </Card>
             ) : (
               filteredClinics.map((clinic) => (
@@ -729,16 +758,24 @@ const FindClinic = () => {
                           {clinic.address}
                         </div>
                       </div>
-                      <span
-                        className={`rounded-full px-3 py-1 text-xs font-medium ${
-                          clinic.status === "Open Now" ||
-                          clinic.status === "24/7 Emergency"
-                            ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
-                            : "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300"
-                        }`}
-                      >
-                        {clinic.status}
-                      </span>
+                      <div className="flex flex-col items-end gap-1">
+                        <span
+                          className={`rounded-full px-3 py-1 text-xs font-medium ${
+                            clinic.status === "Open Now" ||
+                            clinic.status === "24/7 Emergency"
+                              ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
+                              : "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300"
+                          }`}
+                        >
+                          {clinic.status}
+                        </span>
+                        <button
+                          onClick={() => handleShareClinic(clinic)}
+                          className="text-xs text-gray-500 hover:text-brand-500"
+                        >
+                          Share
+                        </button>
+                      </div>
                     </div>
 
                     {/* Clinic Details */}
@@ -795,7 +832,7 @@ const FindClinic = () => {
                         Directions
                       </button>
                       <button
-                        onClick={() => handleBookAppointment(clinic.id)}
+                        onClick={() => handleBookAppointment(clinic)}
                         className="linear flex flex-1 items-center justify-center rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600"
                       >
                         Book Appointment
