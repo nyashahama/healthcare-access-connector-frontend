@@ -425,6 +425,75 @@ const FindClinic = () => {
           </div>
         )}
       </Modal>
+
+      {/* Location Permission Modal */}
+      <Modal
+        isOpen={locationModalOpen}
+        onClose={() => setLocationModalOpen(false)}
+        title="Location Access Required"
+        size="md"
+      >
+        <div className="space-y-6">
+          <div className="text-center">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900">
+              <MdShareLocation className="h-8 w-8 text-blue-600 dark:text-blue-300" />
+            </div>
+            <h4 className="mb-2 text-xl font-bold text-navy-700 dark:text-white">
+              Allow Location Access
+            </h4>
+            <p className="text-gray-600 dark:text-gray-300">
+              We need your location to show clinics near you and calculate
+              distances.
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex items-center rounded-lg bg-blue-50 p-3 dark:bg-blue-900/20">
+              <MdLocationOn className="mr-3 h-5 w-5 text-blue-600" />
+              <div>
+                <div className="font-medium text-blue-800 dark:text-blue-300">
+                  Find Nearest Clinics
+                </div>
+                <div className="text-sm text-blue-600 dark:text-blue-400">
+                  Show clinics within your area
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center rounded-lg bg-green-50 p-3 dark:bg-green-900/20">
+              <MdDirections className="mr-3 h-5 w-5 text-green-600" />
+              <div>
+                <div className="font-medium text-green-800 dark:text-green-300">
+                  Get Accurate Directions
+                </div>
+                <div className="text-sm text-green-600 dark:text-green-400">
+                  Calculate travel time and routes
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-lg bg-yellow-50 p-4 dark:bg-yellow-900/20">
+            <div className="flex items-start">
+              <MdInfo className="mr-2 mt-0.5 h-5 w-5 text-yellow-600" />
+              <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                Your location data is only used to find nearby clinics and is
+                not stored or shared.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex justify-end">
+            <button
+              onClick={() => setLocationModalOpen(false)}
+              className="rounded-lg border border-gray-300 px-6 py-3 font-medium hover:bg-gray-50 dark:border-gray-600"
+            >
+              Use Default Location
+            </button>
+          </div>
+        </div>
+      </Modal>
+
       {/* Header */}
       <div className="mb-6">
         <h3 className="text-2xl font-bold text-navy-700 dark:text-white">
