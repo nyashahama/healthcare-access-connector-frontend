@@ -7,9 +7,14 @@ import {
   MdPerson,
   MdSchedule,
   MdCheckCircle,
+  MdWarning,
+  MdInfo,
+  MdCameraAlt,
 } from "react-icons/md";
 import { FaUserMd, FaStethoscope, FaRegClock } from "react-icons/fa";
 import Card from "components/card";
+import Modal from "components/modal/Modal";
+import { useToast } from "hooks/useToast";
 
 const TelemedicineChat = () => {
   const [messages, setMessages] = useState([]);
@@ -18,6 +23,14 @@ const TelemedicineChat = () => {
   const [waitTime, setWaitTime] = useState("5-10 minutes");
   const [activeProvider, setActiveProvider] = useState(null);
   const messagesEndRef = useRef(null);
+  const { showToast } = useToast();
+
+  // Modal states
+  const [endChatModalOpen, setEndChatModalOpen] = useState(false);
+  const [videoCallModalOpen, setVideoCallModalOpen] = useState(false);
+  const [attachModalOpen, setAttachModalOpen] = useState(false);
+  const [rateModalOpen, setRateModalOpen] = useState(false);
+  const [attachment, setAttachment] = useState(null);
 
   const providers = [
     {
@@ -26,6 +39,9 @@ const TelemedicineChat = () => {
       specialty: "Pediatrics",
       avatar: "👩‍⚕️",
       status: "available",
+      rating: 4.8,
+      responseTime: "2-5 min",
+      fee: "R250",
     },
     {
       id: 2,
@@ -33,6 +49,9 @@ const TelemedicineChat = () => {
       specialty: "General Health",
       avatar: "👨‍⚕️",
       status: "available",
+      rating: 4.5,
+      responseTime: "1-3 min",
+      fee: "R150",
     },
     {
       id: 3,
@@ -40,6 +59,9 @@ const TelemedicineChat = () => {
       specialty: "Family Medicine",
       avatar: "🧑‍⚕️",
       status: "busy",
+      rating: 4.9,
+      responseTime: "5-10 min",
+      fee: "R300",
     },
   ];
 
@@ -78,7 +100,10 @@ const TelemedicineChat = () => {
   };
 
   const handleSendMessage = () => {
-    if (!newMessage.trim()) return;
+    if (!newMessage.trim()) {
+      showToast("Please enter a message", "warning");
+      return;
+    }
 
     const message = {
       id: messages.length + 1,
@@ -92,6 +117,7 @@ const TelemedicineChat = () => {
 
     setMessages([...messages, message]);
     setNewMessage("");
+    showToast("Message sent", "success");
 
     // Simulate provider response after delay
     setTimeout(() => {
@@ -115,6 +141,7 @@ const TelemedicineChat = () => {
       };
 
       setMessages((prev) => [...prev, providerMessage]);
+      showToast(`${activeProvider?.name || "Provider"} replied`, "info");
     }, 2000);
   };
 
@@ -135,9 +162,14 @@ const TelemedicineChat = () => {
     };
 
     setMessages([connectionMessage]);
+    showToast(`Connected to ${provider.name}`, "success");
   };
 
   const handleEndChat = () => {
+    setEndChatModalOpen(true);
+  };
+
+  const confirmEndChat = () => {
     setIsConnected(false);
     setActiveProvider(null);
 
@@ -152,10 +184,67 @@ const TelemedicineChat = () => {
     };
 
     setMessages([...messages, endMessage]);
+    setEndChatModalOpen(false);
+    setRateModalOpen(true);
+    showToast("Chat ended successfully", "info");
+  };
+
+  const handleStartVideoCall = () => {
+    setVideoCallModalOpen(true);
+  };
+
+  const confirmVideoCall = () => {
+    setVideoCallModalOpen(false);
+    showToast("Video call initiated. Please allow camera access.", "info");
+
+    // Simulate video call starting
+    setTimeout(() => {
+      const videoMessage = {
+        id: messages.length + 1,
+        text: `Video call started with ${activeProvider?.name}. Consultation fee: ${activeProvider?.fee}`,
+        sender: "system",
+        time: new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+      };
+      setMessages([...messages, videoMessage]);
+    }, 1000);
+  };
+
+  const handleAttachFile = () => {
+    setAttachModalOpen(true);
+  };
+
+  const handleFileSelect = (type) => {
+    setAttachment(type);
+
+    // Simulate file upload
+    setTimeout(() => {
+      const fileMessage = {
+        id: messages.length + 1,
+        text: `${type} attached: fever_photo.jpg`,
+        sender: "user",
+        time: new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+        attachment: true,
+      };
+      setMessages([...messages, fileMessage]);
+      setAttachModalOpen(false);
+      showToast("File uploaded successfully", "success");
+    }, 1500);
+  };
+
+  const handleRateConsultation = (rating) => {
+    setRateModalOpen(false);
+    showToast(`Thank you for your ${rating}-star rating!`, "success");
   };
 
   const handleBookFollowUp = () => {
     window.location.href = "/patient/find-clinic";
+    showToast("Redirecting to appointment booking", "info");
   };
 
   const MessageBubble = ({ message }) => {
@@ -194,6 +283,14 @@ const TelemedicineChat = () => {
           >
             {message.text}
           </p>
+          {message.attachment && (
+            <div className="mt-2 rounded-lg bg-white/20 p-2">
+              <div className="flex items-center text-sm">
+                <MdAttachFile className="mr-2" />
+                <span>fever_photo.jpg (2.4 MB)</span>
+              </div>
+            </div>
+          )}
           {isUser && (
             <div className="mt-1 text-right text-xs opacity-70">
               {message.time}
@@ -206,6 +303,226 @@ const TelemedicineChat = () => {
 
   return (
     <div className="h-full">
+      {/* Modals */}
+      {/* End Chat Confirmation Modal */}
+      <Modal
+        isOpen={endChatModalOpen}
+        onClose={() => setEndChatModalOpen(false)}
+        title="End Chat Session"
+        size="md"
+      >
+        <div className="space-y-6">
+          <div className="text-center">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-100 dark:bg-red-900">
+              <MdWarning className="h-8 w-8 text-red-600 dark:text-red-300" />
+            </div>
+            <h4 className="mb-2 text-xl font-bold text-navy-700 dark:text-white">
+              End Chat with {activeProvider?.name}?
+            </h4>
+            <p className="text-gray-600 dark:text-gray-300">
+              This will end your current consultation. You can save the chat
+              history for future reference.
+            </p>
+          </div>
+
+          <div className="rounded-lg bg-yellow-50 p-4 dark:bg-yellow-900/20">
+            <div className="flex items-start">
+              <MdInfo className="mr-2 mt-0.5 h-5 w-5 text-yellow-600" />
+              <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                The chat transcript will be saved to your medical records.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3">
+            <button
+              onClick={() => setEndChatModalOpen(false)}
+              className="rounded-lg border border-gray-300 px-6 py-3 font-medium hover:bg-gray-50 dark:border-gray-600"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={confirmEndChat}
+              className="rounded-lg bg-red-500 px-6 py-3 font-medium text-white hover:bg-red-600"
+            >
+              End Chat
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Video Call Confirmation Modal */}
+      <Modal
+        isOpen={videoCallModalOpen}
+        onClose={() => setVideoCallModalOpen(false)}
+        title="Start Video Consultation"
+        size="md"
+      >
+        <div className="space-y-6">
+          <div className="text-center">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900">
+              <MdVideoCall className="h-8 w-8 text-blue-600 dark:text-blue-300" />
+            </div>
+            <h4 className="mb-2 text-xl font-bold text-navy-700 dark:text-white">
+              Start Video Call with {activeProvider?.name}?
+            </h4>
+            <p className="text-gray-600 dark:text-gray-300">
+              Consultation fee: {activeProvider?.fee}
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex items-center rounded-lg border border-gray-200 p-3 dark:border-gray-700">
+              <MdCameraAlt className="mr-3 h-5 w-5 text-gray-600" />
+              <div>
+                <div className="font-medium">Camera & Microphone Access</div>
+                <div className="text-sm text-gray-500">
+                  Required for video consultation
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center rounded-lg border border-gray-200 p-3 dark:border-gray-700">
+              <MdInfo className="mr-3 h-5 w-5 text-green-600" />
+              <div>
+                <div className="font-medium">Secure Connection</div>
+                <div className="text-sm text-gray-500">
+                  End-to-end encrypted
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3">
+            <button
+              onClick={() => setVideoCallModalOpen(false)}
+              className="rounded-lg border border-gray-300 px-6 py-3 font-medium hover:bg-gray-50 dark:border-gray-600"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={confirmVideoCall}
+              className="rounded-lg bg-brand-500 px-6 py-3 font-medium text-white hover:bg-brand-600"
+            >
+              Start Video Call
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Attach File Modal */}
+      <Modal
+        isOpen={attachModalOpen}
+        onClose={() => setAttachModalOpen(false)}
+        title="Attach File"
+        size="md"
+      >
+        <div className="space-y-6">
+          <div className="text-center">
+            <MdAttachFile className="mx-auto mb-4 h-12 w-12 text-brand-500" />
+            <h4 className="mb-2 text-xl font-bold text-navy-700 dark:text-white">
+              Share with Healthcare Provider
+            </h4>
+            <p className="text-gray-600 dark:text-gray-300">
+              Select the type of file you want to share
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              onClick={() => handleFileSelect("Photo")}
+              className="flex flex-col items-center rounded-lg border border-gray-200 p-4 hover:border-brand-500 hover:bg-brand-50 dark:border-gray-700"
+            >
+              <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-600">
+                📷
+              </div>
+              <span className="font-medium">Photo</span>
+              <span className="text-xs text-gray-500">
+                Symptoms, rash, etc.
+              </span>
+            </button>
+            <button
+              onClick={() => handleFileSelect("Document")}
+              className="flex flex-col items-center rounded-lg border border-gray-200 p-4 hover:border-brand-500 hover:bg-brand-50 dark:border-gray-700"
+            >
+              <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-green-100 text-green-600">
+                📄
+              </div>
+              <span className="font-medium">Document</span>
+              <span className="text-xs text-gray-500">
+                Lab results, prescriptions
+              </span>
+            </button>
+          </div>
+
+          <div className="rounded-lg bg-blue-50 p-4 dark:bg-blue-900/20">
+            <div className="flex items-start">
+              <MdInfo className="mr-2 mt-0.5 h-5 w-5 text-blue-600" />
+              <p className="text-sm text-blue-700 dark:text-blue-300">
+                Maximum file size: 10MB. Supported formats: JPG, PNG, PDF, DOC
+              </p>
+            </div>
+          </div>
+
+          <div className="flex justify-end">
+            <button
+              onClick={() => setAttachModalOpen(false)}
+              className="rounded-lg border border-gray-300 px-6 py-3 font-medium hover:bg-gray-50 dark:border-gray-600"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Rate Consultation Modal */}
+      <Modal
+        isOpen={rateModalOpen}
+        onClose={() => setRateModalOpen(false)}
+        title="Rate Your Consultation"
+        size="md"
+      >
+        <div className="space-y-6">
+          <div className="text-center">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-yellow-100 dark:bg-yellow-900">
+              ⭐
+            </div>
+            <h4 className="mb-2 text-xl font-bold text-navy-700 dark:text-white">
+              How was your consultation?
+            </h4>
+            <p className="text-gray-600 dark:text-gray-300">
+              Your feedback helps us improve our service
+            </p>
+          </div>
+
+          <div className="flex justify-center space-x-2">
+            {[1, 2, 3, 4, 5].map((star) => (
+              <button
+                key={star}
+                onClick={() => handleRateConsultation(star)}
+                className="text-3xl hover:scale-110"
+              >
+                {star <= 4 ? "⭐" : "🌟"}
+              </button>
+            ))}
+          </div>
+
+          <div className="text-center">
+            <p className="text-sm text-gray-500">
+              Tap a star to rate (1 = Poor, 5 = Excellent)
+            </p>
+          </div>
+
+          <div className="flex justify-end">
+            <button
+              onClick={() => setRateModalOpen(false)}
+              className="rounded-lg border border-gray-300 px-6 py-3 font-medium hover:bg-gray-50 dark:border-gray-600"
+            >
+              Skip Rating
+            </button>
+          </div>
+        </div>
+      </Modal>
+
       {/* Header */}
       <div className="mb-6">
         <h3 className="text-2xl font-bold text-navy-700 dark:text-white">
@@ -248,7 +565,10 @@ const TelemedicineChat = () => {
                 </div>
                 {isConnected && (
                   <div className="flex items-center space-x-2">
-                    <button className="rounded-lg bg-white/20 p-2 text-white hover:bg-white/30">
+                    <button
+                      onClick={handleStartVideoCall}
+                      className="rounded-lg bg-white/20 p-2 text-white hover:bg-white/30"
+                    >
                       <MdVideoCall className="h-5 w-5" />
                     </button>
                     <button className="rounded-lg bg-white/20 p-2 text-white hover:bg-white/30">
@@ -285,47 +605,58 @@ const TelemedicineChat = () => {
             {/* Message Input */}
             <div className="border-t border-gray-200 p-4 dark:border-gray-700">
               {isConnected ? (
-                <div className="flex items-center">
-                  <button className="mr-3 rounded-lg p-2 text-gray-500 hover:bg-gray-100 dark:text-gray-300">
-                    <MdAttachFile className="h-5 w-5" />
-                  </button>
-                  <input
-                    type="text"
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
-                    placeholder="Type your message here..."
-                    className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-3 dark:border-gray-600 dark:bg-navy-800"
-                  />
-                  <button
-                    onClick={handleSendMessage}
-                    className="linear ml-3 flex items-center rounded-lg bg-brand-500 px-4 py-3 text-white hover:bg-brand-600"
-                  >
-                    <MdSend className="h-5 w-5" />
-                  </button>
-                </div>
+                <>
+                  <div className="flex items-center">
+                    <button
+                      onClick={handleAttachFile}
+                      className="mr-3 rounded-lg p-2 text-gray-500 hover:bg-gray-100 dark:text-gray-300"
+                    >
+                      <MdAttachFile className="h-5 w-5" />
+                    </button>
+                    <input
+                      type="text"
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                      onKeyPress={(e) =>
+                        e.key === "Enter" && handleSendMessage()
+                      }
+                      placeholder="Type your message here..."
+                      className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-3 dark:border-gray-600 dark:bg-navy-800"
+                    />
+                    <button
+                      onClick={handleSendMessage}
+                      className="linear ml-3 flex items-center rounded-lg bg-brand-500 px-4 py-3 text-white hover:bg-brand-600"
+                    >
+                      <MdSend className="h-5 w-5" />
+                    </button>
+                  </div>
+
+                  {/* Chat Actions */}
+                  <div className="mt-4 flex justify-between">
+                    <button
+                      onClick={handleBookFollowUp}
+                      className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50 dark:border-gray-600"
+                    >
+                      Book Follow-up Appointment
+                    </button>
+                    <button
+                      onClick={handleEndChat}
+                      className="rounded-lg bg-red-100 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-200 dark:bg-red-900/20 dark:text-red-300"
+                    >
+                      End Chat
+                    </button>
+                  </div>
+                </>
               ) : (
                 <div className="text-center">
                   <p className="mb-4 text-gray-600 dark:text-gray-300">
                     Connect with a provider to start chatting
                   </p>
-                </div>
-              )}
-
-              {/* Chat Actions */}
-              {isConnected && (
-                <div className="mt-4 flex justify-between">
                   <button
-                    onClick={handleBookFollowUp}
-                    className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50 dark:border-gray-600"
+                    onClick={() => handleConnectToProvider(providers[0])}
+                    className="linear rounded-lg bg-brand-500 px-6 py-3 font-medium text-white hover:bg-brand-600"
                   >
-                    Book Follow-up Appointment
-                  </button>
-                  <button
-                    onClick={handleEndChat}
-                    className="rounded-lg bg-red-100 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-200 dark:bg-red-900/20 dark:text-red-300"
-                  >
-                    End Chat
+                    Start Consultation
                   </button>
                 </div>
               )}
@@ -344,10 +675,10 @@ const TelemedicineChat = () => {
               {providers.map((provider) => (
                 <div
                   key={provider.id}
-                  className={`flex items-center rounded-lg border p-3 ${
+                  className={`flex cursor-pointer items-center rounded-lg border p-3 transition-all ${
                     provider.status === "available"
-                      ? "cursor-pointer hover:border-brand-300 hover:bg-brand-50 dark:hover:border-brand-700"
-                      : "opacity-50"
+                      ? "hover:border-brand-300 hover:bg-brand-50 dark:hover:border-brand-700"
+                      : "cursor-not-allowed opacity-50"
                   } ${
                     activeProvider?.id === provider.id
                       ? "border-brand-500 bg-brand-50 dark:border-brand-500 dark:bg-brand-900/20"
@@ -366,17 +697,26 @@ const TelemedicineChat = () => {
                       <h5 className="font-medium text-navy-700 dark:text-white">
                         {provider.name}
                       </h5>
-                      <span
-                        className={`h-2 w-2 rounded-full ${
-                          provider.status === "available"
-                            ? "bg-green-500"
-                            : "bg-gray-300"
-                        }`}
-                      ></span>
+                      <div className="flex items-center">
+                        <span className="text-xs font-bold text-green-600">
+                          {provider.rating} ⭐
+                        </span>
+                        <span
+                          className={`ml-2 h-2 w-2 rounded-full ${
+                            provider.status === "available"
+                              ? "bg-green-500"
+                              : "bg-gray-300"
+                          }`}
+                        ></span>
+                      </div>
                     </div>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
                       {provider.specialty}
                     </p>
+                    <div className="mt-1 flex items-center justify-between text-xs text-gray-500">
+                      <span>Response: {provider.responseTime}</span>
+                      <span className="font-medium">{provider.fee}</span>
+                    </div>
                   </div>
                 </div>
               ))}
