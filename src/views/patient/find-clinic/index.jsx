@@ -347,6 +347,84 @@ const FindClinic = () => {
           </div>
         )}
       </Modal>
+
+      {/* Directions Modal */}
+      <Modal
+        isOpen={directionsModalOpen}
+        onClose={() => setDirectionsModalOpen(false)}
+        title="Get Directions"
+        size="md"
+      >
+        {selectedClinic && (
+          <div className="space-y-6">
+            <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+              <h4 className="font-bold text-navy-700 dark:text-white">
+                {selectedClinic.name}
+              </h4>
+              <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
+                {selectedClinic.distance} away
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <h5 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Choose transportation:
+              </h5>
+              <button
+                onClick={() => confirmDirections("walking")}
+                className="flex w-full items-center rounded-lg border border-gray-200 p-3 hover:border-brand-500 hover:bg-brand-50 dark:border-gray-700"
+              >
+                <FaWalking className="mr-3 h-5 w-5 text-blue-500" />
+                <div className="flex-1 text-left">
+                  <div className="font-medium">Walking</div>
+                  <div className="text-sm text-gray-500">
+                    ~{Math.round(parseFloat(selectedClinic.distance) * 15)}{" "}
+                    minutes
+                  </div>
+                </div>
+                <span>→</span>
+              </button>
+
+              <button
+                onClick={() => confirmDirections("driving")}
+                className="flex w-full items-center rounded-lg border border-gray-200 p-3 hover:border-brand-500 hover:bg-brand-50 dark:border-gray-700"
+              >
+                <FaCar className="mr-3 h-5 w-5 text-green-500" />
+                <div className="flex-1 text-left">
+                  <div className="font-medium">Driving</div>
+                  <div className="text-sm text-gray-500">
+                    ~{Math.round(parseFloat(selectedClinic.distance) * 3)}{" "}
+                    minutes
+                  </div>
+                </div>
+                <span>→</span>
+              </button>
+
+              <button
+                onClick={() => confirmDirections("transit")}
+                className="flex w-full items-center rounded-lg border border-gray-200 p-3 hover:border-brand-500 hover:bg-brand-50 dark:border-gray-700"
+              >
+                <MdDirections className="mr-3 h-5 w-5 text-purple-500" />
+                <div className="flex-1 text-left">
+                  <div className="font-medium">Public Transport</div>
+                  <div className="text-sm text-gray-500">Check schedules</div>
+                </div>
+                <span>→</span>
+              </button>
+            </div>
+
+            <div className="rounded-lg bg-blue-50 p-4 dark:bg-blue-900/20">
+              <div className="flex items-start">
+                <MdInfo className="mr-2 mt-0.5 h-5 w-5 text-blue-600" />
+                <p className="text-sm text-blue-700 dark:text-blue-300">
+                  Directions will open in Google Maps. Make sure you have the
+                  app installed.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+      </Modal>
       {/* Header */}
       <div className="mb-6">
         <h3 className="text-2xl font-bold text-navy-700 dark:text-white">
