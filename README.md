@@ -3,12 +3,15 @@
 [![React](https://img.shields.io/badge/React-18.2-blue.svg)](https://reactjs.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.3-38B2AC.svg)](https://tailwindcss.com/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
+[![Live Demo](https://img.shields.io/badge/Live_Demo-Vercel-000000.svg)](https://healthcare-access-connector-web.vercel.app)
 
 ![Healthcare Access Connector Dashboard](https://images.unsplash.com/photo-1579684385127-1ef15d508118?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80)
 
 ## 🚀 Overview
 
 **Healthcare Access Connector** is a comprehensive healthcare platform built on Horizon UI, designed to bridge the gap between patients and healthcare providers in underserved communities. This application enables seamless access to healthcare services through three distinct user interfaces: **Patients**, **Healthcare Providers**, and **System Administrators**.
+
+> **🌐 Live Demo**: [https://healthcare-access-connector-web.vercel.app](https://healthcare-access-connector-web.vercel.app)
 
 > **Note**: This project is a transformation of the original Horizon UI template into a specialized healthcare application.
 
@@ -36,6 +39,17 @@
 - Intuitive navigation for all user types
 - Accessibility-focused interface
 - Progressive Web App (PWA) capabilities
+
+## 🌐 Access the Application
+
+### Live Deployment
+
+Visit the deployed application at:
+**[https://healthcare-access-connector-web.vercel.app](https://healthcare-access-connector-web.vercel.app)**
+
+### Local Development
+
+Follow the [Quick Start](#-quick-start) instructions below to run the application locally.
 
 ## 🏗️ Architecture
 
@@ -103,6 +117,7 @@ yarn build
 ### 1. **Patient/Caregiver**
 
 - **Access**: `/patient/*`
+- **Live**: [https://healthcare-access-connector-web.vercel.app/patient](https://healthcare-access-connector-web.vercel.app/patient)
 - **Features**:
   - Find nearby clinics
   - Symptom checking and triage
@@ -114,6 +129,7 @@ yarn build
 ### 2. **Healthcare Provider**
 
 - **Access**: `/provider/*`
+- **Live**: [https://healthcare-access-connector-web.vercel.app/provider](https://healthcare-access-connector-web.vercel.app/provider)
 - **Features**:
   - Appointment calendar management
   - Patient queue monitoring
@@ -124,6 +140,7 @@ yarn build
 ### 3. **System Administrator**
 
 - **Access**: `/admin/*`
+- **Live**: [https://healthcare-access-connector-web.vercel.app/admin](https://healthcare-access-connector-web.vercel.app/admin)
 - **Features**:
   - System health monitoring
   - Clinic verification and approval
@@ -149,6 +166,7 @@ This project extends Horizon UI with healthcare-specific components:
 - **Icons**: React Icons
 - **Build Tool**: Vite
 - **Package Manager**: npm/yarn
+- **Deployment**: Vercel
 
 ## 🔧 Configuration
 
@@ -220,6 +238,17 @@ healthcare-access-connector-frontend/
 └── README.md              # This file
 ```
 
+## 🚀 Deployment
+
+This application is deployed on Vercel. To deploy your own instance:
+
+1. Fork this repository
+2. Connect your repository to Vercel
+3. Configure environment variables in Vercel dashboard
+4. Deploy with automatic CI/CD
+
+Visit the live application: **[https://healthcare-access-connector-web.vercel.app](https://healthcare-access-connector-web.vercel.app)**
+
 ## 🤝 Contributing
 
 We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
@@ -239,10 +268,19 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Built on [Horizon UI Tailwind React](https://horizon-ui.com/)
 - Medical icons from [React Icons](https://react-icons.github.io/react-icons/)
 - Design inspiration from modern healthcare platforms
+- Deployed on [Vercel](https://vercel.com)
 - Special thanks to the open-source community
 
 ## 📞 Support
 
 For support, email [nyashahama55@gmail.com] or open an issue in the GitHub repository.
 
+## 🔗 Links
+
+- **Live Application**: [https://healthcare-access-connector-web.vercel.app](https://healthcare-access-connector-web.vercel.app)
+- **GitHub Repository**: [https://github.com/nyashahama/healthcare-access-connector-frontend](https://github.com/nyashahama/healthcare-access-connector-frontend)
+- **Documentation**: [Coming Soon]
+
 ---
+
+**Made with ❤️ for better healthcare access**
