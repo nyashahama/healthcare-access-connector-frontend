@@ -11,6 +11,7 @@ import {
   MdChildCare,
   MdPregnantWoman,
   MdInfo,
+  MdWarning,
 } from "react-icons/md";
 import { FaBaby, FaAppleAlt, FaUtensils } from "react-icons/fa";
 import Card from "components/card";
@@ -29,6 +30,7 @@ const NutritionLibrary = () => {
   const [shareArticleModalOpen, setShareArticleModalOpen] = useState(false);
   const [smsSubscribeModalOpen, setSmsSubscribeModalOpen] = useState(false);
   const [selectedArticle, setSelectedArticle] = useState(null);
+  const [filterModalOpen, setFilterModalOpen] = useState(false);
 
   const categories = [
     { id: "all", name: "All Topics", icon: <MdLocalDining />, count: 24 },
@@ -533,7 +535,10 @@ Downloaded from HealthConnect Nutrition Library
           </div>
         </div>
         <div className="flex items-center justify-end gap-2">
-          <button className="linear flex items-center rounded-lg bg-lightPrimary px-4 py-2 text-sm font-medium text-brand-500 transition duration-200 hover:bg-gray-100 dark:bg-navy-700 dark:text-white">
+          <button
+            onClick={() => setFilterModalOpen(true)}
+            className="linear flex items-center rounded-lg bg-lightPrimary px-4 py-2 text-sm font-medium text-brand-500 transition duration-200 hover:bg-gray-100 dark:bg-navy-700 dark:text-white"
+          >
             <MdFilterList className="mr-2 h-4 w-4" />
             Filter
           </button>
@@ -545,7 +550,10 @@ Downloaded from HealthConnect Nutrition Library
         {categories.map((category) => (
           <button
             key={category.id}
-            onClick={() => setSelectedCategory(category.id)}
+            onClick={() => {
+              setSelectedCategory(category.id);
+              showToast(`Showing ${category.name} articles`, "info");
+            }}
             className={`flex items-center rounded-full px-4 py-2 text-sm font-medium transition-colors ${
               selectedCategory === category.id
                 ? "bg-brand-500 text-white"
@@ -571,7 +579,10 @@ Downloaded from HealthConnect Nutrition Library
             {articles
               .filter((article) => article.featured)
               .map((article) => (
-                <Card key={article.id} extra="p-6">
+                <Card
+                  key={article.id}
+                  extra="p-6 hover:shadow-lg transition-shadow"
+                >
                   <div className="flex items-start justify-between">
                     <div>
                       <span className="rounded-full bg-yellow-100 px-3 py-1 text-xs font-bold text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300">
@@ -599,9 +610,20 @@ Downloaded from HealthConnect Nutrition Library
                   <p className="mt-3 text-gray-600 dark:text-gray-300">
                     {article.content.substring(0, 120)}...
                   </p>
-                  <button className="linear mt-4 w-full rounded-lg bg-brand-500 py-2 text-sm font-medium text-white hover:bg-brand-600">
-                    Read Full Article
-                  </button>
+                  <div className="mt-4 flex gap-3">
+                    <button
+                      onClick={() => handleViewArticle(article)}
+                      className="linear flex-1 rounded-lg bg-brand-500 py-2 text-sm font-medium text-white hover:bg-brand-600"
+                    >
+                      Read Full Article
+                    </button>
+                    <button
+                      onClick={() => handleSaveOffline(article)}
+                      className="rounded-lg border border-gray-300 px-3 py-2 hover:bg-gray-50 dark:border-gray-600"
+                    >
+                      <MdDownload className="h-4 w-4" />
+                    </button>
+                  </div>
                 </Card>
               ))}
           </div>
@@ -702,10 +724,16 @@ Downloaded from HealthConnect Nutrition Library
 
                   {/* Action Buttons */}
                   <div className="mt-6 flex gap-3">
-                    <button className="linear flex-1 rounded-lg bg-brand-500 py-2 font-medium text-white hover:bg-brand-600">
+                    <button
+                      onClick={() => handleViewArticle(article)}
+                      className="linear flex-1 rounded-lg bg-brand-500 py-2 font-medium text-white hover:bg-brand-600"
+                    >
                       Read Full Guide
                     </button>
-                    <button className="rounded-lg border border-gray-300 px-4 py-2 font-medium hover:bg-gray-50 dark:border-gray-600">
+                    <button
+                      onClick={() => handleSaveOffline(article)}
+                      className="rounded-lg border border-gray-300 px-4 py-2 font-medium hover:bg-gray-50 dark:border-gray-600"
+                    >
                       Save for Offline
                     </button>
                   </div>
@@ -736,7 +764,10 @@ Downloaded from HealthConnect Nutrition Library
                 placeholder="Enter your child's age"
                 className="rounded-lg border border-green-300 bg-white px-4 py-2 dark:border-green-700 dark:bg-navy-800"
               />
-              <button className="linear rounded-lg bg-green-600 px-6 py-2 font-medium text-white hover:bg-green-700">
+              <button
+                onClick={handleSubscribeSMS}
+                className="linear rounded-lg bg-green-600 px-6 py-2 font-medium text-white hover:bg-green-700"
+              >
                 Subscribe to SMS Tips
               </button>
             </div>
@@ -787,12 +818,30 @@ Downloaded from HealthConnect Nutrition Library
                   Prep time: 20 mins • Serves: 4
                 </p>
               </div>
-              <button className="linear mt-4 w-full rounded-lg bg-green-500 py-2 text-sm font-medium text-white hover:bg-green-600">
+              <button
+                onClick={() => showToast("New meal idea generated!", "success")}
+                className="linear mt-4 w-full rounded-lg bg-green-500 py-2 text-sm font-medium text-white hover:bg-green-600"
+              >
                 Generate Another Idea
               </button>
             </div>
           </div>
         </Card>
+      </div>
+
+      {/* Disclaimer */}
+      <div className="mt-6 rounded-lg bg-blue-50 p-4 dark:bg-blue-900/20">
+        <div className="flex items-start">
+          <MdWarning className="mr-3 mt-1 h-5 w-5 text-blue-600 dark:text-blue-400" />
+          <div>
+            <p className="text-sm text-blue-800 dark:text-blue-300">
+              <strong>Important:</strong> This information is for educational
+              purposes only. Always consult with a healthcare provider or
+              nutritionist for personalized dietary advice, especially for
+              infants, pregnant women, or individuals with medical conditions.
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );
