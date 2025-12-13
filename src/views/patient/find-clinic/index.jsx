@@ -9,6 +9,7 @@ import {
   MdMap,
   MdList,
   MdDirections,
+  MdInfo,
 } from "react-icons/md";
 import {
   FaFilter,
@@ -19,9 +20,11 @@ import {
 } from "react-icons/fa";
 import Card from "components/card";
 import ClinicMap from "../components/ClinicMap";
+import { useToast } from "hooks/useToast";
+import Modal from "components/modal/Modal";
 
 const FindClinic = () => {
-  const [viewMode, setViewMode] = useState("map"); // 'map' or 'list'
+  const [viewMode, setViewMode] = useState("map");
   const [selectedFilters, setSelectedFilters] = useState({
     freeServices: true,
     childHealth: false,
@@ -32,6 +35,14 @@ const FindClinic = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [userLocation, setUserLocation] = useState(null);
   const [selectedClinic, setSelectedClinic] = useState(null);
+  const { showToast } = useToast();
+
+  // Modal states
+  const [bookModalOpen, setBookModalOpen] = useState(false);
+  const [directionsModalOpen, setDirectionsModalOpen] = useState(false);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [locationModalOpen, setLocationModalOpen] = useState(false);
+  const [filterModalOpen, setFilterModalOpen] = useState(false);
 
   // Mock clinic data - In production, this would come from an API
   const clinics = [
@@ -119,18 +130,32 @@ const FindClinic = () => {
   useEffect(() => {
     // Get user's location
     if (navigator.geolocation) {
+      setLocationModalOpen(true);
       navigator.geolocation.getCurrentPosition(
         (position) => {
           setUserLocation({
             lat: position.coords.latitude,
             lng: position.coords.longitude,
           });
+          setLocationModalOpen(false);
+          showToast("Location found successfully", "success");
         },
-        () => {
-          // Default to Johannesburg coordinates if permission denied
-          setUserLocation({ lat: -26.2041, lng: 28.0473 });
+        (error) => {
+          setLocationModalOpen(false);
+          if (error.code === error.PERMISSION_DENIED) {
+            showToast(
+              "Location permission denied. Using default location.",
+              "warning"
+            );
+            setUserLocation({ lat: -26.2041, lng: 28.0473 }); // Default to Johannesburg
+          } else {
+            showToast("Error getting location", "error");
+          }
         }
       );
+    } else {
+      showToast("Geolocation not supported by your browser", "error");
+      setUserLocation({ lat: -26.2041, lng: 28.0473 });
     }
   }, []);
 
@@ -158,16 +183,60 @@ const FindClinic = () => {
     return true;
   });
 
-  const handleBookAppointment = (clinicId) => {
-    console.log(`Booking appointment for clinic ${clinicId}`);
+  const handleBookAppointment = (clinic) => {
+    setSelectedClinic(clinic);
+    setBookModalOpen(true);
+  };
+
+  const confirmBooking = () => {
+    setBookModalOpen(false);
+    showToast(`Appointment booked at ${selectedClinic.name}`, "success");
     // Navigate to booking page
-    window.location.href = `/patient/book-appointment?clinic=${clinicId}`;
+    window.location.href = `/patient/book-appointment?clinic=${selectedClinic.id}`;
   };
 
   const handleGetDirections = (clinic) => {
-    // Open Google Maps with directions
-    const url = `https://www.google.com/maps/dir/?api=1&destination=${clinic.coordinates.lat},${clinic.coordinates.lng}`;
+    setSelectedClinic(clinic);
+    setDirectionsModalOpen(true);
+  };
+
+  const confirmDirections = (transport) => {
+    setDirectionsModalOpen(false);
+    showToast(
+      `Opening ${transport} directions to ${selectedClinic.name}`,
+      "info"
+    );
+
+    const url = `https://www.google.com/maps/dir/?api=1&destination=${selectedClinic.coordinates.lat},${selectedClinic.coordinates.lng}&travelmode=${transport}`;
     window.open(url, "_blank");
+  };
+
+  const handleShareClinic = (clinic) => {
+    setSelectedClinic(clinic);
+    setShareModalOpen(true);
+  };
+
+  const confirmShare = (method) => {
+    setShareModalOpen(false);
+    showToast(`Clinic shared via ${method}`, "success");
+  };
+
+  const handleUpdateLocation = () => {
+    setLocationModalOpen(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setUserLocation({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        });
+        setLocationModalOpen(false);
+        showToast("Location updated successfully", "success");
+      },
+      () => {
+        setLocationModalOpen(false);
+        showToast("Could not update location", "error");
+      }
+    );
   };
 
   const FilterButton = ({ icon, label, filterKey }) => (
@@ -191,6 +260,93 @@ const FindClinic = () => {
 
   return (
     <div className="h-full">
+      {/* Modals */}
+      {/* Book Appointment Modal */}
+      <Modal
+        isOpen={bookModalOpen}
+        onClose={() => setBookModalOpen(false)}
+        title="Book Appointment"
+        size="md"
+      >
+        {selectedClinic && (
+          <div className="space-y-6">
+            <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+              <div className="flex items-start">
+                <MdLocalHospital className="mr-3 h-6 w-6 text-brand-500" />
+                <div>
+                  <h4 className="font-bold text-navy-700 dark:text-white">
+                    {selectedClinic.name}
+                  </h4>
+                  <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
+                    {selectedClinic.address}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Select Date
+                </label>
+                <input
+                  type="date"
+                  className="w-full rounded-lg border border-gray-300 p-2 dark:border-gray-600 dark:bg-navy-700"
+                  min={new Date().toISOString().split("T")[0]}
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Select Time
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  {["09:00", "10:00", "11:00", "14:00", "15:00", "16:00"].map(
+                    (time) => (
+                      <button
+                        key={time}
+                        className="rounded-lg border border-gray-300 py-2 hover:border-brand-500 dark:border-gray-600"
+                      >
+                        {time}
+                      </button>
+                    )
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-lg bg-green-50 p-4 dark:bg-green-900/20">
+              <div className="flex items-start">
+                <MdInfo className="mr-2 mt-0.5 h-5 w-5 text-green-600" />
+                <div>
+                  <p className="text-sm font-medium text-green-800 dark:text-green-300">
+                    Free Service Available
+                  </p>
+                  <p className="mt-1 text-sm text-green-600 dark:text-green-400">
+                    This clinic provides free consultations for children under
+                    6.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setBookModalOpen(false)}
+                className="rounded-lg border border-gray-300 px-6 py-2 font-medium hover:bg-gray-50 dark:border-gray-600"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmBooking}
+                className="rounded-lg bg-brand-500 px-6 py-2 font-medium text-white hover:bg-brand-600"
+              >
+                Continue Booking
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
       {/* Header */}
       <div className="mb-6">
         <h3 className="text-2xl font-bold text-navy-700 dark:text-white">
