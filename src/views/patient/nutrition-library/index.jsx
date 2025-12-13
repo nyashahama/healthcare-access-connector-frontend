@@ -374,6 +374,61 @@ Downloaded from HealthConnect Nutrition Library
           </div>
         )}
       </Modal>
+
+      {/* Share Article Modal */}
+      <Modal
+        isOpen={shareArticleModalOpen}
+        onClose={() => setShareArticleModalOpen(false)}
+        title="Share Nutrition Article"
+        size="md"
+      >
+        {selectedArticle && (
+          <div className="space-y-6">
+            <div className="text-center">
+              <h4 className="text-xl font-bold text-navy-700 dark:text-white">
+                Share "{selectedArticle.title}"
+              </h4>
+              <p className="text-gray-600 dark:text-gray-300">
+                Send to family, friends, or healthcare provider
+              </p>
+            </div>
+
+            <div className="grid grid-cols-3 gap-3">
+              <button
+                onClick={() => confirmShareArticle("WhatsApp")}
+                className="flex flex-col items-center rounded-lg border border-gray-200 p-3 hover:border-green-500 hover:bg-green-50 dark:border-gray-700"
+              >
+                <div className="mb-1 text-2xl">💬</div>
+                <span className="text-xs">WhatsApp</span>
+              </button>
+              <button
+                onClick={() => confirmShareArticle("SMS")}
+                className="flex flex-col items-center rounded-lg border border-gray-200 p-3 hover:border-blue-500 hover:bg-blue-50 dark:border-gray-700"
+              >
+                <div className="mb-1 text-2xl">📱</div>
+                <span className="text-xs">SMS</span>
+              </button>
+              <button
+                onClick={() => confirmShareArticle("Email")}
+                className="flex flex-col items-center rounded-lg border border-gray-200 p-3 hover:border-red-500 hover:bg-red-50 dark:border-gray-700"
+              >
+                <div className="mb-1 text-2xl">📧</div>
+                <span className="text-xs">Email</span>
+              </button>
+            </div>
+
+            <div className="rounded-lg bg-yellow-50 p-4 dark:bg-yellow-900/20">
+              <div className="flex items-start">
+                <MdInfo className="mr-2 mt-0.5 h-5 w-5 text-yellow-600" />
+                <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                  This article contains general health information. Always
+                  consult a healthcare provider for personalized advice.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+      </Modal>
       {/* Header */}
       <div className="mb-6">
         <h3 className="text-2xl font-bold text-navy-700 dark:text-white">
