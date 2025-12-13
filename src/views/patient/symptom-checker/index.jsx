@@ -397,6 +397,83 @@ const SymptomChecker = () => {
         </div>
       </Modal>
 
+      {/* Share Result Modal */}
+      <Modal
+        isOpen={shareModalOpen}
+        onClose={() => setShareModalOpen(false)}
+        title="Share Assessment"
+        size="md"
+      >
+        <div className="space-y-6">
+          <div className="text-center">
+            <h4 className="mb-2 text-xl font-bold text-navy-700 dark:text-white">
+              Share with Healthcare Provider
+            </h4>
+            <p className="text-gray-600 dark:text-gray-300">
+              Share your symptom assessment results
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              onClick={() => confirmShareResult("Email")}
+              className="flex flex-col items-center rounded-lg border border-gray-200 p-4 hover:border-brand-500 hover:bg-brand-50 dark:border-gray-700"
+            >
+              <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-600">
+                📧
+              </div>
+              <span className="font-medium">Email</span>
+            </button>
+            <button
+              onClick={() => confirmShareResult("SMS")}
+              className="flex flex-col items-center rounded-lg border border-gray-200 p-4 hover:border-brand-500 hover:bg-brand-50 dark:border-gray-700"
+            >
+              <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-green-100 text-green-600">
+                💬
+              </div>
+              <span className="font-medium">SMS</span>
+            </button>
+            <button
+              onClick={() => confirmShareResult("WhatsApp")}
+              className="flex flex-col items-center rounded-lg border border-gray-200 p-4 hover:border-brand-500 hover:bg-brand-50 dark:border-gray-700"
+            >
+              <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-green-100 text-green-600">
+                📱
+              </div>
+              <span className="font-medium">WhatsApp</span>
+            </button>
+            <button
+              onClick={() => confirmShareResult("Print")}
+              className="flex flex-col items-center rounded-lg border border-gray-200 p-4 hover:border-brand-500 hover:bg-brand-50 dark:border-gray-700"
+            >
+              <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 text-gray-600">
+                🖨️
+              </div>
+              <span className="font-medium">Print</span>
+            </button>
+          </div>
+
+          <div className="rounded-lg bg-yellow-50 p-4 dark:bg-yellow-900/20">
+            <div className="flex items-start">
+              <MdInfo className="mr-2 mt-0.5 h-5 w-5 text-yellow-600" />
+              <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                Personal health information will be included. Only share with
+                trusted healthcare providers.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex justify-end">
+            <button
+              onClick={() => setShareModalOpen(false)}
+              className="rounded-lg border border-gray-300 px-6 py-3 font-medium hover:bg-gray-50 dark:border-gray-600"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </Modal>
+
       {/* Header */}
       <div className="mb-6">
         <h3 className="text-2xl font-bold text-navy-700 dark:text-white">
