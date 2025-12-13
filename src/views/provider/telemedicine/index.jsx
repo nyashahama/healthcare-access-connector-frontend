@@ -253,7 +253,7 @@ const ProviderTelemedicine = () => {
     };
 
     setMessages([...messages, message]);
-    showToast(`Follow-up scheduled for ${selectedPatient.name}`);
+    //showToast(`Follow-up scheduled for ${selectedPatient.name}`);
   };
 
   const handleEndConsultationModal = () => {
