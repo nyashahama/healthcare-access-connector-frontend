@@ -160,7 +160,7 @@ const ClinicMap = ({ clinics, userLocation, onClinicSelect }) => {
       <div
         ref={mapRef}
         className="h-full w-full rounded-lg"
-        style={{ minHeight: "500px" }}
+        style={{ minHeight: "500px", zIndex: 1 }}
       />
       <div className="absolute right-4 top-4 z-[1000] rounded-lg bg-white p-2 shadow-lg dark:bg-navy-800">
         <div className="flex items-center space-x-2">
