@@ -11,6 +11,7 @@ import {
 } from "react-icons/md";
 import Modal from "components/modal/Modal";
 import { useToast } from "hooks/useToast";
+import { useNavigate } from "react-router-dom";
 
 const BookingModal = ({
   isOpen,
@@ -20,6 +21,7 @@ const BookingModal = ({
   type = "quick", // "quick" or "detailed"
 }) => {
   const { showToast } = useToast();
+  const navigate = useNavigate();
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
   const [reason, setReason] = useState("");
@@ -58,7 +60,9 @@ const BookingModal = ({
   const handleRedirectToFullBooking = () => {
     onClose();
     showToast("Opening full booking form...", "info");
-    window.location.href = `/patient/book-appointment?clinic=${clinic.id}`;
+    navigate(`/patient/book-appointment?clinic=${clinic.id}`, {
+      state: { clinic }, // Pass clinic data in state
+    });
   };
 
   return (
@@ -67,6 +71,7 @@ const BookingModal = ({
       onClose={onClose}
       title="Book Appointment"
       size={type === "quick" ? "md" : "lg"}
+      className="z-[1000]"
     >
       <div className="space-y-6">
         {/* Clinic Info */}
