@@ -23,6 +23,7 @@ import Card from "components/card";
 import ClinicMap from "../components/ClinicMap";
 import { useToast } from "hooks/useToast";
 import Modal from "components/modal/Modal";
+import BookingModal from "../components/BookingModal";
 
 const FindClinic = () => {
   const [viewMode, setViewMode] = useState("map");
@@ -44,6 +45,12 @@ const FindClinic = () => {
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [locationModalOpen, setLocationModalOpen] = useState(false);
   const [filterModalOpen, setFilterModalOpen] = useState(false);
+  const [smsConfirmModalOpen, setSmsConfirmModalOpen] = useState(false);
+  const [successModalOpen, setSuccessModalOpen] = useState(false);
+
+  const [selectedDate, setSelectedDate] = useState("");
+  const [selectedTime, setSelectedTime] = useState("");
+  const [bookingData, setBookingData] = useState(null);
 
   // Mock clinic data - In production, this would come from an API
   const clinics = [
@@ -262,91 +269,180 @@ const FindClinic = () => {
   return (
     <div className="h-full">
       {/* Modals */}
-      {/* Book Appointment Modal */}
+      {/* Booking Modal  */}
+      {bookModalOpen && selectedClinic && (
+        <BookingModal
+          isOpen={bookModalOpen}
+          onClose={() => setBookModalOpen(false)}
+          clinic={selectedClinic}
+          type="quick"
+          onConfirmBooking={(bookingData) => {
+            setBookModalOpen(false);
+            setBookingData(bookingData);
+            setSelectedDate(
+              bookingData.date || new Date().toISOString().split("T")[0]
+            );
+            setSelectedTime(bookingData.time || "09:00 AM");
+            showToast(
+              `Quick appointment booked at ${selectedClinic.name}`,
+              "success"
+            );
+            setTimeout(() => {
+              setSmsConfirmModalOpen(true);
+            }, 500);
+          }}
+        />
+      )}
+
+      {/* SMS Confirmation Modal  */}
       <Modal
-        isOpen={bookModalOpen}
-        onClose={() => setBookModalOpen(false)}
-        title="Book Appointment"
+        isOpen={smsConfirmModalOpen}
+        onClose={() => setSmsConfirmModalOpen(false)}
+        title="SMS Appointment Confirmation"
         size="md"
       >
-        {selectedClinic && (
-          <div className="space-y-6">
-            <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
-              <div className="flex items-start">
-                <MdLocalHospital className="mr-3 h-6 w-6 text-brand-500" />
-                <div>
-                  <h4 className="font-bold text-navy-700 dark:text-white">
-                    {selectedClinic.name}
-                  </h4>
-                  <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
-                    {selectedClinic.address}
-                  </p>
-                </div>
-              </div>
-            </div>
+        <div className="space-y-6">
+          <div className="text-center">
+            <MdPhone className="mx-auto mb-4 h-12 w-12 text-brand-500" />
+            <h4 className="mb-2 text-xl font-bold text-navy-700 dark:text-white">
+              Appointment Booked!
+            </h4>
+            <p className="text-gray-600 dark:text-gray-300">
+              An SMS confirmation has been sent to your phone.
+            </p>
+          </div>
 
-            <div className="space-y-4">
+          <div className="rounded-lg bg-green-50 p-4 dark:bg-green-900/20">
+            <div className="flex items-start">
+              <MdInfo className="mr-2 mt-0.5 h-5 w-5 text-green-600" />
               <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Select Date
-                </label>
-                <input
-                  type="date"
-                  className="w-full rounded-lg border border-gray-300 p-2 dark:border-gray-600 dark:bg-navy-700"
-                  min={new Date().toISOString().split("T")[0]}
-                />
+                <p className="text-sm font-medium text-green-800 dark:text-green-300">
+                  Confirmation Details:
+                </p>
+                <p className="mt-1 text-sm text-green-600 dark:text-green-400">
+                  Date: {selectedDate || "Tomorrow"}
+                  <br />
+                  Time: {selectedTime || "09:00 AM"}
+                  <br />
+                  Clinic: {selectedClinic?.name}
+                </p>
               </div>
-
-              <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Select Time
-                </label>
-                <div className="grid grid-cols-3 gap-2">
-                  {["09:00", "10:00", "11:00", "14:00", "15:00", "16:00"].map(
-                    (time) => (
-                      <button
-                        key={time}
-                        className="rounded-lg border border-gray-300 py-2 hover:border-brand-500 dark:border-gray-600"
-                      >
-                        {time}
-                      </button>
-                    )
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-lg bg-green-50 p-4 dark:bg-green-900/20">
-              <div className="flex items-start">
-                <MdInfo className="mr-2 mt-0.5 h-5 w-5 text-green-600" />
-                <div>
-                  <p className="text-sm font-medium text-green-800 dark:text-green-300">
-                    Free Service Available
-                  </p>
-                  <p className="mt-1 text-sm text-green-600 dark:text-green-400">
-                    This clinic provides free consultations for children under
-                    6.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setBookModalOpen(false)}
-                className="rounded-lg border border-gray-300 px-6 py-2 font-medium hover:bg-gray-50 dark:border-gray-600"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={confirmBooking}
-                className="rounded-lg bg-brand-500 px-6 py-2 font-medium text-white hover:bg-brand-600"
-              >
-                Continue Booking
-              </button>
             </div>
           </div>
-        )}
+
+          <div className="space-y-3">
+            <h5 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              What's next?
+            </h5>
+            <div className="space-y-2">
+              <div className="flex items-center rounded-lg bg-blue-50 p-3 dark:bg-blue-900/20">
+                <span className="mr-3 text-blue-600">1.</span>
+                <div className="text-sm text-blue-700 dark:text-blue-300">
+                  Arrive 10 minutes before your appointment
+                </div>
+              </div>
+              <div className="flex items-center rounded-lg bg-green-50 p-3 dark:bg-green-900/20">
+                <span className="mr-3 text-green-600">2.</span>
+                <div className="text-sm text-green-700 dark:text-green-300">
+                  Bring ID and medical aid card
+                </div>
+              </div>
+              <div className="flex items-center rounded-lg bg-purple-50 p-3 dark:bg-purple-900/20">
+                <span className="mr-3 text-purple-600">3.</span>
+                <div className="text-sm text-purple-700 dark:text-purple-300">
+                  Check SMS for cancellation instructions
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3">
+            <button
+              onClick={() => {
+                setSmsConfirmModalOpen(false);
+                setSuccessModalOpen(true); // Open success modal
+              }}
+              className="rounded-lg border border-gray-300 px-6 py-2 font-medium hover:bg-gray-50 dark:border-gray-600"
+            >
+              View Details
+            </button>
+            <button
+              onClick={() => {
+                setSmsConfirmModalOpen(false);
+                showToast("Appointment confirmed!", "success");
+              }}
+              className="rounded-lg bg-brand-500 px-6 py-2 font-medium text-white hover:bg-brand-600"
+            >
+              Done
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Success Confirmation Modal */}
+      <Modal
+        isOpen={successModalOpen}
+        onClose={() => setSuccessModalOpen(false)}
+        title="Appointment Confirmed"
+        size="md"
+      >
+        <div className="space-y-6">
+          <div className="text-center">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900">
+              <MdAccessTime className="h-8 w-8 text-green-600 dark:text-green-300" />
+            </div>
+            <h4 className="mb-2 text-xl font-bold text-navy-700 dark:text-white">
+              Appointment Booked Successfully!
+            </h4>
+            <p className="text-gray-600 dark:text-gray-300">
+              Your appointment has been confirmed and added to your calendar.
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex items-center justify-between rounded-lg border border-gray-200 p-3 dark:border-gray-700">
+              <span className="text-gray-700 dark:text-gray-300">Clinic:</span>
+              <span className="font-medium">{selectedClinic?.name}</span>
+            </div>
+            <div className="flex items-center justify-between rounded-lg border border-gray-200 p-3 dark:border-gray-700">
+              <span className="text-gray-700 dark:text-gray-300">Date:</span>
+              <span className="font-medium">{selectedDate || "Tomorrow"}</span>
+            </div>
+            <div className="flex items-center justify-between rounded-lg border border-gray-200 p-3 dark:border-gray-700">
+              <span className="text-gray-700 dark:text-gray-300">Time:</span>
+              <span className="font-medium">{selectedTime || "09:00 AM"}</span>
+            </div>
+            <div className="flex items-center justify-between rounded-lg border border-gray-200 p-3 dark:border-gray-700">
+              <span className="text-gray-700 dark:text-gray-300">
+                Confirmation:
+              </span>
+              <span className="font-medium text-green-600">SMS Sent ✓</span>
+            </div>
+          </div>
+
+          <div className="rounded-lg bg-blue-50 p-4 dark:bg-blue-900/20">
+            <div className="flex items-start">
+              <MdInfo className="mr-2 mt-0.5 h-5 w-5 text-blue-500" />
+              <p className="text-sm text-blue-700 dark:text-blue-300">
+                To cancel or reschedule, reply "CANCEL" to the SMS or call the
+                clinic directly.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3">
+            <button
+              onClick={() => {
+                setSuccessModalOpen(false);
+                showToast("Added to your appointments", "info");
+                window.location.href = "/patient/appointments";
+              }}
+              className="rounded-lg bg-brand-500 px-6 py-2 font-medium text-white hover:bg-brand-600"
+            >
+              View My Appointments
+            </button>
+          </div>
+        </div>
       </Modal>
 
       {/* Directions Modal */}
