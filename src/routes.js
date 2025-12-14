@@ -7,6 +7,7 @@ import SymptomChecker from "views/patient/symptom-checker";
 import TelemedicineChat from "views/patient/telemedicine-chat";
 import NutritionLibrary from "views/patient/nutrition-library";
 import PatientProfile from "views/patient/profile";
+import BookAppointment from "views/patient/components/BookAppointment";
 
 // Provider Views
 import ProviderDashboard from "views/provider/dashboard";
@@ -15,6 +16,7 @@ import PatientQueue from "views/provider/queue";
 import ClinicManagement from "views/provider/clinic-management";
 import ProviderProfile from "views/provider/profile";
 import StaffManagement from "views/provider/staff-management";
+import ProviderTelemedicine from "views/provider/telemedicine";
 
 // Admin Views
 import SystemDashboard from "views/admin/dashboard";
@@ -47,7 +49,6 @@ import {
   MdLock,
 } from "react-icons/md";
 import { FaStethoscope } from "react-icons/fa";
-import ProviderTelemedicine from "views/provider/telemedicine";
 
 // Patient Routes
 export const patientRoutes = [
@@ -57,6 +58,13 @@ export const patientRoutes = [
     path: "dashboard",
     icon: <MdHome className="h-6 w-6" />,
     component: <PatientDashboard />,
+  },
+  {
+    name: "Book Appointment",
+    layout: "/patient",
+    path: "book-appointment",
+    icon: <MdCalendarToday className="h-6 w-6" />,
+    component: <BookAppointment />,
   },
   {
     name: "Find Clinic",
