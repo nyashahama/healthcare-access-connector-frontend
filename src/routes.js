@@ -61,8 +61,8 @@ import LabResults from "views/patient/lab-results";
 import HealthRecords from "views/patient/health-records";
 import MedicationReminders from "views/patient/medication-reminders";
 import CommunityForum from "views/patient/community";
-import CommunityPost from "views/patient/community";
-import CreateCommunityPost from "views/patient/community";
+import CommunityPost from "views/patient/community/CommunityPost";
+import CreateCommunityPost from "views/patient/community/CreateCommunityPost";
 // Patient Routes
 export const patientRoutes = [
   {
