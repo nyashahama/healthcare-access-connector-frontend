@@ -226,6 +226,20 @@ export const providerRoutes = [
     roles: ["clinic_admin"], // Only clinic admin can see
   },
   {
+    name: "Professional Forum",
+    layout: "/provider",
+    path: "community",
+    icon: <MdForum className="h-6 w-6" />,
+    //component: <ProviderCommunity />,
+    roles: ["clinic_admin", "doctor", "nurse"],
+    subroutes: [
+      { path: "case-discussions", name: "Case Discussions" },
+      { path: "specialties", name: "Specialty Groups" },
+      { path: "resources", name: "Medical Resources" },
+      { path: "events", name: "Events & CPD" },
+    ],
+  },
+  {
     name: "Profile",
     layout: "/provider",
     path: "profile",
