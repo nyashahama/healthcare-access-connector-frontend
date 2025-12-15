@@ -4,6 +4,12 @@ import SidebarCard from "components/sidebar/components/SidebarCard";
 import { patientRoutes } from "routes.js";
 
 const PatientSidebar = ({ open, onClose }) => {
+  // Filter out routes that should not appear in sidebar
+  const filteredRoutes = patientRoutes.filter((route) => {
+    // Show route if sidebar is not explicitly set to false
+    return route.sidebar !== false;
+  });
+
   return (
     <div
       className={`sm:none duration-175 linear fixed !z-50 flex min-h-full w-[313px] flex-col bg-white pb-10 shadow-2xl shadow-white/5 transition-all dark:!bg-navy-800 dark:text-white md:!z-50 lg:!z-50 xl:!z-0 ${
@@ -24,9 +30,9 @@ const PatientSidebar = ({ open, onClose }) => {
       </div>
       <div className="mb-7 mt-[58px] h-px bg-gray-300 dark:bg-white/30" />
 
-      {/* Navigation Links */}
+      {/* Navigation Links - Pass filtered routes */}
       <ul className="mb-auto pt-1">
-        <Links routes={patientRoutes} />
+        <Links routes={filteredRoutes} />
       </ul>
 
       {/* Health Tips Card */}
