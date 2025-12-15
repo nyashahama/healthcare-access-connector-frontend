@@ -47,6 +47,12 @@ import {
   MdLibraryBooks,
   MdAnalytics,
   MdLock,
+  MdListAlt,
+  MdLocalPharmacy,
+  MdScience,
+  MdHealthAndSafety,
+  MdNotifications,
+  MdForum,
 } from "react-icons/md";
 import { FaStethoscope } from "react-icons/fa";
 
@@ -65,6 +71,13 @@ export const patientRoutes = [
     path: "book-appointment",
     icon: <MdCalendarToday className="h-6 w-6" />,
     component: <BookAppointment />,
+  },
+  {
+    name: "My Appointments",
+    layout: "/patient",
+    path: "appointments",
+    icon: <MdListAlt className="h-6 w-6" />,
+    //component: <PatientAppointments />, // NEW
   },
   {
     name: "Find Clinic",
@@ -93,6 +106,41 @@ export const patientRoutes = [
     path: "nutrition",
     icon: <MdRestaurant className="h-6 w-6" />,
     component: <NutritionLibrary />,
+  },
+  {
+    name: "Prescriptions", // NEW
+    layout: "/patient",
+    path: "prescriptions",
+    icon: <MdLocalPharmacy className="h-6 w-6" />,
+    //component: <Prescriptions />,
+  },
+  {
+    name: "Lab Results", // NEW
+    layout: "/patient",
+    path: "lab-results",
+    icon: <MdScience className="h-6 w-6" />,
+    //component: <LabResults />,
+  },
+  {
+    name: "Health Records", // NEW
+    layout: "/patient",
+    path: "health-records",
+    icon: <MdHealthAndSafety className="h-6 w-6" />,
+    //component: <HealthRecords />,
+  },
+  {
+    name: "Medication Reminders", // NEW
+    layout: "/patient",
+    path: "medication-reminders",
+    icon: <MdNotifications className="h-6 w-6" />,
+    //component: <MedicationReminders />,
+  },
+  {
+    name: "Community Forum", // NEW
+    layout: "/patient",
+    path: "community",
+    icon: <MdForum className="h-6 w-6" />,
+    //component: <CommunityForum />,
   },
   {
     name: "Profile",
