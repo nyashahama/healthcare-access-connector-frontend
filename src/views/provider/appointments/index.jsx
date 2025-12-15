@@ -193,7 +193,7 @@ const Appointments = () => {
   };
 
   const handleStartAppointment = (id) => {
-    alert(`Starting appointment ${id}`);
+    showToast(`Starting appointment ${id}`);
     // Navigate to consultation page or open chat
   };
 
