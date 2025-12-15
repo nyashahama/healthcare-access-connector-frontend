@@ -59,6 +59,7 @@ import PatientAppointments from "views/patient/appointments";
 import Prescriptions from "views/patient/prescriptions";
 import LabResults from "views/patient/lab-results";
 import HealthRecords from "views/patient/health-records";
+import MedicationReminders from "views/patient/medication-reminders";
 
 // Patient Routes
 export const patientRoutes = [
@@ -137,7 +138,7 @@ export const patientRoutes = [
     layout: "/patient",
     path: "medication-reminders",
     icon: <MdNotifications className="h-6 w-6" />,
-    //component: <MedicationReminders />,
+    component: <MedicationReminders />,
   },
   {
     name: "Community Forum", // NEW
