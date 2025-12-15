@@ -55,6 +55,7 @@ import {
   MdForum,
 } from "react-icons/md";
 import { FaStethoscope } from "react-icons/fa";
+import PatientAppointments from "views/patient/appointments";
 
 // Patient Routes
 export const patientRoutes = [
@@ -77,7 +78,7 @@ export const patientRoutes = [
     layout: "/patient",
     path: "appointments",
     icon: <MdListAlt className="h-6 w-6" />,
-    //component: <PatientAppointments />, // NEW
+    component: <PatientAppointments />, // NEW
   },
   {
     name: "Find Clinic",
