@@ -60,6 +60,7 @@ import Prescriptions from "views/patient/prescriptions";
 import LabResults from "views/patient/lab-results";
 import HealthRecords from "views/patient/health-records";
 import MedicationReminders from "views/patient/medication-reminders";
+import CommunityForum from "views/patient/community";
 
 // Patient Routes
 export const patientRoutes = [
@@ -145,7 +146,7 @@ export const patientRoutes = [
     layout: "/patient",
     path: "community",
     icon: <MdForum className="h-6 w-6" />,
-    //component: <CommunityForum />,
+    component: <CommunityForum />,
   },
   {
     name: "Profile",
