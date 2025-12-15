@@ -122,7 +122,7 @@ export const patientRoutes = [
     layout: "/patient",
     path: "lab-results",
     icon: <MdScience className="h-6 w-6" />,
-    //component: <LabResults />,
+    component: <LabResults />,
   },
   {
     name: "Health Records", // NEW
