@@ -4,6 +4,10 @@ import SidebarCard from "components/sidebar/components/SidebarCard";
 import { providerRoutes } from "routes.js";
 
 const ProviderSidebar = ({ open, onClose }) => {
+  const filteredRoutes = providerRoutes.filter((route) => {
+    // Show route if sidebar is not explicitly set to false
+    return route.sidebar !== false;
+  });
   return (
     <div
       className={`sm:none duration-175 linear fixed !z-50 flex min-h-full w-[313px] flex-col bg-white pb-10 shadow-2xl shadow-white/5 transition-all dark:!bg-navy-800 dark:text-white md:!z-50 lg:!z-50 xl:!z-0 ${
@@ -26,7 +30,7 @@ const ProviderSidebar = ({ open, onClose }) => {
 
       {/* Navigation Links */}
       <ul className="mb-auto pt-1">
-        <Links routes={providerRoutes} />
+        <Links routes={filteredRoutes} />
       </ul>
 
       {/* Quick Stats Card */}
