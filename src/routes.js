@@ -61,7 +61,8 @@ import LabResults from "views/patient/lab-results";
 import HealthRecords from "views/patient/health-records";
 import MedicationReminders from "views/patient/medication-reminders";
 import CommunityForum from "views/patient/community";
-
+import CommunityPost from "views/patient/community";
+import CreateCommunityPost from "views/patient/community";
 // Patient Routes
 export const patientRoutes = [
   {
@@ -147,6 +148,22 @@ export const patientRoutes = [
     path: "community",
     icon: <MdForum className="h-6 w-6" />,
     component: <CommunityForum />,
+  },
+  {
+    name: "View Post", // Hidden from sidebar
+    layout: "/patient",
+    path: "community/post/:id",
+    icon: <MdForum className="h-6 w-6" />,
+    component: <CommunityPost />,
+    sidebar: false,
+  },
+  {
+    name: "Create Post", // Hidden from sidebar
+    layout: "/patient",
+    path: "community/new",
+    icon: <MdForum className="h-6 w-6" />,
+    component: <CreateCommunityPost />,
+    sidebar: false,
   },
   {
     name: "Profile",
