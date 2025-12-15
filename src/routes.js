@@ -64,6 +64,8 @@ import CommunityForum from "views/patient/community";
 import CommunityPost from "views/patient/community/CommunityPost";
 import CreateCommunityPost from "views/patient/community/CreateCommunityPost";
 import ProviderCommunityForum from "views/provider/community";
+import CreateProviderCommunityPost from "views/provider/community/CreateCommunityPost";
+import ProviderCommunityPost from "views/provider/community/CommunityPost";
 // Patient Routes
 export const patientRoutes = [
   {
@@ -233,12 +235,22 @@ export const providerRoutes = [
     icon: <MdForum className="h-6 w-6" />,
     component: <ProviderCommunityForum />,
     roles: ["clinic_admin", "doctor", "nurse"],
-    subroutes: [
-      { path: "case-discussions", name: "Case Discussions" },
-      { path: "specialties", name: "Specialty Groups" },
-      { path: "resources", name: "Medical Resources" },
-      { path: "events", name: "Events & CPD" },
-    ],
+  },
+  {
+    name: "View Post",
+    layout: "/provider",
+    path: "community/post/:id",
+    icon: <MdForum className="h-6 w-6" />,
+    component: <ProviderCommunityPost />,
+    sidebar: false,
+  },
+  {
+    name: "Create Post",
+    layout: "/provider",
+    path: "community/new",
+    icon: <MdForum className="h-6 w-6" />,
+    component: <CreateProviderCommunityPost />,
+    sidebar: false,
   },
   {
     name: "Profile",

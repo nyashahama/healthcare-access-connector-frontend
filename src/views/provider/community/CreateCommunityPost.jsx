@@ -1,3 +1,4 @@
+// views/provider/community/CreateCommunityPost.jsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -206,6 +207,10 @@ const CreateProviderCommunityPost = () => {
     setModalState({ ...modalState, cancel: false });
     navigate("/provider/community");
     showToast("Discussion discarded", "info");
+  };
+
+  const confirm = () => {
+    showToast("confirm successfull");
   };
 
   const PreviewModal = () => (
