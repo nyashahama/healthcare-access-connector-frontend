@@ -56,6 +56,8 @@ import {
 } from "react-icons/md";
 import { FaStethoscope } from "react-icons/fa";
 import PatientAppointments from "views/patient/appointments";
+import Prescriptions from "views/patient/prescriptions";
+import LabResults from "views/patient/lab-results";
 
 // Patient Routes
 export const patientRoutes = [
@@ -113,7 +115,7 @@ export const patientRoutes = [
     layout: "/patient",
     path: "prescriptions",
     icon: <MdLocalPharmacy className="h-6 w-6" />,
-    //component: <Prescriptions />,
+    component: <Prescriptions />,
   },
   {
     name: "Lab Results", // NEW
