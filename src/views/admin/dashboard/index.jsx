@@ -14,29 +14,40 @@ import {
   MdSecurity,
   MdBackup,
   MdSettings,
+  MdCheckCircle,
+  MdCancel,
+  MdEmail,
+  MdSchedule,
 } from "react-icons/md";
 import {
   FaClinicMedical,
   FaUserCheck,
   FaServer,
   FaDatabase,
+  FaUserMd,
 } from "react-icons/fa";
 import Widget from "components/widget/Widget";
 import SystemHealth from "../components/SystemHealth";
 import RegistrationQueue from "../components/RegistrationQueue";
 import AnalyticsChart from "../components/AnalyticsChart";
 import Modal from "components/modal/Modal";
-import { useToast } from "hooks/useToast";
 
 const SystemDashboard = () => {
-  const { showToast } = useToast();
   const [selectedSystem, setSelectedSystem] = useState(null);
+  const [selectedClinic, setSelectedClinic] = useState(null);
+  const [toasts, setToasts] = useState([]);
 
   // Modal states
   const [restartModalOpen, setRestartModalOpen] = useState(false);
   const [backupModalOpen, setBackupModalOpen] = useState(false);
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
   const [notificationModalOpen, setNotificationModalOpen] = useState(false);
+  const [approveClinicModalOpen, setApproveClinicModalOpen] = useState(false);
+  const [rejectClinicModalOpen, setRejectClinicModalOpen] = useState(false);
+  const [notificationTitle, setNotificationTitle] = useState("");
+  const [notificationMessage, setNotificationMessage] = useState("");
+  const [notificationAudience, setNotificationAudience] = useState("All Users");
+  const [rejectReason, setRejectReason] = useState("");
 
   // System alerts data
   const systemAlerts = [
@@ -66,6 +77,19 @@ const SystemDashboard = () => {
     },
   ];
 
+  // Toast notification system
+  const showToast = (message, type = "info") => {
+    const id = Date.now();
+    const newToast = { id, message, type };
+    setToasts((prev) => [...prev, newToast]);
+
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((toast) => toast.id !== id));
+    }, 5000);
+  };
+
+  // Handlers for system actions
   const handleRestartSystem = (system) => {
     setSelectedSystem(system);
     setRestartModalOpen(true);
@@ -78,8 +102,38 @@ const SystemDashboard = () => {
 
   const handleViewDetails = (system) => {
     setSelectedSystem(system);
-    // In a real app, this would navigate to detailed system page
     showToast(`Viewing details for ${system}`, "info");
+  };
+
+  const handleApproveClinic = (clinic) => {
+    setSelectedClinic(clinic);
+    setApproveClinicModalOpen(true);
+  };
+
+  const handleRejectClinic = (clinic) => {
+    setSelectedClinic(clinic);
+    setRejectClinicModalOpen(true);
+  };
+
+  const handleViewAllRegistrations = () => {
+    showToast("Opening full registration queue...", "info");
+    // In real app, navigate to registration page
+  };
+
+  const handleAddCredits = () => {
+    showToast("Redirecting to SMS credit purchase...", "info");
+  };
+
+  const handleClearCache = () => {
+    showToast("System cache cleared successfully", "success");
+  };
+
+  const handleDownloadLogs = () => {
+    showToast("System logs downloaded successfully", "success");
+  };
+
+  const handleClearAlerts = () => {
+    showToast("All alerts cleared", "info");
   };
 
   const confirmRestart = () => {
@@ -92,6 +146,38 @@ const SystemDashboard = () => {
     console.log(`Creating backup for: ${selectedSystem}`);
     setBackupModalOpen(false);
     showToast(`Backup created for ${selectedSystem}`, "success");
+  };
+
+  const confirmApproveClinic = () => {
+    console.log(`Approving clinic: ${selectedClinic.name}`);
+    setApproveClinicModalOpen(false);
+    showToast(
+      `Clinic "${selectedClinic.name}" approved successfully`,
+      "success"
+    );
+  };
+
+  const confirmRejectClinic = () => {
+    console.log(`Rejecting clinic: ${selectedClinic.name}`);
+    setRejectClinicModalOpen(false);
+    setRejectReason("");
+    showToast(
+      `Clinic "${selectedClinic.name}" registration rejected`,
+      "warning"
+    );
+  };
+
+  const sendNotification = () => {
+    if (!notificationTitle || !notificationMessage) {
+      showToast("Please fill in all notification fields", "error");
+      return;
+    }
+
+    console.log(`Sending notification to ${notificationAudience}`);
+    setNotificationModalOpen(false);
+    setNotificationTitle("");
+    setNotificationMessage("");
+    showToast(`Notification sent to ${notificationAudience}`, "success");
   };
 
   const getStatusBadge = (status) => {
@@ -124,7 +210,46 @@ const SystemDashboard = () => {
 
   return (
     <div className="h-full">
+      {/* Toast Notifications Container */}
+      <div className="fixed right-4 top-4 z-50 space-y-2">
+        {toasts.map((toast) => (
+          <div
+            key={toast.id}
+            className={`flex items-center rounded-lg p-4 shadow-lg transition-all duration-300 ${
+              toast.type === "success"
+                ? "bg-green-500 text-white"
+                : toast.type === "error"
+                ? "bg-red-500 text-white"
+                : toast.type === "warning"
+                ? "bg-yellow-500 text-white"
+                : "bg-blue-500 text-white"
+            }`}
+          >
+            <div className="mr-3">
+              {toast.type === "success" && (
+                <MdCheckCircle className="h-5 w-5" />
+              )}
+              {toast.type === "error" && <MdCancel className="h-5 w-5" />}
+              {toast.type === "warning" && <MdWarning className="h-5 w-5" />}
+              {toast.type === "info" && <MdInfo className="h-5 w-5" />}
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-medium">{toast.message}</p>
+            </div>
+            <button
+              onClick={() =>
+                setToasts((prev) => prev.filter((t) => t.id !== toast.id))
+              }
+              className="ml-4 text-white opacity-70 hover:opacity-100"
+            >
+              ×
+            </button>
+          </div>
+        ))}
+      </div>
+
       {/* Modals */}
+
       {/* Restart System Modal */}
       <Modal
         isOpen={restartModalOpen}
@@ -299,6 +424,227 @@ const SystemDashboard = () => {
         </div>
       </Modal>
 
+      {/* Notification Modal */}
+      <Modal
+        isOpen={notificationModalOpen}
+        onClose={() => {
+          setNotificationModalOpen(false);
+          setNotificationTitle("");
+          setNotificationMessage("");
+        }}
+        title="Send System Notification"
+        size="md"
+      >
+        <div className="space-y-6">
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Notification Title
+            </label>
+            <input
+              type="text"
+              placeholder="Enter notification title..."
+              value={notificationTitle}
+              onChange={(e) => setNotificationTitle(e.target.value)}
+              className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
+            />
+          </div>
+
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Notification Message
+            </label>
+            <textarea
+              placeholder="Enter notification message..."
+              rows="4"
+              value={notificationMessage}
+              onChange={(e) => setNotificationMessage(e.target.value)}
+              className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
+            />
+          </div>
+
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Target Audience
+            </label>
+            <select
+              value={notificationAudience}
+              onChange={(e) => setNotificationAudience(e.target.value)}
+              className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
+            >
+              <option>All Users</option>
+              <option>Patients Only</option>
+              <option>Healthcare Providers Only</option>
+              <option>Clinic Administrators</option>
+              <option>Specific Region</option>
+            </select>
+          </div>
+
+          <div className="flex justify-end gap-3">
+            <button
+              onClick={() => {
+                setNotificationModalOpen(false);
+                setNotificationTitle("");
+                setNotificationMessage("");
+              }}
+              className="rounded-lg border border-gray-300 px-6 py-3 font-medium transition-all duration-200 hover:scale-105 hover:bg-gray-50 dark:border-gray-600"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={sendNotification}
+              className="rounded-lg bg-brand-500 px-6 py-3 font-medium text-white transition-all duration-200 hover:scale-105 hover:bg-brand-600"
+            >
+              Send Notification
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Approve Clinic Modal */}
+      <Modal
+        isOpen={approveClinicModalOpen}
+        onClose={() => setApproveClinicModalOpen(false)}
+        title="Approve Clinic Registration"
+        size="md"
+      >
+        <div className="space-y-6">
+          <div className="text-center">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
+              <MdCheckCircle className="h-8 w-8 text-green-600" />
+            </div>
+            <h4 className="mb-2 text-xl font-bold text-navy-700 dark:text-white">
+              Approve {selectedClinic?.name}?
+            </h4>
+            <p className="text-gray-600 dark:text-gray-300">
+              This clinic will be activated and visible to patients. A
+              confirmation email will be sent to the clinic administrator.
+            </p>
+          </div>
+
+          <div className="rounded-lg bg-gray-50 p-4 dark:bg-navy-700">
+            <div className="space-y-3">
+              <div className="flex justify-between">
+                <span className="text-sm text-gray-600 dark:text-gray-300">
+                  Location:
+                </span>
+                <span className="font-medium">{selectedClinic?.location}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm text-gray-600 dark:text-gray-300">
+                  Type:
+                </span>
+                <span className="font-medium">{selectedClinic?.type}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm text-gray-600 dark:text-gray-300">
+                  Submitted:
+                </span>
+                <span className="font-medium">{selectedClinic?.submitted}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm text-gray-600 dark:text-gray-300">
+                  Documents:
+                </span>
+                <span
+                  className={`font-medium ${
+                    selectedClinic?.documents === "3/3"
+                      ? "text-green-600 dark:text-green-400"
+                      : "text-yellow-600 dark:text-yellow-400"
+                  }`}
+                >
+                  {selectedClinic?.documents}{" "}
+                  {selectedClinic?.documents === "3/3"
+                    ? "(Complete)"
+                    : "(Incomplete)"}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3">
+            <button
+              onClick={() => setApproveClinicModalOpen(false)}
+              className="rounded-lg border border-gray-300 px-6 py-3 font-medium transition-all duration-200 hover:scale-105 hover:bg-gray-50 dark:border-gray-600"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={confirmApproveClinic}
+              className="rounded-lg bg-green-500 px-6 py-3 font-medium text-white transition-all duration-200 hover:scale-105 hover:bg-green-600"
+            >
+              Approve Clinic
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Reject Clinic Modal */}
+      <Modal
+        isOpen={rejectClinicModalOpen}
+        onClose={() => {
+          setRejectClinicModalOpen(false);
+          setRejectReason("");
+        }}
+        title="Reject Clinic Registration"
+        size="md"
+      >
+        <div className="space-y-6">
+          <div className="text-center">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-100">
+              <MdCancel className="h-8 w-8 text-red-600" />
+            </div>
+            <h4 className="mb-2 text-xl font-bold text-navy-700 dark:text-white">
+              Reject {selectedClinic?.name}?
+            </h4>
+            <p className="text-gray-600 dark:text-gray-300">
+              This clinic will not be activated. You can provide feedback on why
+              the registration was rejected.
+            </p>
+          </div>
+
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Rejection Reason (Optional)
+            </label>
+            <textarea
+              placeholder="Provide details for rejection..."
+              rows="3"
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+              className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
+            />
+          </div>
+
+          <div className="rounded-lg bg-yellow-50 p-4 dark:bg-yellow-900/20">
+            <div className="flex items-start">
+              <MdWarning className="mr-2 mt-0.5 h-5 w-5 text-yellow-600" />
+              <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                <strong>Note:</strong> The clinic administrator will be notified
+                of this rejection.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3">
+            <button
+              onClick={() => {
+                setRejectClinicModalOpen(false);
+                setRejectReason("");
+              }}
+              className="rounded-lg border border-gray-300 px-6 py-3 font-medium transition-all duration-200 hover:scale-105 hover:bg-gray-50 dark:border-gray-600"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={confirmRejectClinic}
+              className="rounded-lg bg-red-500 px-6 py-3 font-medium text-white transition-all duration-200 hover:scale-105 hover:bg-red-600"
+            >
+              Reject Clinic
+            </button>
+          </div>
+        </div>
+      </Modal>
+
       {/* Header */}
       <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
@@ -370,7 +716,10 @@ const SystemDashboard = () => {
             <h5 className="text-lg font-bold text-navy-700 dark:text-white">
               🔔 System Alerts
             </h5>
-            <button className="rounded-lg bg-gray-100 px-3 py-1 text-xs font-medium transition-all duration-200 hover:scale-105 hover:bg-gray-200 dark:bg-navy-700">
+            <button
+              onClick={handleClearAlerts}
+              className="rounded-lg bg-gray-100 px-3 py-1 text-xs font-medium transition-all duration-200 hover:scale-105 hover:bg-gray-200 dark:bg-navy-700"
+            >
               Clear All
             </button>
           </div>
@@ -435,7 +784,11 @@ const SystemDashboard = () => {
       <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-3">
         {/* Registration Queue */}
         <div className="lg:col-span-2">
-          <RegistrationQueue />
+          <RegistrationQueue
+            onApprove={handleApproveClinic}
+            onReject={handleRejectClinic}
+            onViewAll={handleViewAllRegistrations}
+          />
         </div>
 
         {/* Quick Metrics */}
@@ -467,6 +820,28 @@ const SystemDashboard = () => {
                   3
                 </span>
               </div>
+              <div className="flex items-center justify-between transition-all duration-300 hover:scale-[1.02]">
+                <div className="flex items-center">
+                  <MdEmail className="mr-3 h-5 w-5 text-blue-500" />
+                  <span className="text-gray-600 dark:text-gray-300">
+                    Pending Emails
+                  </span>
+                </div>
+                <span className="rounded-full bg-blue-100 px-3 py-1 text-sm font-bold text-blue-700 transition-all duration-200 hover:scale-105 dark:bg-blue-900 dark:text-blue-300">
+                  47
+                </span>
+              </div>
+              <div className="flex items-center justify-between transition-all duration-300 hover:scale-[1.02]">
+                <div className="flex items-center">
+                  <MdSchedule className="mr-3 h-5 w-5 text-purple-500" />
+                  <span className="text-gray-600 dark:text-gray-300">
+                    Maintenance Tasks
+                  </span>
+                </div>
+                <span className="rounded-full bg-purple-100 px-3 py-1 text-sm font-bold text-purple-700 transition-all duration-200 hover:scale-105 dark:bg-purple-900 dark:text-purple-300">
+                  5
+                </span>
+              </div>
             </div>
           </div>
 
@@ -481,8 +856,14 @@ const SystemDashboard = () => {
               <div className="mt-2 h-2 w-full rounded-full bg-green-200">
                 <div className="h-2 w-3/4 rounded-full bg-white transition-all duration-1000"></div>
               </div>
+              <div className="mt-1 text-xs opacity-80">
+                Last purchase: 2 days ago
+              </div>
             </div>
-            <button className="linear w-full rounded-xl bg-white py-2 font-medium text-green-600 transition-all duration-200 hover:scale-105 hover:bg-gray-100">
+            <button
+              onClick={handleAddCredits}
+              className="linear w-full rounded-xl bg-white py-2 font-medium text-green-600 transition-all duration-200 hover:scale-105 hover:bg-gray-100"
+            >
               Add Credits
             </button>
           </div>
@@ -494,7 +875,7 @@ const SystemDashboard = () => {
             </h5>
             <div className="space-y-3">
               <button
-                onClick={() => showToast("System log downloaded", "success")}
+                onClick={handleDownloadLogs}
                 className="w-full rounded-lg bg-blue-50 py-3 text-sm font-medium text-blue-700 transition-all duration-200 hover:scale-105 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-300"
               >
                 Download System Logs
@@ -506,12 +887,16 @@ const SystemDashboard = () => {
                 Create Full Backup
               </button>
               <button
-                onClick={() =>
-                  showToast("Cache cleared successfully", "success")
-                }
+                onClick={handleClearCache}
                 className="w-full rounded-lg border border-red-300 py-3 text-sm font-medium text-red-700 transition-all duration-200 hover:scale-105 hover:bg-red-50 dark:border-red-700 dark:text-red-400"
               >
                 Clear System Cache
+              </button>
+              <button
+                onClick={() => showToast("Audit report generated", "info")}
+                className="w-full rounded-lg border border-purple-300 py-3 text-sm font-medium text-purple-700 transition-all duration-200 hover:scale-105 hover:bg-purple-50 dark:border-purple-700 dark:text-purple-400"
+              >
+                Generate Audit Report
               </button>
             </div>
           </div>
@@ -570,6 +955,11 @@ const SystemDashboard = () => {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Last Updated Footer */}
+      <div className="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
+        Last updated: {new Date().toLocaleString()} • System Version: 2.4.1
       </div>
     </div>
   );
