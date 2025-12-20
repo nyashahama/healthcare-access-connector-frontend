@@ -81,5 +81,17 @@ const authService = {
     const response = await apiClient.get(`/api/v1/verify-email?token=${token}`);
     return response.data;
   },
+
+  /**
+   * Request password reset
+   * @param {string} identifier - Email or phone
+   * @returns {Promise<Object>} Success message
+   */
+  requestPasswordReset: async (identifier) => {
+    const response = await apiClient.post("/api/v1/password/reset-request", {
+      identifier,
+    });
+    return response.data;
+  },
 };
 export default authService;
