@@ -130,4 +130,22 @@ export const useAuth = () => {
       return { success: false, error: errorMessage };
     }
   }, []);
+
+  //Update password
+  const updatePassword = useCallback(async (userId, data) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await authService.updatePassword(userId, data);
+      setLoading(false);
+      return { success: true, data: response };
+    } catch (err) {
+      const errorMessage =
+        err.response?.data?.error || "Password update failed";
+      setError(errorMessage);
+      setLoading(false);
+      return { success: false, error: errorMessage };
+    }
+  }, []);
 };
