@@ -43,5 +43,22 @@ export const useAuth = () => {
       setLoading(false);
       return { success: false, error: errorMessage };
     }
-  });
+  }, []);
+
+  //log out a user
+  const logout = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      await authService.logout();
+      navigate("/signin");
+      setLoading(false);
+      return { success: true };
+    } catch (err) {
+      const errorMessage = err.response?.data?.error || "Couldn't log out";
+      setError(errorMessage);
+      setLoading(false);
+      return { success: false, error: errorMessage };
+    }
+  }, [navigate]);
 };
