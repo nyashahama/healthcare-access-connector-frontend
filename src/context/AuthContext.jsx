@@ -71,10 +71,35 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem("user");
-  };
+  /**
+   * Logout user and clear global state
+   * @returns {Promise<Object>} { success, error }
+   */
+  const logout = useCallback(async () => {
+    try {
+      setLoading(true);
+
+      // Call auth service (handles API call + localStorage cleanup)
+      await authService.logout();
+
+      // Clear global state
+      setUser(null);
+      setIsAuthenticated(false);
+
+      return { success: true };
+    } catch (error) {
+      const errorMessage = error.response?.data?.error || "Logout failed";
+      console.error("Logout error:", error);
+
+      // Still clear state even if API call fails
+      setUser(null);
+      setIsAuthenticated(false);
+
+      return { success: false, error: errorMessage };
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   const value = {
     user,
