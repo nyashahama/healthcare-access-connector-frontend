@@ -153,5 +153,14 @@ const authService = {
     const response = await apiClient.get(`/api/v1/users/${userId}/consent`);
     return response.data;
   },
+
+  /**
+   * Get current user from localStorage
+   * @returns {Object|null} User object or null
+   */
+  getCurrentUser: () => {
+    const userStr = localStorage.getItem("user");
+    return userStr ? JSON.parse(userStr) : null;
+  },
 };
 export default authService;
