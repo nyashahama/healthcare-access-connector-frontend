@@ -105,5 +105,17 @@ const authService = {
     const response = await apiClient.post("/api/v1/password/reset", data);
     return response.data;
   },
+
+  /**
+   * Resend verification email
+   * @param {string} email - User email
+   * @returns {Promise<Object>} Success message
+   */
+  resendVerification: async (email) => {
+    const response = await apiClient.post("/api/v1/auth/resend-verification", {
+      email,
+    });
+    return response.data;
+  },
 };
 export default authService;
