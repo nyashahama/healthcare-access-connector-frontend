@@ -117,5 +117,15 @@ const authService = {
     });
     return response.data;
   },
+
+  /**
+   * Get user profile
+   * @param {string} userId - User ID
+   * @returns {Promise<Object>} User profile data
+   */
+  getProfile: async (userId) => {
+    const response = await apiClient.get(`/api/v1/users/${userId}`);
+    return response.data;
+  },
 };
 export default authService;
