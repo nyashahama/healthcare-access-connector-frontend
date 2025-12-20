@@ -101,11 +101,68 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
+  /**
+   * Update user data in state
+   * Useful when user profile is updated
+   * @param {Object} userData - Updated user data
+   */
+  const updateUser = useCallback((userData) => {
+    setUser(userData);
+    localStorage.setItem("user", JSON.stringify(userData));
+  }, []);
+
+  /**
+   * Refresh authentication state from localStorage
+   * Useful after token refresh or external updates
+   */
+  const refreshAuth = useCallback(() => {
+    const authenticated = authService.isAuthenticated();
+    const currentUser = authService.getCurrentUser();
+
+    setIsAuthenticated(authenticated);
+    setUser(currentUser);
+  }, []);
+
+  /**
+   * Check if user has a specific role
+   * @param {string} role - Role to check
+   * @returns {boolean}
+   */
+  const hasRole = useCallback(
+    (role) => {
+      return user?.role === role;
+    },
+    [user]
+  );
+
+  /**
+   * Check if user has any of the specified roles
+   * @param {string[]} roles - Array of roles to check
+   * @returns {boolean}
+   */
+  const hasAnyRole = useCallback(
+    (roles) => {
+      return roles.includes(user?.role);
+    },
+    [user]
+  );
+
   const value = {
+    // State
     user,
+    loading,
+    isAuthenticated,
+
+    // Methods
     login,
     logout,
-    loading,
+    updateUser,
+    refreshAuth,
+    hasRole,
+    hasAnyRole,
+
+    // Utility methods from service
+    getToken: authService.getToken,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
