@@ -1,7 +1,5 @@
-// src/api/apiClient.js
 import axios from "axios";
 
-// Use process.env for Create React App (not import.meta.env which is for Vite)
 const API_URL = process.env.REACT_APP_API_URL || "http://localhost:8089";
 
 console.log("API URL from env:", API_URL);
@@ -13,6 +11,9 @@ const apiClient = axios.create({
     "Content-Type": "application/json",
   },
 });
+
+// Track if we're already redirecting to prevent multiple redirects
+let isRedirecting = false;
 
 // Request interceptor - Add auth token to requests
 apiClient.interceptors.request.use(
@@ -34,9 +35,6 @@ apiClient.interceptors.response.use(
     if (error.response?.status === 401) {
       const currentPath = window.location.pathname;
 
-      // Don't redirect if:
-      // 1. Already on an auth page
-      // 2. The request was a logout attempt (which can fail if session already expired)
       const isAuthPage =
         currentPath.includes("/auth/") ||
         currentPath.includes("/signin") ||
@@ -46,7 +44,10 @@ apiClient.interceptors.response.use(
 
       const isLogoutRequest = error.config?.url?.includes("/logout");
 
-      if (!isAuthPage && !isLogoutRequest) {
+      if (!isAuthPage && !isLogoutRequest && !isRedirecting) {
+        // Set flag to prevent multiple redirects
+        isRedirecting = true;
+
         // Clear auth data
         localStorage.removeItem("token");
         localStorage.removeItem("user");
@@ -54,6 +55,11 @@ apiClient.interceptors.response.use(
 
         // Redirect to signin
         window.location.href = "/auth/sign-in";
+
+        // Reset flag after redirect
+        setTimeout(() => {
+          isRedirecting = false;
+        }, 1000);
       }
     }
 

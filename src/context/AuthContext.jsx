@@ -1,10 +1,11 @@
-// src/context/AuthContext.jsx
 import React, {
   createContext,
   useContext,
   useState,
   useEffect,
   useCallback,
+  useMemo,
+  useRef,
 } from "react";
 import authService from "../api/services/authService";
 
@@ -23,52 +24,63 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
+  // Use ref to track if component is mounted
+  const isMounted = useRef(true);
+
   // Initialize auth state from localStorage on mount
   useEffect(() => {
     const initializeAuth = () => {
       try {
-        // Check if user is authenticated
         const authenticated = authService.isAuthenticated();
         const currentUser = authService.getCurrentUser();
 
         if (authenticated && currentUser) {
-          setUser(currentUser);
-          setIsAuthenticated(true);
+          if (isMounted.current) {
+            setUser(currentUser);
+            setIsAuthenticated(true);
+          }
         } else {
-          // Clear any stale data silently (no API call)
           authService.clearAuthData();
-          setUser(null);
-          setIsAuthenticated(false);
+          if (isMounted.current) {
+            setUser(null);
+            setIsAuthenticated(false);
+          }
         }
       } catch (error) {
         console.error("Error initializing auth:", error);
         authService.clearAuthData();
-        setUser(null);
-        setIsAuthenticated(false);
+        if (isMounted.current) {
+          setUser(null);
+          setIsAuthenticated(false);
+        }
       } finally {
-        setLoading(false);
+        if (isMounted.current) {
+          setLoading(false);
+        }
       }
     };
 
     initializeAuth();
+
+    // Cleanup function
+    return () => {
+      isMounted.current = false;
+    };
   }, []);
 
-  /**
-   * Login user and update global state
-   * @param {Object} credentials - { identifier, password }
-   * @returns {Promise<Object>} { success, data, error }
-   */
   const login = useCallback(async (credentials) => {
     try {
-      setLoading(true);
+      if (!isMounted.current)
+        return { success: false, error: "Component unmounted" };
 
-      // Call auth service
+      setLoading(true);
       const response = await authService.login(credentials);
       const { user: userData } = response;
 
-      // Update global state
-      setUser(userData);
-      setIsAuthenticated(true);
+      if (isMounted.current) {
+        setUser(userData);
+        setIsAuthenticated(true);
+      }
 
       return { success: true, data: response };
     } catch (error) {
@@ -76,68 +88,61 @@ export const AuthProvider = ({ children }) => {
       console.error("Login error:", error);
       return { success: false, error: errorMessage };
     } finally {
-      setLoading(false);
+      if (isMounted.current) {
+        setLoading(false);
+      }
     }
   }, []);
 
-  /**
-   * Logout user and clear global state
-   * @returns {Promise<Object>} { success, error }
-   */
   const logout = useCallback(async () => {
     try {
-      setLoading(true);
+      if (!isMounted.current)
+        return { success: false, error: "Component unmounted" };
 
-      // Call auth service (handles API call + localStorage cleanup)
+      setLoading(true);
       await authService.logout();
 
-      // Clear global state
-      setUser(null);
-      setIsAuthenticated(false);
+      if (isMounted.current) {
+        setUser(null);
+        setIsAuthenticated(false);
+      }
 
       return { success: true };
     } catch (error) {
       const errorMessage = error.response?.data?.error || "Logout failed";
       console.error("Logout error:", error);
 
-      // Still clear state even if API call fails
       authService.clearAuthData();
-      setUser(null);
-      setIsAuthenticated(false);
+      if (isMounted.current) {
+        setUser(null);
+        setIsAuthenticated(false);
+      }
 
       return { success: false, error: errorMessage };
     } finally {
-      setLoading(false);
+      if (isMounted.current) {
+        setLoading(false);
+      }
     }
   }, []);
 
-  /**
-   * Update user data in state
-   * Useful when user profile is updated
-   * @param {Object} userData - Updated user data
-   */
   const updateUser = useCallback((userData) => {
-    setUser(userData);
-    localStorage.setItem("user", JSON.stringify(userData));
+    if (isMounted.current) {
+      setUser(userData);
+      localStorage.setItem("user", JSON.stringify(userData));
+    }
   }, []);
 
-  /**
-   * Refresh authentication state from localStorage
-   * Useful after token refresh or external updates
-   */
   const refreshAuth = useCallback(() => {
-    const authenticated = authService.isAuthenticated();
-    const currentUser = authService.getCurrentUser();
+    if (isMounted.current) {
+      const authenticated = authService.isAuthenticated();
+      const currentUser = authService.getCurrentUser();
 
-    setIsAuthenticated(authenticated);
-    setUser(currentUser);
+      setIsAuthenticated(authenticated);
+      setUser(currentUser);
+    }
   }, []);
 
-  /**
-   * Check if user has a specific role
-   * @param {string} role - Role to check
-   * @returns {boolean}
-   */
   const hasRole = useCallback(
     (role) => {
       return user?.role === role;
@@ -145,11 +150,6 @@ export const AuthProvider = ({ children }) => {
     [user]
   );
 
-  /**
-   * Check if user has any of the specified roles
-   * @param {string[]} roles - Array of roles to check
-   * @returns {boolean}
-   */
   const hasAnyRole = useCallback(
     (roles) => {
       return roles.includes(user?.role);
@@ -157,23 +157,32 @@ export const AuthProvider = ({ children }) => {
     [user]
   );
 
-  const value = {
-    // State
-    user,
-    loading,
-    isAuthenticated,
-
-    // Methods
-    login,
-    logout,
-    updateUser,
-    refreshAuth,
-    hasRole,
-    hasAnyRole,
-
-    // Utility methods from service
-    getToken: authService.getToken,
-  };
+  // Memoize the context value to prevent unnecessary re-renders
+  const value = useMemo(
+    () => ({
+      user,
+      loading,
+      isAuthenticated,
+      login,
+      logout,
+      updateUser,
+      refreshAuth,
+      hasRole,
+      hasAnyRole,
+      getToken: authService.getToken,
+    }),
+    [
+      user,
+      loading,
+      isAuthenticated,
+      login,
+      logout,
+      updateUser,
+      refreshAuth,
+      hasRole,
+      hasAnyRole,
+    ]
+  );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

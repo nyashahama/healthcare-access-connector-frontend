@@ -1,17 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import InputField from "components/fields/InputField";
 import {
-  FaUser,
-  FaEnvelope,
-  FaPhone,
-  FaLock,
   FaEye,
   FaEyeSlash,
-  FaIdCard,
-  FaMapMarkerAlt,
-  FaBirthdayCake,
-  FaVenusMars,
   FaUserInjured,
   FaUserMd,
   FaUserShield,
@@ -19,36 +11,46 @@ import {
 import { MdHealthAndSafety, MdArrowBack } from "react-icons/md";
 import Checkbox from "components/checkbox";
 import { useToast } from "hooks/useToast";
-import { useAuth } from "hooks/useAuth";
+import { useAuth } from "context/AuthContext";
 
 const SignUp = () => {
   const [step, setStep] = useState(1);
   const [userType, setUserType] = useState("patient");
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
-    // Step 1
     firstName: "",
     lastName: "",
     email: "",
     phone: "",
     password: "",
     confirmPassword: "",
-
-    // Step 2
     idNumber: "",
     dateOfBirth: "",
     gender: "",
     address: "",
     city: "",
     postalCode: "",
-
-    // Terms
     termsAccepted: false,
     newsletter: true,
   });
+
   const navigate = useNavigate();
   const { showToast } = useToast();
-  const { register, loading: authLoading } = useAuth();
+  const { login, loading: authLoading } = useAuth();
+
+  // Use ref to track if component is mounted
+  const isMounted = useRef(true);
+  const navigationTimeout = useRef(null);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      isMounted.current = false;
+      if (navigationTimeout.current) {
+        clearTimeout(navigationTimeout.current);
+      }
+    };
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -79,7 +81,6 @@ const SignUp = () => {
       showToast("Please enter your phone number", "warning");
       return false;
     }
-    // Validate South African phone number
     const phoneRegex = /^(?:(?:\+27|0)[\s-]?[1-9][\d\s-]{8,9})$/;
     if (!phoneRegex.test(formData.phone.replace(/\s/g, ""))) {
       showToast("Please enter a valid South African phone number", "warning");
@@ -112,7 +113,6 @@ const SignUp = () => {
       showToast("Please enter your ID number", "warning");
       return false;
     }
-    // Validate South African ID number (13 digits)
     const idRegex = /^[0-9]{13}$/;
     if (!idRegex.test(formData.idNumber.replace(/\s/g, ""))) {
       showToast(
@@ -147,7 +147,6 @@ const SignUp = () => {
     }
 
     try {
-      // Prepare registration data
       const registrationData = {
         email: formData.email,
         phone: formData.phone,
@@ -164,7 +163,9 @@ const SignUp = () => {
         newsletter: formData.newsletter,
       };
 
-      const result = await register(registrationData);
+      const result = await login(registrationData);
+
+      if (!isMounted.current) return;
 
       if (result.success) {
         showToast(
@@ -172,16 +173,19 @@ const SignUp = () => {
           "success"
         );
 
-        // Auto-login or redirect to sign-in
-        setTimeout(() => {
-          navigate("/auth/sign-in");
+        navigationTimeout.current = setTimeout(() => {
+          if (isMounted.current) {
+            navigate("/auth/sign-in");
+          }
         }, 2000);
       } else {
         showToast(result.error || "Registration failed", "error");
       }
     } catch (error) {
-      showToast("An unexpected error occurred", "error");
-      console.error("Registration error:", error);
+      if (isMounted.current) {
+        showToast("An unexpected error occurred", "error");
+        console.error("Registration error:", error);
+      }
     }
   };
 
@@ -202,10 +206,10 @@ const SignUp = () => {
         </div>
 
         {/* Progress Steps */}
-        <div className="mb-6">
+        <div className="relative mb-6">
           <div className="flex items-center justify-between">
             {[1, 2].map((stepNum) => (
-              <div key={stepNum} className="flex flex-col items-center">
+              <div key={stepNum} className="z-10 flex flex-col items-center">
                 <div
                   className={`flex h-8 w-8 items-center justify-center rounded-full ${
                     step >= stepNum
@@ -220,8 +224,11 @@ const SignUp = () => {
                 </span>
               </div>
             ))}
-            <div className="absolute left-0 right-0 top-4 -z-10 h-0.5 bg-gray-200 dark:bg-gray-700"></div>
           </div>
+          <div
+            className="absolute left-0 right-0 top-4 h-0.5 bg-gray-200 dark:bg-gray-700"
+            style={{ zIndex: 0 }}
+          ></div>
         </div>
 
         {/* Main Card */}
@@ -241,7 +248,8 @@ const SignUp = () => {
                   key={role.id}
                   type="button"
                   onClick={() => setUserType(role.id)}
-                  className={`flex flex-col items-center rounded-xl px-3 py-4 transition-all ${
+                  disabled={authLoading}
+                  className={`flex flex-col items-center rounded-xl px-3 py-4 transition-all disabled:cursor-not-allowed disabled:opacity-50 ${
                     userType === role.id
                       ? "border-2 border-brand-500 bg-brand-50 text-brand-700 dark:border-brand-500 dark:bg-brand-900/20"
                       : "border border-gray-200 bg-gray-50 text-gray-600 hover:border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
@@ -324,7 +332,7 @@ const SignUp = () => {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-10 text-gray-500"
+                  className="absolute right-3 top-10 text-gray-500 disabled:cursor-not-allowed disabled:opacity-50"
                   disabled={authLoading}
                 >
                   {showPassword ? <FaEyeSlash /> : <FaEye />}
@@ -383,11 +391,11 @@ const SignUp = () => {
                         setFormData((prev) => ({ ...prev, gender }))
                       }
                       disabled={authLoading}
-                      className={`rounded-lg px-3 py-2 text-sm transition-colors ${
+                      className={`rounded-lg px-3 py-2 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
                         formData.gender === gender
                           ? "bg-brand-500 text-white"
                           : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300"
-                      } disabled:cursor-not-allowed disabled:opacity-50`}
+                      }`}
                     >
                       {gender}
                     </button>

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import InputField from "components/fields/InputField";
 import { FcGoogle } from "react-icons/fc";
@@ -11,7 +11,7 @@ import {
 } from "react-icons/fa";
 import Checkbox from "components/checkbox";
 import { useToast } from "hooks/useToast";
-import { useAuth } from "hooks/useAuth"; // This should be your custom hook
+import { useAuth } from "context/AuthContext"; // Use AuthContext instead of useAuth hook
 
 export default function SignIn() {
   const [userType, setUserType] = useState("patient");
@@ -27,17 +27,29 @@ export default function SignIn() {
   const { showToast } = useToast();
   const { login, loading: authLoading } = useAuth();
 
+  // Use ref to track if component is mounted
+  const isMounted = useRef(true);
+  // Use ref to track navigation timeout
+  const navigationTimeout = useRef(null);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      isMounted.current = false;
+      if (navigationTimeout.current) {
+        clearTimeout(navigationTimeout.current);
+      }
+    };
+  }, []);
+
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
 
-    // For checkboxes
     if (type === "checkbox") {
       if (name === "rememberMe") {
         setRememberMe(checked);
       }
-    }
-    // For text/email/password inputs
-    else {
+    } else {
       setCredentials((prev) => ({
         ...prev,
         [name]: value,
@@ -47,7 +59,6 @@ export default function SignIn() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Form submitted with:", credentials); // Debug log
 
     // Validation
     if (!credentials.identifier.trim()) {
@@ -64,12 +75,12 @@ export default function SignIn() {
 
     try {
       const result = await login(credentials);
-      console.log("Login result:", result); // Debug log
+
+      if (!isMounted.current) return; // Don't update state if unmounted
 
       if (result.success) {
         showToast("Login successful!", "success");
 
-        // Get user role and redirect accordingly
         const user = result.data?.user;
         if (user) {
           // Store remember me preference
@@ -81,7 +92,9 @@ export default function SignIn() {
 
           // Redirect based on user role
           const role = user.role || userType;
-          setTimeout(() => {
+          navigationTimeout.current = setTimeout(() => {
+            if (!isMounted.current) return;
+
             switch (role) {
               case "patient":
                 navigate("/patient/dashboard");
@@ -104,10 +117,14 @@ export default function SignIn() {
         showToast(result.error || "Login failed", "error");
       }
     } catch (error) {
-      console.error("Login error details:", error); // Debug log
-      showToast("An unexpected error occurred", "error");
+      if (isMounted.current) {
+        showToast("An unexpected error occurred", "error");
+        console.error("Login error:", error);
+      }
     } finally {
-      setIsLoading(false);
+      if (isMounted.current) {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -134,7 +151,8 @@ export default function SignIn() {
             <button
               type="button"
               onClick={() => setUserType("patient")}
-              className={`linear rounded-xl px-4 py-3 text-center transition duration-200 ${
+              disabled={isLoading || authLoading}
+              className={`linear rounded-xl px-4 py-3 text-center transition duration-200 disabled:cursor-not-allowed disabled:opacity-50 ${
                 userType === "patient"
                   ? "bg-brand-500 text-white"
                   : "bg-gray-100 text-gray-600 dark:bg-navy-800 dark:text-white"
@@ -146,7 +164,8 @@ export default function SignIn() {
             <button
               type="button"
               onClick={() => setUserType("provider")}
-              className={`linear rounded-xl px-4 py-3 text-center transition duration-200 ${
+              disabled={isLoading || authLoading}
+              className={`linear rounded-xl px-4 py-3 text-center transition duration-200 disabled:cursor-not-allowed disabled:opacity-50 ${
                 userType === "provider"
                   ? "bg-brand-500 text-white"
                   : "bg-gray-100 text-gray-600 dark:bg-navy-800 dark:text-white"
@@ -158,7 +177,8 @@ export default function SignIn() {
             <button
               type="button"
               onClick={() => setUserType("admin")}
-              className={`linear rounded-xl px-4 py-3 text-center transition duration-200 ${
+              disabled={isLoading || authLoading}
+              className={`linear rounded-xl px-4 py-3 text-center transition duration-200 disabled:cursor-not-allowed disabled:opacity-50 ${
                 userType === "admin"
                   ? "bg-brand-500 text-white"
                   : "bg-gray-100 text-gray-600 dark:bg-navy-800 dark:text-white"
@@ -185,8 +205,7 @@ export default function SignIn() {
         <div className="mb-6 flex items-center gap-3">
           <div className="h-px w-full bg-gray-200 dark:bg-navy-700" />
           <p className="text-base text-gray-600 dark:text-white">
-            {" "}
-            or continue with{" "}
+            or continue with
           </p>
           <div className="h-px w-full bg-gray-200 dark:bg-navy-700" />
         </div>
@@ -195,14 +214,14 @@ export default function SignIn() {
         <button
           type="button"
           onClick={handleGoogleLogin}
-          className="mb-6 flex w-full items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white py-3 text-gray-700 transition hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300"
+          disabled={isLoading || authLoading}
+          className="mb-6 flex w-full items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white py-3 text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300"
         >
           <FcGoogle className="h-5 w-5" />
           <span>Continue with Google</span>
         </button>
 
         <form onSubmit={handleSubmit}>
-          {/* Email/Phone */}
           <InputField
             variant="auth"
             extra="mb-3"
@@ -216,7 +235,6 @@ export default function SignIn() {
             disabled={isLoading || authLoading}
           />
 
-          {/* Password with show/hide */}
           <div className="relative mb-3">
             <InputField
               variant="auth"
@@ -231,14 +249,14 @@ export default function SignIn() {
             />
             <button
               type="button"
-              className="absolute right-3 top-10 text-gray-500 hover:text-gray-700"
+              className="absolute right-3 top-10 text-gray-500 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-50"
               onClick={() => setShowPassword(!showPassword)}
+              disabled={isLoading || authLoading}
             >
               {showPassword ? <FaEyeSlash /> : <FaEye />}
             </button>
           </div>
 
-          {/* Checkbox and Forgot Password */}
           <div className="mb-4 flex items-center justify-between px-2">
             <div className="flex items-center">
               <Checkbox
@@ -259,7 +277,6 @@ export default function SignIn() {
             </Link>
           </div>
 
-          {/* Submit Button */}
           <button
             type="submit"
             disabled={isLoading || authLoading}
@@ -292,15 +309,6 @@ export default function SignIn() {
             )}
           </button>
         </form>
-
-        {/* Debug section - remove in production */}
-        <div className="mt-4 rounded border p-2 text-xs text-gray-500">
-          <p>Debug Info:</p>
-          <p>Identifier: {credentials.identifier}</p>
-          <p>Password length: {credentials.password.length}</p>
-          <p>Remember me: {rememberMe ? "Yes" : "No"}</p>
-          <p>Loading: {isLoading || authLoading ? "Yes" : "No"}</p>
-        </div>
 
         {/* Emergency Notice */}
         <div className="mt-6 rounded-xl bg-red-50 p-4 dark:bg-red-900/20">
