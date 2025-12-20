@@ -166,4 +166,22 @@ export const useAuth = () => {
       return { success: false, error: errorMessage };
     }
   }, []);
+
+  //Get consent settings
+  const getConsent = useCallback(async (userId) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await authService.getConsent(userId);
+      setLoading(false);
+      return { success: true, data: response };
+    } catch (err) {
+      const errorMessage =
+        err.response?.data?.error || "Failed to load consent";
+      setError(errorMessage);
+      setLoading(false);
+      return { success: false, error: errorMessage };
+    }
+  }, []);
 };
