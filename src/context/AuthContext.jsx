@@ -44,10 +44,32 @@ export const AuthProvider = ({ children }) => {
     initializeAuth();
   }, []);
 
-  const login = (userData) => {
-    setUser(userData);
-    localStorage.setItem("user", JSON.stringify(userData));
-  };
+  /**
+   * Login user and update global state
+   * @param {Object} credentials - { identifier, password }
+   * @returns {Promise<Object>} { success, data, error }
+   */
+  const login = useCallback(async (credentials) => {
+    try {
+      setLoading(true);
+
+      // Call auth service
+      const response = await authService.login(credentials);
+      const { user: userData } = response;
+
+      // Update global state
+      setUser(userData);
+      setIsAuthenticated(true);
+
+      return { success: true, data: response };
+    } catch (error) {
+      const errorMessage = error.response?.data?.error || "Login failed";
+      console.error("Login error:", error);
+      return { success: false, error: errorMessage };
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   const logout = () => {
     setUser(null);
