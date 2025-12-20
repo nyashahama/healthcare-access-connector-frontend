@@ -95,4 +95,21 @@ export const useAuth = () => {
       return { success: false, error: errorMessage };
     }
   }, []);
+
+  // Reset password
+  const resetPassword = useCallback(async (data) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await authService.resetPassword(data);
+      setLoading(false);
+      return { success: true, data: response };
+    } catch (err) {
+      const errorMessage = err.response?.data?.error || "Password reset failed";
+      setError(errorMessage);
+      setLoading(false);
+      return { success: false, error: errorMessage };
+    }
+  }, []);
 };
