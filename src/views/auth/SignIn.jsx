@@ -11,7 +11,7 @@ import {
 } from "react-icons/fa";
 import Checkbox from "components/checkbox";
 import { useToast } from "hooks/useToast";
-import { useAuth } from "hooks/useAuth";
+import { useAuth } from "hooks/useAuth"; // This should be your custom hook
 
 export default function SignIn() {
   const [userType, setUserType] = useState("patient");
@@ -28,15 +28,26 @@ export default function SignIn() {
   const { login, loading: authLoading } = useAuth();
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setCredentials((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    const { name, value, type, checked } = e.target;
+
+    // For checkboxes
+    if (type === "checkbox") {
+      if (name === "rememberMe") {
+        setRememberMe(checked);
+      }
+    }
+    // For text/email/password inputs
+    else {
+      setCredentials((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log("Form submitted with:", credentials); // Debug log
 
     // Validation
     if (!credentials.identifier.trim()) {
@@ -53,6 +64,7 @@ export default function SignIn() {
 
     try {
       const result = await login(credentials);
+      console.log("Login result:", result); // Debug log
 
       if (result.success) {
         showToast("Login successful!", "success");
@@ -92,15 +104,14 @@ export default function SignIn() {
         showToast(result.error || "Login failed", "error");
       }
     } catch (error) {
+      console.error("Login error details:", error); // Debug log
       showToast("An unexpected error occurred", "error");
-      console.error("Login error:", error);
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleGoogleLogin = () => {
-    // Google OAuth implementation
     showToast("Google login coming soon!", "info");
   };
 
@@ -182,6 +193,7 @@ export default function SignIn() {
 
         {/* Google Login Button */}
         <button
+          type="button"
           onClick={handleGoogleLogin}
           className="mb-6 flex w-full items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white py-3 text-gray-700 transition hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300"
         >
@@ -219,7 +231,7 @@ export default function SignIn() {
             />
             <button
               type="button"
-              className="absolute right-3 top-10 text-gray-500"
+              className="absolute right-3 top-10 text-gray-500 hover:text-gray-700"
               onClick={() => setShowPassword(!showPassword)}
             >
               {showPassword ? <FaEyeSlash /> : <FaEye />}
@@ -230,8 +242,9 @@ export default function SignIn() {
           <div className="mb-4 flex items-center justify-between px-2">
             <div className="flex items-center">
               <Checkbox
+                name="rememberMe"
                 checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
+                onChange={handleInputChange}
                 disabled={isLoading || authLoading}
               />
               <p className="ml-2 text-sm font-medium text-navy-700 dark:text-white">
@@ -279,6 +292,15 @@ export default function SignIn() {
             )}
           </button>
         </form>
+
+        {/* Debug section - remove in production */}
+        <div className="mt-4 rounded border p-2 text-xs text-gray-500">
+          <p>Debug Info:</p>
+          <p>Identifier: {credentials.identifier}</p>
+          <p>Password length: {credentials.password.length}</p>
+          <p>Remember me: {rememberMe ? "Yes" : "No"}</p>
+          <p>Loading: {isLoading || authLoading ? "Yes" : "No"}</p>
+        </div>
 
         {/* Emergency Notice */}
         <div className="mt-6 rounded-xl bg-red-50 p-4 dark:bg-red-900/20">

@@ -19,6 +19,7 @@ import {
 import { MdHealthAndSafety, MdArrowBack } from "react-icons/md";
 import Checkbox from "components/checkbox";
 import { useToast } from "hooks/useToast";
+import { useAuth } from "hooks/useAuth";
 
 const SignUp = () => {
   const [step, setStep] = useState(1);
@@ -45,9 +46,9 @@ const SignUp = () => {
     termsAccepted: false,
     newsletter: true,
   });
-  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const { register, loading: authLoading } = useAuth();
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -78,12 +79,25 @@ const SignUp = () => {
       showToast("Please enter your phone number", "warning");
       return false;
     }
+    // Validate South African phone number
+    const phoneRegex = /^(?:(?:\+27|0)[\s-]?[1-9][\d\s-]{8,9})$/;
+    if (!phoneRegex.test(formData.phone.replace(/\s/g, ""))) {
+      showToast("Please enter a valid South African phone number", "warning");
+      return false;
+    }
     if (!formData.password.trim()) {
       showToast("Please enter a password", "warning");
       return false;
     }
     if (formData.password.length < 8) {
       showToast("Password must be at least 8 characters", "warning");
+      return false;
+    }
+    if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)) {
+      showToast(
+        "Password must contain uppercase, lowercase and numbers",
+        "warning"
+      );
       return false;
     }
     if (formData.password !== formData.confirmPassword) {
@@ -96,6 +110,15 @@ const SignUp = () => {
   const validateStep2 = () => {
     if (!formData.idNumber.trim()) {
       showToast("Please enter your ID number", "warning");
+      return false;
+    }
+    // Validate South African ID number (13 digits)
+    const idRegex = /^[0-9]{13}$/;
+    if (!idRegex.test(formData.idNumber.replace(/\s/g, ""))) {
+      showToast(
+        "Please enter a valid 13-digit South African ID number",
+        "warning"
+      );
       return false;
     }
     if (!formData.dateOfBirth.trim()) {
@@ -117,26 +140,49 @@ const SignUp = () => {
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!formData.termsAccepted) {
       showToast("Please accept the terms and conditions", "warning");
       return;
     }
 
-    setIsLoading(true);
+    try {
+      // Prepare registration data
+      const registrationData = {
+        email: formData.email,
+        phone: formData.phone,
+        password: formData.password,
+        role: userType,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        idNumber: formData.idNumber,
+        dateOfBirth: formData.dateOfBirth,
+        gender: formData.gender,
+        address: formData.address,
+        city: formData.city,
+        postalCode: formData.postalCode,
+        newsletter: formData.newsletter,
+      };
 
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false);
-      showToast(
-        "Account created successfully! Please check your email for verification.",
-        "success"
-      );
+      const result = await register(registrationData);
 
-      setTimeout(() => {
-        navigate("/auth/sign-in");
-      }, 2000);
-    }, 3000);
+      if (result.success) {
+        showToast(
+          "Account created successfully! Please check your email for verification.",
+          "success"
+        );
+
+        // Auto-login or redirect to sign-in
+        setTimeout(() => {
+          navigate("/auth/sign-in");
+        }, 2000);
+      } else {
+        showToast(result.error || "Registration failed", "error");
+      }
+    } catch (error) {
+      showToast("An unexpected error occurred", "error");
+      console.error("Registration error:", error);
+    }
   };
 
   return (
@@ -221,6 +267,7 @@ const SignUp = () => {
                   value={formData.firstName}
                   onChange={handleInputChange}
                   required
+                  disabled={authLoading}
                 />
                 <InputField
                   variant="auth"
@@ -231,6 +278,7 @@ const SignUp = () => {
                   value={formData.lastName}
                   onChange={handleInputChange}
                   required
+                  disabled={authLoading}
                 />
               </div>
 
@@ -244,6 +292,7 @@ const SignUp = () => {
                 onChange={handleInputChange}
                 type="email"
                 required
+                disabled={authLoading}
               />
 
               <InputField
@@ -256,6 +305,7 @@ const SignUp = () => {
                 onChange={handleInputChange}
                 type="tel"
                 required
+                disabled={authLoading}
               />
 
               <div className="relative">
@@ -269,11 +319,13 @@ const SignUp = () => {
                   onChange={handleInputChange}
                   type={showPassword ? "text" : "password"}
                   required
+                  disabled={authLoading}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-10 text-gray-500"
+                  disabled={authLoading}
                 >
                   {showPassword ? <FaEyeSlash /> : <FaEye />}
                 </button>
@@ -289,6 +341,7 @@ const SignUp = () => {
                 onChange={handleInputChange}
                 type="password"
                 required
+                disabled={authLoading}
               />
             </div>
           ) : (
@@ -302,6 +355,7 @@ const SignUp = () => {
                 value={formData.idNumber}
                 onChange={handleInputChange}
                 required
+                disabled={authLoading}
               />
 
               <InputField
@@ -313,6 +367,7 @@ const SignUp = () => {
                 onChange={handleInputChange}
                 type="date"
                 required
+                disabled={authLoading}
               />
 
               <div>
@@ -327,11 +382,12 @@ const SignUp = () => {
                       onClick={() =>
                         setFormData((prev) => ({ ...prev, gender }))
                       }
-                      className={`rounded-lg px-3 py-2 text-sm ${
+                      disabled={authLoading}
+                      className={`rounded-lg px-3 py-2 text-sm transition-colors ${
                         formData.gender === gender
                           ? "bg-brand-500 text-white"
                           : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300"
-                      }`}
+                      } disabled:cursor-not-allowed disabled:opacity-50`}
                     >
                       {gender}
                     </button>
@@ -345,6 +401,7 @@ const SignUp = () => {
                     checked={formData.termsAccepted}
                     onChange={handleInputChange}
                     name="termsAccepted"
+                    disabled={authLoading}
                   />
                   <label className="ml-2 text-sm text-gray-700 dark:text-gray-300">
                     I agree to the{" "}
@@ -369,6 +426,7 @@ const SignUp = () => {
                     checked={formData.newsletter}
                     onChange={handleInputChange}
                     name="newsletter"
+                    disabled={authLoading}
                   />
                   <label className="ml-2 text-sm text-gray-700 dark:text-gray-300">
                     Receive health tips and updates
@@ -382,10 +440,10 @@ const SignUp = () => {
           <div className="mt-6 space-y-4">
             <button
               onClick={handleNextStep}
-              disabled={isLoading}
-              className="linear w-full rounded-xl bg-brand-500 py-3 text-white hover:bg-brand-600 disabled:opacity-50"
+              disabled={authLoading}
+              className="linear w-full rounded-xl bg-brand-500 py-3 text-white hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {isLoading ? (
+              {authLoading ? (
                 <span className="flex items-center justify-center">
                   <svg
                     className="mr-2 h-5 w-5 animate-spin"
@@ -417,8 +475,10 @@ const SignUp = () => {
 
             {step === 2 && (
               <button
+                type="button"
                 onClick={() => setStep(1)}
-                className="linear w-full rounded-xl border border-gray-300 bg-white py-3 text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300"
+                disabled={authLoading}
+                className="linear w-full rounded-xl border border-gray-300 bg-white py-3 text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300"
               >
                 <MdArrowBack className="mr-2 inline h-4 w-4" />
                 Back
