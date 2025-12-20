@@ -1,4 +1,12 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+// src/context/AuthContext.jsx
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+} from "react";
+import authService from "../api/services/authService";
 
 const AuthContext = createContext();
 
@@ -27,13 +35,14 @@ export const AuthProvider = ({ children }) => {
           setUser(currentUser);
           setIsAuthenticated(true);
         } else {
-          // Clear any stale data
-          authService.logout();
+          // Clear any stale data silently (no API call)
+          authService.clearAuthData();
           setUser(null);
           setIsAuthenticated(false);
         }
       } catch (error) {
         console.error("Error initializing auth:", error);
+        authService.clearAuthData();
         setUser(null);
         setIsAuthenticated(false);
       } finally {
@@ -92,6 +101,7 @@ export const AuthProvider = ({ children }) => {
       console.error("Logout error:", error);
 
       // Still clear state even if API call fails
+      authService.clearAuthData();
       setUser(null);
       setIsAuthenticated(false);
 
