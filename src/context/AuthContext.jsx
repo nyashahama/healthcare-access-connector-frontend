@@ -13,26 +13,35 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
+  // Initialize auth state from localStorage on mount
   useEffect(() => {
-    // Check for stored user session
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    } else {
-      // Set a default user for testing purposes
-      const defaultUser = {
-        id: 1,
-        name: "Dr. John Smith",
-        email: "john.smith@clinic.com",
-        role: "doctor", // Change to "clinic_admin" or "nurse" to test different dashboards
-        specialization: "General Practitioner",
-        clinic: "Community Health Center",
-      };
-      setUser(defaultUser);
-      localStorage.setItem("user", JSON.stringify(defaultUser));
-    }
-    setLoading(false);
+    const initializeAuth = () => {
+      try {
+        // Check if user is authenticated
+        const authenticated = authService.isAuthenticated();
+        const currentUser = authService.getCurrentUser();
+
+        if (authenticated && currentUser) {
+          setUser(currentUser);
+          setIsAuthenticated(true);
+        } else {
+          // Clear any stale data
+          authService.logout();
+          setUser(null);
+          setIsAuthenticated(false);
+        }
+      } catch (error) {
+        console.error("Error initializing auth:", error);
+        setUser(null);
+        setIsAuthenticated(false);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initializeAuth();
   }, []);
 
   const login = (userData) => {
