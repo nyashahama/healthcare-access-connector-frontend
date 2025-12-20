@@ -127,5 +127,21 @@ const authService = {
     const response = await apiClient.get(`/api/v1/users/${userId}`);
     return response.data;
   },
+
+  /**
+   * Update user password
+   * @param {string} userId - User ID
+   * @param {Object} data
+   * @param {string} data.current_password - Current password
+   * @param {string} data.new_password - New password
+   * @returns {Promise<Object>} Success message
+   */
+  updatePassword: async (userId, data) => {
+    const response = await apiClient.put(
+      `/api/v1/users/${userId}/password`,
+      data
+    );
+    return response.data;
+  },
 };
 export default authService;
