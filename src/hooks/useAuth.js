@@ -61,4 +61,21 @@ export const useAuth = () => {
       return { success: false, error: errorMessage };
     }
   }, [navigate]);
+
+  // Verify email
+  const verifyEmail = useCallback(async (token) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await authService.verifyEmail(token);
+      setLoading(false);
+      return { success: true, data: response };
+    } catch (err) {
+      const errorMessage = err.response?.data?.error || "Verification failed";
+      setError(errorMessage);
+      setLoading(false);
+      return { success: false, error: errorMessage };
+    }
+  }, []);
 };
