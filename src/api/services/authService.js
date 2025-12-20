@@ -143,5 +143,15 @@ const authService = {
     );
     return response.data;
   },
+
+  /**
+   * Get user consent settings
+   * @param {string} userId - User ID
+   * @returns {Promise<Object>} Consent data
+   */
+  getConsent: async (userId) => {
+    const response = await apiClient.get(`/api/v1/users/${userId}/consent`);
+    return response.data;
+  },
 };
 export default authService;
