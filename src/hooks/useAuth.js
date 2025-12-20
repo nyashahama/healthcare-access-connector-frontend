@@ -148,4 +148,22 @@ export const useAuth = () => {
       return { success: false, error: errorMessage };
     }
   }, []);
+
+  //Get user profile
+  const getProfile = useCallback(async (userId) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await authService.getProfile(userId);
+      setLoading(false);
+      return { success: true, data: response };
+    } catch (err) {
+      const errorMessage =
+        err.response?.data?.error || "Failed to load profile";
+      setError(errorMessage);
+      setLoading(false);
+      return { success: false, error: errorMessage };
+    }
+  }, []);
 };
