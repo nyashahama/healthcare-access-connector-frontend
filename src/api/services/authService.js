@@ -39,5 +39,47 @@ const authService = {
 
     return response.data;
   },
+
+  /**
+   * Logout user
+   * @returns {Promise<void>}
+   */
+  logout: async () => {
+    try {
+      await apiClient.post("/api/v1/auth/logout");
+    } finally {
+      // Clear local storage regardless of API call success
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      localStorage.removeItem("tokenExpiry");
+    }
+  },
+
+  /**
+   * Refresh access token
+   * @returns {Promise<Object>} New token data
+   */
+  refreshToken: async () => {
+    const response = await apiClient.post("/api/v1/auth/refresh");
+    const { token, expires_at, user } = response.data;
+
+    if (token) {
+      localStorage.setItem("token", token);
+      localStorage.setItem("user", JSON.stringify(user));
+      localStorage.setItem("tokenExpiry", expires_at);
+    }
+
+    return response.data;
+  },
+
+  /**
+   * Verify email with token
+   * @param {string} token - Verification token from email
+   * @returns {Promise<Object>} Success message
+   */
+  verifyEmail: async (token) => {
+    const response = await apiClient.get(`/api/v1/verify-email?token=${token}`);
+    return response.data;
+  },
 };
 export default authService;
