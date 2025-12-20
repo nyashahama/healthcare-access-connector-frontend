@@ -184,4 +184,35 @@ export const useAuth = () => {
       return { success: false, error: errorMessage };
     }
   }, []);
+
+  /**
+   * Clear error
+   */
+  const clearError = useCallback(() => {
+    setError(null);
+  }, []);
+
+  return {
+    // Methods
+    register,
+    login,
+    logout,
+    verifyEmail,
+    requestPasswordReset,
+    resetPassword,
+    resendVerification,
+    updatePassword,
+    getProfile,
+    getConsent,
+    clearError,
+
+    // State
+    loading,
+    error,
+
+    // Utility methods
+    isAuthenticated: authService.isAuthenticated,
+    getCurrentUser: authService.getCurrentUser,
+    getToken: authService.getToken,
+  };
 };
