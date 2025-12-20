@@ -93,5 +93,17 @@ const authService = {
     });
     return response.data;
   },
+
+  /**
+   * Reset password with token
+   * @param {Object} data
+   * @param {string} data.token - Reset token
+   * @param {string} data.new_password - New password
+   * @returns {Promise<Object>} Success message
+   */
+  resetPassword: async (data) => {
+    const response = await apiClient.post("/api/v1/password/reset", data);
+    return response.data;
+  },
 };
 export default authService;
