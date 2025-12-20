@@ -162,5 +162,13 @@ const authService = {
     const userStr = localStorage.getItem("user");
     return userStr ? JSON.parse(userStr) : null;
   },
+
+  /**
+   * Get current token from localStorage
+   * @returns {string|null} Token or null
+   */
+  getToken: () => {
+    return localStorage.getItem("token");
+  },
 };
 export default authService;
