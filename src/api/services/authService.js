@@ -170,5 +170,24 @@ const authService = {
   getToken: () => {
     return localStorage.getItem("token");
   },
+
+  /**
+   * Check if user is authenticated
+   * @returns {boolean}
+   */
+  isAuthenticated: () => {
+    const token = localStorage.getItem("token");
+    const expiry = localStorage.getItem("tokenExpiry");
+
+    if (!token || !expiry) {
+      return false;
+    }
+
+    // Check if token is expired
+    const expiryDate = new Date(expiry);
+    const now = new Date();
+
+    return expiryDate > now;
+  },
 };
 export default authService;
