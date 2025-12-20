@@ -20,11 +20,28 @@ export const useAuth = () => {
       const response = await authService.register(data);
       setLoading(false);
       return { success: true, data: response };
-    } catch (error) {
+    } catch (err) {
       const errorMessage = err.response?.data?.error || "Registration failed";
       setError(errorMessage);
       setLoading(false);
       return { success: false, error: errorMessage };
     }
   }, []);
+
+  //a user logs in
+  const login = useCallback(async (credentials) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await authService.login(credentials);
+      setLoading(false);
+      return { success: true, data: response };
+    } catch (err) {
+      const errorMessage = err.response?.data?.error || "Login unsuccessful";
+      setError(errorMessage);
+      setLoading(false);
+      return { success: false, error: errorMessage };
+    }
+  });
 };
