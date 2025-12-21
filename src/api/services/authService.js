@@ -1,5 +1,4 @@
-// src/api/services/authService.js
-import apiClient from "../apiClient";
+import apiClient from "api/apiClient";
 
 /**
  * Authentication Service
@@ -42,7 +41,7 @@ const authService = {
   },
 
   /**
-   * Logout user (makes API call)
+   * Logout user
    * @returns {Promise<void>}
    */
   logout: async () => {
@@ -50,19 +49,10 @@ const authService = {
       await apiClient.post("/api/v1/auth/logout");
     } finally {
       // Clear local storage regardless of API call success
-      authService.clearAuthData();
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      localStorage.removeItem("tokenExpiry");
     }
-  },
-
-  /**
-   * Clear authentication data from localStorage
-   * Use this for silent logout without API call
-   * @returns {void}
-   */
-  clearAuthData: () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    localStorage.removeItem("tokenExpiry");
   },
 
   /**
@@ -169,13 +159,8 @@ const authService = {
    * @returns {Object|null} User object or null
    */
   getCurrentUser: () => {
-    try {
-      const userStr = localStorage.getItem("user");
-      return userStr ? JSON.parse(userStr) : null;
-    } catch (error) {
-      console.error("Error parsing user from localStorage:", error);
-      return null;
-    }
+    const userStr = localStorage.getItem("user");
+    return userStr ? JSON.parse(userStr) : null;
   },
 
   /**
@@ -198,16 +183,11 @@ const authService = {
       return false;
     }
 
-    try {
-      // Check if token is expired
-      const expiryDate = new Date(expiry);
-      const now = new Date();
+    // Check if token is expired
+    const expiryDate = new Date(expiry);
+    const now = new Date();
 
-      return expiryDate > now;
-    } catch (error) {
-      console.error("Error checking token expiry:", error);
-      return false;
-    }
+    return expiryDate > now;
   },
 };
 
