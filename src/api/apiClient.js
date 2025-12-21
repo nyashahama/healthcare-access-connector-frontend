@@ -2,7 +2,9 @@
 import axios from "axios";
 
 // Use process.env for Create React App (not import.meta.env which is for Vite)
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:8089";
+const API_URL =
+  process.env.REACT_APP_API_URL ||
+  "https://healthcare-access-connector-backend.onrender.com";
 
 console.log("API URL from env:", API_URL);
 
