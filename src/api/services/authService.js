@@ -49,10 +49,17 @@ const authService = {
       await apiClient.post("/api/v1/auth/logout");
     } finally {
       // Clear local storage regardless of API call success
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-      localStorage.removeItem("tokenExpiry");
+      authService.clearAuthData();
     }
+  },
+
+  /**
+   * Clear authentication data from localStorage
+   */
+  clearAuthData: () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    localStorage.removeItem("tokenExpiry");
   },
 
   /**
