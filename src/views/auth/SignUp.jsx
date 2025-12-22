@@ -11,12 +11,13 @@ import {
 import { MdHealthAndSafety, MdArrowBack } from "react-icons/md";
 import Checkbox from "components/checkbox";
 import { useToast } from "hooks/useToast";
-import { useAuth } from "context/AuthContext";
+import { useAuth } from "hooks/useAuth";
 
 const SignUp = () => {
   const [step, setStep] = useState(1);
   const [userType, setUserType] = useState("patient");
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -36,13 +37,11 @@ const SignUp = () => {
 
   const navigate = useNavigate();
   const { showToast } = useToast();
-  const { login, loading: authLoading } = useAuth();
+  const { register, loading: authLoading } = useAuth();
 
-  // Use ref to track if component is mounted
   const isMounted = useRef(true);
   const navigationTimeout = useRef(null);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       isMounted.current = false;
@@ -146,6 +145,8 @@ const SignUp = () => {
       return;
     }
 
+    setIsLoading(true);
+
     try {
       const registrationData = {
         email: formData.email,
@@ -163,7 +164,7 @@ const SignUp = () => {
         newsletter: formData.newsletter,
       };
 
-      const result = await login(registrationData);
+      const result = await register(registrationData);
 
       if (!isMounted.current) return;
 
@@ -186,8 +187,14 @@ const SignUp = () => {
         showToast("An unexpected error occurred", "error");
         console.error("Registration error:", error);
       }
+    } finally {
+      if (isMounted.current) {
+        setIsLoading(false);
+      }
     }
   };
+
+  const loading = isLoading || authLoading;
 
   return (
     <div className="mb-16 mt-16 flex h-full w-full items-center justify-center px-2 md:mx-0 md:px-0 lg:mb-10 lg:items-center lg:justify-start">
@@ -248,7 +255,7 @@ const SignUp = () => {
                   key={role.id}
                   type="button"
                   onClick={() => setUserType(role.id)}
-                  disabled={authLoading}
+                  disabled={loading}
                   className={`flex flex-col items-center rounded-xl px-3 py-4 transition-all disabled:cursor-not-allowed disabled:opacity-50 ${
                     userType === role.id
                       ? "border-2 border-brand-500 bg-brand-50 text-brand-700 dark:border-brand-500 dark:bg-brand-900/20"
@@ -275,7 +282,7 @@ const SignUp = () => {
                   value={formData.firstName}
                   onChange={handleInputChange}
                   required
-                  disabled={authLoading}
+                  disabled={loading}
                 />
                 <InputField
                   variant="auth"
@@ -286,7 +293,7 @@ const SignUp = () => {
                   value={formData.lastName}
                   onChange={handleInputChange}
                   required
-                  disabled={authLoading}
+                  disabled={loading}
                 />
               </div>
 
@@ -300,7 +307,7 @@ const SignUp = () => {
                 onChange={handleInputChange}
                 type="email"
                 required
-                disabled={authLoading}
+                disabled={loading}
               />
 
               <InputField
@@ -313,7 +320,7 @@ const SignUp = () => {
                 onChange={handleInputChange}
                 type="tel"
                 required
-                disabled={authLoading}
+                disabled={loading}
               />
 
               <div className="relative">
@@ -327,13 +334,13 @@ const SignUp = () => {
                   onChange={handleInputChange}
                   type={showPassword ? "text" : "password"}
                   required
-                  disabled={authLoading}
+                  disabled={loading}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-10 text-gray-500 disabled:cursor-not-allowed disabled:opacity-50"
-                  disabled={authLoading}
+                  disabled={loading}
                 >
                   {showPassword ? <FaEyeSlash /> : <FaEye />}
                 </button>
@@ -349,7 +356,7 @@ const SignUp = () => {
                 onChange={handleInputChange}
                 type="password"
                 required
-                disabled={authLoading}
+                disabled={loading}
               />
             </div>
           ) : (
@@ -363,7 +370,7 @@ const SignUp = () => {
                 value={formData.idNumber}
                 onChange={handleInputChange}
                 required
-                disabled={authLoading}
+                disabled={loading}
               />
 
               <InputField
@@ -375,7 +382,7 @@ const SignUp = () => {
                 onChange={handleInputChange}
                 type="date"
                 required
-                disabled={authLoading}
+                disabled={loading}
               />
 
               <div>
@@ -390,7 +397,7 @@ const SignUp = () => {
                       onClick={() =>
                         setFormData((prev) => ({ ...prev, gender }))
                       }
-                      disabled={authLoading}
+                      disabled={loading}
                       className={`rounded-lg px-3 py-2 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
                         formData.gender === gender
                           ? "bg-brand-500 text-white"
@@ -409,7 +416,7 @@ const SignUp = () => {
                     checked={formData.termsAccepted}
                     onChange={handleInputChange}
                     name="termsAccepted"
-                    disabled={authLoading}
+                    disabled={loading}
                   />
                   <label className="ml-2 text-sm text-gray-700 dark:text-gray-300">
                     I agree to the{" "}
@@ -434,7 +441,7 @@ const SignUp = () => {
                     checked={formData.newsletter}
                     onChange={handleInputChange}
                     name="newsletter"
-                    disabled={authLoading}
+                    disabled={loading}
                   />
                   <label className="ml-2 text-sm text-gray-700 dark:text-gray-300">
                     Receive health tips and updates
@@ -448,10 +455,10 @@ const SignUp = () => {
           <div className="mt-6 space-y-4">
             <button
               onClick={handleNextStep}
-              disabled={authLoading}
+              disabled={loading}
               className="linear w-full rounded-xl bg-brand-500 py-3 text-white hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {authLoading ? (
+              {loading ? (
                 <span className="flex items-center justify-center">
                   <svg
                     className="mr-2 h-5 w-5 animate-spin"
@@ -485,7 +492,7 @@ const SignUp = () => {
               <button
                 type="button"
                 onClick={() => setStep(1)}
-                disabled={authLoading}
+                disabled={loading}
                 className="linear w-full rounded-xl border border-gray-300 bg-white py-3 text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300"
               >
                 <MdArrowBack className="mr-2 inline h-4 w-4" />
