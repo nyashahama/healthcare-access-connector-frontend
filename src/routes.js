@@ -8,6 +8,14 @@ import TelemedicineChat from "views/patient/telemedicine-chat";
 import NutritionLibrary from "views/patient/nutrition-library";
 import PatientProfile from "views/patient/profile";
 import BookAppointment from "views/patient/components/BookAppointment";
+import PatientAppointments from "views/patient/appointments";
+import Prescriptions from "views/patient/prescriptions";
+import LabResults from "views/patient/lab-results";
+import HealthRecords from "views/patient/health-records";
+import MedicationReminders from "views/patient/medication-reminders";
+import CommunityForum from "views/patient/community";
+import CommunityPost from "views/patient/community/CommunityPost";
+import CreateCommunityPost from "views/patient/community/CreateCommunityPost";
 
 // Provider Views
 import ProviderDashboard from "views/provider/dashboard";
@@ -17,6 +25,9 @@ import ClinicManagement from "views/provider/clinic-management";
 import ProviderProfile from "views/provider/profile";
 import StaffManagement from "views/provider/staff-management";
 import ProviderTelemedicine from "views/provider/telemedicine";
+import ProviderCommunityForum from "views/provider/community";
+import CreateProviderCommunityPost from "views/provider/community/CreateCommunityPost";
+import ProviderCommunityPost from "views/provider/community/CommunityPost";
 
 // Admin Views
 import SystemDashboard from "views/admin/dashboard";
@@ -29,6 +40,10 @@ import Analytics from "views/admin/analytics";
 import SignIn from "views/auth/SignIn";
 import SignUp from "views/auth/SignUp";
 import ForgotPassword from "views/auth/ForgotPassword";
+import ResetPassword from "views/auth/ResetPassword";
+import VerifyEmail from "views/auth/VerifyEmail";
+import ChangePassword from "views/auth/ChangePassword";
+import ConsentSettings from "views/auth/ConsentSettings";
 
 // Icon Imports
 import {
@@ -55,17 +70,7 @@ import {
   MdForum,
 } from "react-icons/md";
 import { FaStethoscope } from "react-icons/fa";
-import PatientAppointments from "views/patient/appointments";
-import Prescriptions from "views/patient/prescriptions";
-import LabResults from "views/patient/lab-results";
-import HealthRecords from "views/patient/health-records";
-import MedicationReminders from "views/patient/medication-reminders";
-import CommunityForum from "views/patient/community";
-import CommunityPost from "views/patient/community/CommunityPost";
-import CreateCommunityPost from "views/patient/community/CreateCommunityPost";
-import ProviderCommunityForum from "views/provider/community";
-import CreateProviderCommunityPost from "views/provider/community/CreateCommunityPost";
-import ProviderCommunityPost from "views/provider/community/CommunityPost";
+
 // Patient Routes
 export const patientRoutes = [
   {
@@ -87,7 +92,7 @@ export const patientRoutes = [
     layout: "/patient",
     path: "appointments",
     icon: <MdListAlt className="h-6 w-6" />,
-    component: <PatientAppointments />, // NEW
+    component: <PatientAppointments />,
   },
   {
     name: "Find Clinic",
@@ -118,42 +123,42 @@ export const patientRoutes = [
     component: <NutritionLibrary />,
   },
   {
-    name: "Prescriptions", // NEW
+    name: "Prescriptions",
     layout: "/patient",
     path: "prescriptions",
     icon: <MdLocalPharmacy className="h-6 w-6" />,
     component: <Prescriptions />,
   },
   {
-    name: "Lab Results", // NEW
+    name: "Lab Results",
     layout: "/patient",
     path: "lab-results",
     icon: <MdScience className="h-6 w-6" />,
     component: <LabResults />,
   },
   {
-    name: "Health Records", // NEW
+    name: "Health Records",
     layout: "/patient",
     path: "health-records",
     icon: <MdHealthAndSafety className="h-6 w-6" />,
     component: <HealthRecords />,
   },
   {
-    name: "Medication Reminders", // NEW
+    name: "Medication Reminders",
     layout: "/patient",
     path: "medication-reminders",
     icon: <MdNotifications className="h-6 w-6" />,
     component: <MedicationReminders />,
   },
   {
-    name: "Community Forum", // NEW
+    name: "Community Forum",
     layout: "/patient",
     path: "community",
     icon: <MdForum className="h-6 w-6" />,
     component: <CommunityForum />,
   },
   {
-    name: "View Post", // Hidden from sidebar
+    name: "View Post",
     layout: "/patient",
     path: "community/post/:id",
     icon: <MdForum className="h-6 w-6" />,
@@ -161,7 +166,7 @@ export const patientRoutes = [
     sidebar: false,
   },
   {
-    name: "Create Post", // Hidden from sidebar
+    name: "Create Post",
     layout: "/patient",
     path: "community/new",
     icon: <MdForum className="h-6 w-6" />,
@@ -175,17 +180,34 @@ export const patientRoutes = [
     icon: <MdPerson className="h-6 w-6" />,
     component: <PatientProfile />,
   },
+  // Hidden routes (no sidebar entry)
+  {
+    name: "Change Password",
+    layout: "/patient",
+    path: "change-password",
+    icon: <MdLock className="h-6 w-6" />,
+    component: <ChangePassword />,
+    sidebar: false,
+  },
+  {
+    name: "Consent Settings",
+    layout: "/patient",
+    path: "consent-settings",
+    icon: <MdHealthAndSafety className="h-6 w-6" />,
+    component: <ConsentSettings />,
+    sidebar: false,
+  },
 ];
 
-// Provider Routes (Clinic Admin sees different dashboard than Doctor)
+// Provider Routes
 export const providerRoutes = [
   {
     name: "Dashboard",
     layout: "/provider",
     path: "dashboard",
     icon: <MdHome className="h-6 w-6" />,
-    component: <ProviderDashboard />, // Shows different dashboard based on role
-    roles: ["clinic_admin", "doctor"], // Both can see but content differs
+    component: <ProviderDashboard />,
+    roles: ["clinic_admin", "doctor"],
   },
   {
     name: "Appointments",
@@ -210,7 +232,7 @@ export const providerRoutes = [
     path: "clinic-management",
     icon: <MdBusiness className="h-6 w-6" />,
     component: <ClinicManagement />,
-    roles: ["clinic_admin"], // Only clinic admin can see
+    roles: ["clinic_admin"],
   },
   {
     name: "Telemedicine",
@@ -225,8 +247,8 @@ export const providerRoutes = [
     layout: "/provider",
     path: "staff",
     icon: <MdPeople className="h-6 w-6" />,
-    component: <StaffManagement />, // New component for managing staff
-    roles: ["clinic_admin"], // Only clinic admin can see
+    component: <StaffManagement />,
+    roles: ["clinic_admin"],
   },
   {
     name: "Professional Forum",
@@ -259,6 +281,15 @@ export const providerRoutes = [
     icon: <MdPerson className="h-6 w-6" />,
     component: <ProviderProfile />,
     roles: ["clinic_admin", "doctor"],
+  },
+  // Hidden routes
+  {
+    name: "Change Password",
+    layout: "/provider",
+    path: "change-password",
+    icon: <MdLock className="h-6 w-6" />,
+    component: <ChangePassword />,
+    sidebar: false,
   },
 ];
 
@@ -323,5 +354,19 @@ export const authRoutes = [
     path: "forgot-password",
     icon: <MdLock className="h-6 w-6" />,
     component: <ForgotPassword />,
+  },
+  {
+    name: "Reset Password",
+    layout: "/auth",
+    path: "reset-password",
+    icon: <MdLock className="h-6 w-6" />,
+    component: <ResetPassword />,
+  },
+  {
+    name: "Verify Email",
+    layout: "/auth",
+    path: "verify-email",
+    icon: <MdLock className="h-6 w-6" />,
+    component: <VerifyEmail />,
   },
 ];
