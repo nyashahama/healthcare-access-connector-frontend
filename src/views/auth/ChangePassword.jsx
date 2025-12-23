@@ -110,7 +110,8 @@ const ChangePassword = () => {
   };
 
   return (
-    <div className="mb-16 mt-16 flex h-full w-full items-center justify-center px-2 md:mx-0 md:px-0 lg:mb-10 lg:items-center lg:justify-start">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-white p-4 dark:from-navy-900 dark:to-gray-900">
+      {" "}
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="mb-8 text-center">
