@@ -22,6 +22,7 @@ const ForgotPassword = () => {
     newPassword: "",
     confirmPassword: "",
   });
+  const [resetToken, setResetToken] = useState(null); // Store the token from OTP verification
   const [otpVerified, setOtpVerified] = useState(false);
 
   const [searchParams] = useSearchParams();
@@ -35,6 +36,7 @@ const ForgotPassword = () => {
   useEffect(() => {
     // Check for token in URL (legacy email verification link)
     if (token) {
+      setResetToken(token);
       setStep(3);
       showToast("Please create your new password", "info");
     }
@@ -154,6 +156,10 @@ const ForgotPassword = () => {
       if (!isMounted.current) return;
 
       if (result.success) {
+        // Store the token from OTP verification response
+        if (result.data && result.data.token) {
+          setResetToken(result.data.token);
+        }
         setOtpVerified(true);
         showToast("Code verified successfully", "success");
         setStep(3);
@@ -193,24 +199,19 @@ const ForgotPassword = () => {
       return;
     }
 
+    // Check if we have a valid token for reset
+    if (!resetToken) {
+      showToast("Verification required. Please verify OTP first.", "warning");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      // For OTP flow, use OTP as token
-      // For legacy email link flow, use token from URL
-      const resetToken = token || formData.otp;
-
       const resetData = {
         token: resetToken,
         new_password: formData.newPassword,
       };
-
-      // Ensure OTP is verified for non-legacy flows
-      if (!token && !otpVerified) {
-        showToast("Please verify your OTP first", "warning");
-        setIsLoading(false);
-        return;
-      }
 
       const result = await resetPassword(resetData);
 
@@ -497,7 +498,7 @@ const ForgotPassword = () => {
 
               <button
                 onClick={handleResetPassword}
-                disabled={isLoading}
+                disabled={isLoading || !resetToken}
                 className="linear mt-6 w-full rounded-xl bg-brand-500 py-3 text-white hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isLoading ? (
