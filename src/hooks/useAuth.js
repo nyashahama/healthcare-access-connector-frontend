@@ -1,4 +1,5 @@
 import authService from "api/services/authService";
+import { data } from "autoprefixer";
 import { useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -113,6 +114,23 @@ export const useAuth = () => {
     }
   }, []);
 
+  const generateOTP = useCallback(async (data) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await authService.generateOTP(data);
+      setLoading(false);
+      return { success: true, data: response };
+    } catch (err) {
+      const errorMessage =
+        err.response?.data?.error || "Failed to generate OTP";
+      setError(errorMessage);
+      setLoading(false);
+      return { success: false, error: errorMessage };
+    }
+  }, []);
+
   //Resend verification email
   const resendVerification = useCallback(async (email) => {
     setLoading(true);
@@ -200,6 +218,7 @@ export const useAuth = () => {
     verifyEmail,
     requestPasswordReset,
     resetPassword,
+    generateOTP,
     resendVerification,
     updatePassword,
     getProfile,
