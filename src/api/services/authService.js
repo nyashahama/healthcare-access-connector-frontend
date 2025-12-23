@@ -114,6 +114,18 @@ const authService = {
   },
 
   /**
+   * Reset password with token
+   * @param {Object} data
+   * @param {string} data.identifier - email or phone
+   * @param {string} data.purpose - password_reset or verify_email
+   * @returns {Promise<Object>} Success message
+   */
+  generateOTP: async (data) => {
+    const response = await apiClient.post("/api/v1/auth/otp/generate", data);
+    return response.data;
+  },
+
+  /**
    * Resend verification email
    * @param {string} email - User email
    * @returns {Promise<Object>} Success message
