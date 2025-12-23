@@ -114,12 +114,31 @@ export const useAuth = () => {
     }
   }, []);
 
+  //generate OTP
   const generateOTP = useCallback(async (data) => {
     setLoading(true);
     setError(null);
 
     try {
       const response = await authService.generateOTP(data);
+      setLoading(false);
+      return { success: true, data: response };
+    } catch (err) {
+      const errorMessage =
+        err.response?.data?.error || "Failed to generate OTP";
+      setError(errorMessage);
+      setLoading(false);
+      return { success: false, error: errorMessage };
+    }
+  }, []);
+
+  //generate OTP
+  const verifyOTP = useCallback(async (data) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await authService.verifyOTP(data);
       setLoading(false);
       return { success: true, data: response };
     } catch (err) {
@@ -219,6 +238,7 @@ export const useAuth = () => {
     requestPasswordReset,
     resetPassword,
     generateOTP,
+    verifyOTP,
     resendVerification,
     updatePassword,
     getProfile,
