@@ -114,7 +114,7 @@ const authService = {
   },
 
   /**
-   * Reset password with token
+   * Generate OTP with phone or email
    * @param {Object} data
    * @param {string} data.identifier - email or phone
    * @param {string} data.purpose - password_reset or verify_email
@@ -122,6 +122,18 @@ const authService = {
    */
   generateOTP: async (data) => {
     const response = await apiClient.post("/api/v1/auth/otp/generate", data);
+    return response.data;
+  },
+
+  /**
+   * Verify OTP with phone or email
+   * @param {Object} data
+   * @param {string} data.identifier - email or phone
+   * @param {string} data.otp - otp
+   * @returns {Promise<Object>} Success message
+   */
+  verifyOTP: async (data) => {
+    const response = await apiClient.post("/api/v1/auth/otp/verify", data);
     return response.data;
   },
 
