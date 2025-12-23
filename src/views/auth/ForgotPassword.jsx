@@ -22,25 +22,27 @@ const ForgotPassword = () => {
     newPassword: "",
     confirmPassword: "",
   });
+  const [otpVerified, setOtpVerified] = useState(false);
 
   const [searchParams] = useSearchParams();
   const token = searchParams.get("token");
   const navigate = useNavigate();
   const { showToast } = useToast();
-  const { requestPasswordReset, resetPassword, resendVerification } = useAuth();
+  const { generateOTP, verifyOTP, resetPassword } = useAuth();
 
   const isMounted = useRef(true);
 
   useEffect(() => {
-    // Check for token in URL (email verification link)
+    // Check for token in URL (legacy email verification link)
     if (token) {
       setStep(3);
+      showToast("Please create your new password", "info");
     }
 
     return () => {
       isMounted.current = false;
     };
-  }, [token]);
+  }, [token, showToast]);
 
   useEffect(() => {
     if (timer > 0) {
@@ -70,26 +72,24 @@ const ForgotPassword = () => {
     setIsLoading(true);
 
     try {
-      const result = await requestPasswordReset(formData.identifier);
+      const result = await generateOTP({
+        identifier: formData.identifier,
+        purpose: "password_reset",
+      });
 
       if (!isMounted.current) return;
 
       if (result.success) {
         setTimer(60);
         setStep(2);
-        showToast(
-          method === "email"
-            ? `Reset link sent to ${formData.identifier}`
-            : `OTP sent to ${formData.identifier}`,
-          "success"
-        );
+        showToast(`OTP sent to ${formData.identifier}`, "success");
       } else {
-        showToast(result.error || "Failed to send reset code", "error");
+        showToast(result.error || "Failed to send OTP", "error");
       }
     } catch (error) {
       if (isMounted.current) {
         showToast("An unexpected error occurred", "error");
-        console.error("Send code error:", error);
+        console.error("Send OTP error:", error);
       }
     } finally {
       if (isMounted.current) {
@@ -100,27 +100,70 @@ const ForgotPassword = () => {
 
   const handleResendCode = async () => {
     if (!formData.identifier.trim()) {
-      showToast("Please enter your email address", "warning");
+      showToast(
+        method === "email"
+          ? "Please enter your email address"
+          : "Please enter your phone number",
+        "warning"
+      );
       return;
     }
 
     setIsLoading(true);
 
     try {
-      const result = await resendVerification(formData.identifier);
+      const result = await generateOTP({
+        identifier: formData.identifier,
+        purpose: "password_reset",
+      });
 
       if (!isMounted.current) return;
 
       if (result.success) {
         setTimer(60);
-        showToast("Verification code resent successfully", "success");
+        showToast("OTP resent successfully", "success");
       } else {
-        showToast(result.error || "Failed to resend code", "error");
+        showToast(result.error || "Failed to resend OTP", "error");
       }
     } catch (error) {
       if (isMounted.current) {
         showToast("An unexpected error occurred", "error");
-        console.error("Resend code error:", error);
+        console.error("Resend OTP error:", error);
+      }
+    } finally {
+      if (isMounted.current) {
+        setIsLoading(false);
+      }
+    }
+  };
+
+  const handleVerifyCode = async () => {
+    if (!formData.otp.trim() || formData.otp.length !== 6) {
+      showToast("Please enter a valid 6-digit code", "warning");
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const result = await verifyOTP({
+        identifier: formData.identifier,
+        otp: formData.otp,
+      });
+
+      if (!isMounted.current) return;
+
+      if (result.success) {
+        setOtpVerified(true);
+        showToast("Code verified successfully", "success");
+        setStep(3);
+      } else {
+        showToast(result.error || "Invalid verification code", "error");
+      }
+    } catch (error) {
+      if (isMounted.current) {
+        showToast("An unexpected error occurred", "error");
+        console.error("Verify code error:", error);
       }
     } finally {
       if (isMounted.current) {
@@ -138,6 +181,13 @@ const ForgotPassword = () => {
       showToast("Password must be at least 8 characters", "warning");
       return;
     }
+    if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.newPassword)) {
+      showToast(
+        "Password must contain uppercase, lowercase and numbers",
+        "warning"
+      );
+      return;
+    }
     if (formData.newPassword !== formData.confirmPassword) {
       showToast("Passwords do not match", "warning");
       return;
@@ -146,10 +196,21 @@ const ForgotPassword = () => {
     setIsLoading(true);
 
     try {
+      // For OTP flow, use OTP as token
+      // For legacy email link flow, use token from URL
+      const resetToken = token || formData.otp;
+
       const resetData = {
-        token: token || formData.otp,
+        token: resetToken,
         new_password: formData.newPassword,
       };
+
+      // Ensure OTP is verified for non-legacy flows
+      if (!token && !otpVerified) {
+        showToast("Please verify your OTP first", "warning");
+        setIsLoading(false);
+        return;
+      }
 
       const result = await resetPassword(resetData);
 
@@ -239,7 +300,9 @@ const ForgotPassword = () => {
                 variant="auth"
                 label={method === "email" ? "Email Address" : "Phone Number"}
                 placeholder={
-                  method === "email" ? "your.email@example.com" : "071 234 5678"
+                  method === "email"
+                    ? "your.email@example.com"
+                    : "+254712345678"
                 }
                 id="identifier"
                 name="identifier"
@@ -276,10 +339,10 @@ const ForgotPassword = () => {
                         d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                       />
                     </svg>
-                    Sending...
+                    Sending OTP...
                   </span>
                 ) : (
-                  `Send ${method === "email" ? "Reset Link" : "OTP"}`
+                  `Send OTP via ${method === "email" ? "Email" : "SMS"}`
                 )}
               </button>
             </>
@@ -294,25 +357,30 @@ const ForgotPassword = () => {
                   </div>
                 </div>
                 <h3 className="mb-2 text-lg font-bold text-navy-700 dark:text-white">
-                  Enter Verification Code
+                  Enter OTP Code
                 </h3>
                 <p className="text-gray-600 dark:text-gray-300">
                   {method === "email"
-                    ? `Check your email for the 6-digit code`
-                    : `Check your SMS for the 6-digit code`}
+                    ? `Check your email for the 6-digit OTP`
+                    : `Check your SMS for the 6-digit OTP`}
+                  <br />
+                  <span className="text-sm text-gray-500">
+                    Sent to: {formData.identifier}
+                  </span>
                 </p>
               </div>
 
               <div className="mb-6">
                 <InputField
                   variant="auth"
-                  label="6-digit Code"
+                  label="6-digit OTP"
                   placeholder="123456"
                   id="otp"
                   name="otp"
                   value={formData.otp}
                   onChange={handleInputChange}
                   maxLength="6"
+                  pattern="\d{6}"
                   extra="mb-4"
                   disabled={isLoading}
                 />
@@ -337,18 +405,45 @@ const ForgotPassword = () => {
                       disabled={isLoading}
                       className="text-sm text-brand-500 hover:text-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                      Resend code
+                      Resend OTP
                     </button>
                   )}
                 </div>
               </div>
 
               <button
-                onClick={() => setStep(3)}
-                disabled={isLoading || !formData.otp.trim()}
+                onClick={handleVerifyCode}
+                disabled={
+                  isLoading || !formData.otp.trim() || formData.otp.length !== 6
+                }
                 className="linear w-full rounded-xl bg-brand-500 py-3 text-white hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                Verify Code
+                {isLoading ? (
+                  <span className="flex items-center justify-center">
+                    <svg
+                      className="mr-2 h-5 w-5 animate-spin"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                        fill="none"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      />
+                    </svg>
+                    Verifying...
+                  </span>
+                ) : (
+                  "Verify OTP"
+                )}
               </button>
             </>
           )}
@@ -361,6 +456,16 @@ const ForgotPassword = () => {
                 </h3>
                 <p className="text-gray-600 dark:text-gray-300">
                   Enter your new password below
+                  {otpVerified && !token && (
+                    <span className="block text-sm text-green-600 dark:text-green-400">
+                      ✓ OTP verified successfully
+                    </span>
+                  )}
+                  {token && (
+                    <span className="block text-sm text-blue-600 dark:text-blue-400">
+                      ✓ Email verification complete
+                    </span>
+                  )}
                 </p>
               </div>
 
