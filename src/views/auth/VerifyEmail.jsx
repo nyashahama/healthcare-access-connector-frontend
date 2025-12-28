@@ -136,7 +136,7 @@ const VerifyEmail = () => {
   const content = getContent();
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12 dark:bg-navy-900">
+    <div className="mb-16 mt-16 flex h-full w-full items-center justify-center px-2 md:mx-0 md:px-0 lg:mb-10 lg:items-center lg:justify-start">
       <div className="w-full max-w-md">
         <div className="text-center">
           <div className="mb-6 inline-flex items-center justify-center">
