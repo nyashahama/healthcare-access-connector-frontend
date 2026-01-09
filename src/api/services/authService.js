@@ -15,7 +15,7 @@ const authService = {
    * @returns {Promise<Object>} User data
    */
   register: async (data) => {
-    const response = await apiClient.post("/api/v1/register", data);
+    const response = await apiClient.post("/api/v1/auth/register", data);
     return response.data;
   },
 
@@ -27,7 +27,7 @@ const authService = {
    * @returns {Promise<Object>} Login response with token and user data
    */
   login: async (credentials) => {
-    const response = await apiClient.post("/api/v1/login", credentials);
+    const response = await apiClient.post("/api/v1/auth/login", credentials);
     const { token, expires_at, user } = response.data;
 
     // Store token in localStorage
@@ -85,7 +85,9 @@ const authService = {
    * @returns {Promise<Object>} Success message
    */
   verifyEmail: async (token) => {
-    const response = await apiClient.get(`/api/v1/verify-email?token=${token}`);
+    const response = await apiClient.get(
+      `/api/v1/auth/verify-email?token=${token}`
+    );
     return response.data;
   },
 
@@ -95,9 +97,12 @@ const authService = {
    * @returns {Promise<Object>} Success message
    */
   requestPasswordReset: async (identifier) => {
-    const response = await apiClient.post("/api/v1/password/reset-request", {
-      identifier,
-    });
+    const response = await apiClient.post(
+      "/api/v1/auth/password/reset-request",
+      {
+        identifier,
+      }
+    );
     return response.data;
   },
 
@@ -109,7 +114,7 @@ const authService = {
    * @returns {Promise<Object>} Success message
    */
   resetPassword: async (data) => {
-    const response = await apiClient.post("/api/v1/password/reset", data);
+    const response = await apiClient.post("/api/v1/auth/password/reset", data);
     return response.data;
   },
 
