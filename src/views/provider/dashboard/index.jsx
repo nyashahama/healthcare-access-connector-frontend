@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { useAuth } from "context/AuthContext";
 import { IoMdPeople, IoMdTime, IoMdChatbubbles } from "react-icons/io";
 import {
   MdCalendarToday,
@@ -18,7 +17,6 @@ import QuickActions from "../components/QuickActions";
 import Card from "components/card";
 
 const ProviderDashboard = () => {
-  const { user, loading } = useAuth();
   const [dashboardData, setDashboardData] = useState({
     todayAppointments: 0,
     waitingPatients: 0,
@@ -27,6 +25,9 @@ const ProviderDashboard = () => {
     clinicStats: {},
     recentActivity: [],
   });
+
+  const [loading, setLoading] = useState(false);
+  const [userRole, setUserRole] = useState("doctor"); // Default role for now
 
   const fetchClinicAdminDashboard = async () => {
     return {
@@ -72,20 +73,21 @@ const ProviderDashboard = () => {
 
   // Load dashboard data based on role
   useEffect(() => {
-    if (!user) return;
     const loadDashboardData = async () => {
+      setLoading(true);
       let data;
-      if (user.role === "clinic_admin") {
+      if (userRole === "clinic_admin") {
         data = await fetchClinicAdminDashboard();
-      } else if (user.role === "doctor") {
+      } else if (userRole === "doctor") {
         data = await fetchDoctorDashboard();
-      } else if (user.role === "nurse") {
+      } else if (userRole === "nurse") {
         data = await fetchNurseDashboard();
       }
       setDashboardData(data);
+      setLoading(false);
     };
     loadDashboardData();
-  }, [user]);
+  }, [userRole]);
 
   if (loading) {
     return (
@@ -172,11 +174,10 @@ const ProviderDashboard = () => {
           </div>
           <div>
             <h3 className="text-2xl font-bold text-navy-700 dark:text-white">
-              Welcome back, Dr. {user.name?.split(" ")[0] || ""}! 👨‍⚕️
+              Welcome back, Doctor! 👨‍⚕️
             </h3>
             <p className="text-gray-600 dark:text-gray-300">
-              {user.specialization || "General Practitioner"} at{" "}
-              {user.clinic || "Your Clinic"}
+              General Practitioner at Your Clinic
             </p>
           </div>
         </div>
@@ -245,10 +246,10 @@ const ProviderDashboard = () => {
           </div>
           <div>
             <h3 className="text-2xl font-bold text-navy-700 dark:text-white">
-              Welcome, Nurse {user.name?.split(" ")[0] || ""}! 👩‍⚕️
+              Welcome, Nurse! 👩‍⚕️
             </h3>
             <p className="text-gray-600 dark:text-gray-300">
-              Ready to provide care at {user.clinic || "Your Clinic"}
+              Ready to provide care at Your Clinic
             </p>
           </div>
         </div>
@@ -292,16 +293,56 @@ const ProviderDashboard = () => {
     </div>
   );
 
-  // Render based on role
-  if (user.role === "clinic_admin") {
-    return <ClinicAdminDashboard />;
-  } else if (user.role === "doctor") {
-    return <DoctorDashboard />;
-  } else if (user.role === "nurse") {
-    return <NurseDashboard />;
-  }
+  // Role selector for testing (temporary - remove when user system is implemented)
+  const RoleSelector = () => (
+    <div className="mb-6 rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+      <h4 className="mb-3 text-lg font-semibold text-navy-700 dark:text-white">
+        Select Role (Temporary - For Testing)
+      </h4>
+      <div className="flex space-x-3">
+        <button
+          onClick={() => setUserRole("doctor")}
+          className={`rounded-lg px-4 py-2 font-medium ${
+            userRole === "doctor"
+              ? "bg-brand-500 text-white"
+              : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+          }`}
+        >
+          Doctor
+        </button>
+        <button
+          onClick={() => setUserRole("nurse")}
+          className={`rounded-lg px-4 py-2 font-medium ${
+            userRole === "nurse"
+              ? "bg-brand-500 text-white"
+              : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+          }`}
+        >
+          Nurse
+        </button>
+        <button
+          onClick={() => setUserRole("clinic_admin")}
+          className={`rounded-lg px-4 py-2 font-medium ${
+            userRole === "clinic_admin"
+              ? "bg-brand-500 text-white"
+              : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+          }`}
+        >
+          Clinic Admin
+        </button>
+      </div>
+    </div>
+  );
 
-  return <div>Loading...</div>;
+  // Render based on role
+  return (
+    <div>
+      <RoleSelector />
+      {userRole === "clinic_admin" && <ClinicAdminDashboard />}
+      {userRole === "doctor" && <DoctorDashboard />}
+      {userRole === "nurse" && <NurseDashboard />}
+    </div>
+  );
 };
 
 export default ProviderDashboard;
