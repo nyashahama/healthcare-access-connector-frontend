@@ -45,6 +45,9 @@ import VerifyEmail from "views/auth/VerifyEmail";
 import ChangePassword from "views/auth/ChangePassword";
 import ConsentSettings from "views/auth/ConsentSettings";
 
+// Landing Page View
+import LandingPage from "views/landing";
+
 // Icon Imports
 import {
   MdHome,
@@ -70,6 +73,15 @@ import {
   MdForum,
 } from "react-icons/md";
 import { FaStethoscope } from "react-icons/fa";
+
+export const landingRoutes = [
+  {
+    name: "Home",
+    layout: "/",
+    path: "",
+    component: <LandingPage />,
+  },
+];
 
 // Patient Routes
 export const patientRoutes = [
