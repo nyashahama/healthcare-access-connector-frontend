@@ -1,10 +1,25 @@
 import React from "react";
 
+// Declare images globally as constants
+const IMAGES = {
+  PLANET: "/images/planet.png",
+  PLANET_OVERLAY: "/images/planet-overlay.svg",
+  TAG_01: "/images/planet-tag-01.png",
+  TAG_02: "/images/planet-tag-02.png",
+  TAG_03: "/images/planet-tag-03.png",
+  TAG_04: "/images/planet-tag-04.png",
+};
+
 const features = [
   {
     icon: (
-      <svg className="fill-current h-6 w-6 text-blue-600" viewBox="0 0 24 24">
-        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+      <svg
+        className="fill-blue-500"
+        xmlns="http://www.w3.org/2000/svg"
+        width={16}
+        height={16}
+      >
+        <path d="M8 0C3.582 0 0 3.582 0 8s3.582 8 8 8 8-3.582 8-8-3.582-8-8-8zm0 14c-3.314 0-6-2.686-6-6s2.686-6 6-6 6 2.686 6 6-2.686 6-6 6zm-1-7V5h2v2h2v2h-4v2H7z" />
       </svg>
     ),
     title: "AI Symptom Checker",
@@ -13,8 +28,13 @@ const features = [
   },
   {
     icon: (
-      <svg className="fill-current h-6 w-6 text-blue-600" viewBox="0 0 24 24">
-        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
+      <svg
+        className="fill-blue-500"
+        xmlns="http://www.w3.org/2000/svg"
+        width={16}
+        height={16}
+      >
+        <path d="M8 0C3.582 0 0 3.582 0 8s3.582 8 8 8 8-3.582 8-8-3.582-8-8-8zm0 14c-3.314 0-6-2.686-6-6s2.686-6 6-6 6 2.686 6 6-2.686 6-6 6zm1-7V4H7v3H5v2h4v3h2V9H9z" />
       </svg>
     ),
     title: "Find Free Clinics",
@@ -23,8 +43,13 @@ const features = [
   },
   {
     icon: (
-      <svg className="fill-current h-6 w-6 text-blue-600" viewBox="0 0 24 24">
-        <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V8l8 5 8-5v10zm-8-7L4 6h16l-8 5z" />
+      <svg
+        className="fill-blue-500"
+        xmlns="http://www.w3.org/2000/svg"
+        width={16}
+        height={16}
+      >
+        <path d="M15 4H1a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1ZM3 1a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h1a1 1 0 1 1 0 2H3a3 3 0 0 1-3-3V2a3 3 0 0 1 3-3h1a1 1 0 1 1 0 2H3ZM13 1a1 1 0 0 0 0 2h1a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1h-1a1 1 0 1 0 0 2h1a3 3 0 0 0 3-3V4a3 3 0 0 0-3-3h-1Z" />
       </svg>
     ),
     title: "Telemedicine Chat",
@@ -33,8 +58,13 @@ const features = [
   },
   {
     icon: (
-      <svg className="fill-current h-6 w-6 text-blue-600" viewBox="0 0 24 24">
-        <path d="M18.06 22.99h1.66c.84 0 1.53-.64 1.63-1.46L23 5.05h-5V1h-1.97v4.05h-4.97l.3 2.34c1.71.47 3.31 1.32 4.27 2.26 1.44 1.42 2.43 2.89 2.43 5.29v8.05zM1 21.99V21h15.03v.99c0 .55-.45 1-1.01 1H2.01c-.56 0-1.01-.45-1.01-1zm15.03-7c0-8-15.03-8-15.03 0h15.03zM1.02 17h15v2h-15z" />
+      <svg
+        className="fill-blue-500"
+        xmlns="http://www.w3.org/2000/svg"
+        width={16}
+        height={16}
+      >
+        <path d="M10.284.33a1 1 0 1 0-.574 1.917 6.049 6.049 0 0 1 2.417 1.395A1 1 0 0 0 13.5 2.188 8.034 8.034 0 0 0 10.284.33ZM6.288 2.248A1 1 0 0 0 5.718.33 8.036 8.036 0 0 0 2.5 2.187a1 1 0 0 0 1.372 1.455 6.036 6.036 0 0 1 2.415-1.395ZM1.42 5.401a1 1 0 0 1 .742 1.204 6.025 6.025 0 0 0 0 2.79 1 1 0 0 1-1.946.462 8.026 8.026 0 0 1 0-3.714A1 1 0 0 1 1.421 5.4Zm2.452 6.957A1 1 0 0 0 2.5 13.812a8.036 8.036 0 0 0 3.216 1.857 1 1 0 0 0 .574-1.916 6.044 6.044 0 0 1-2.417-1.395Zm9.668.04a1 1 0 0 1-.041 1.414 8.033 8.033 0 0 1-3.217 1.857 1 1 0 1 1-.571-1.917 6.035 6.035 0 0 0 2.415-1.395 1 1 0 0 1 1.414.042Zm2.242-6.255a1 1 0 1 0-1.946.462 6.03 6.03 0 0 1 0 2.79 1 1 0 1 0 1.946.462 8.022 8.022 0 0 0 0-3.714Z" />
       </svg>
     ),
     title: "Nutrition Resources",
@@ -43,8 +73,13 @@ const features = [
   },
   {
     icon: (
-      <svg className="fill-current h-6 w-6 text-blue-600" viewBox="0 0 24 24">
-        <path d="M15.5 1h-8C6.12 1 5 2.12 5 3.5v17C5 21.88 6.12 23 7.5 23h8c1.38 0 2.5-1.12 2.5-2.5v-17C18 2.12 16.88 1 15.5 1zm-4 21c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4.5-4H7V4h9v14z" />
+      <svg
+        className="fill-blue-500"
+        xmlns="http://www.w3.org/2000/svg"
+        width={16}
+        height={16}
+      >
+        <path d="M9 1a1 1 0 1 0-2 0v6a1 1 0 0 0 2 0V1ZM4.572 3.08a1 1 0 0 0-1.144-1.64A7.987 7.987 0 0 0 0 8a8 8 0 0 0 16 0c0-2.72-1.36-5.117-3.428-6.56a1 1 0 1 0-1.144 1.64A5.987 5.987 0 0 1 14 8 6 6 0 1 1 2 8a5.987 5.987 0 0 1 2.572-4.92Z" />
       </svg>
     ),
     title: "SMS Access",
@@ -53,8 +88,13 @@ const features = [
   },
   {
     icon: (
-      <svg className="fill-current h-6 w-6 text-blue-600" viewBox="0 0 24 24">
-        <path d="M19 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zm-5.5-6c0 .83-.67 1.5-1.5 1.5s-1.5-.67-1.5-1.5.67-1.5 1.5-1.5 1.5.67 1.5 1.5zM12 9c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm0 6c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z" />
+      <svg
+        className="fill-blue-500"
+        xmlns="http://www.w3.org/2000/svg"
+        width={16}
+        height={16}
+      >
+        <path d="M15 4H1a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1ZM3 1a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h1a1 1 0 1 1 0 2H3a3 3 0 0 1-3-3V2a3 3 0 0 1 3-3h1a1 1 0 1 1 0 2H3ZM13 1a1 1 0 0 0 0 2h1a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1h-1a1 1 0 1 0 0 2h1a3 3 0 0 0 3-3V4a3 3 0 0 0-3-3h-1Z" />
       </svg>
     ),
     title: "Secure Dashboard",
@@ -65,67 +105,101 @@ const features = [
 
 export default function FeaturesPlanet() {
   return (
-    <section
-      id="features"
-      className="bg-gradient-to-b from-white to-blue-50 py-12 md:py-20"
-    >
+    <section className="relative bg-gray-900 py-12 md:py-20">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         {/* Section header */}
         <div className="mx-auto max-w-3xl pb-12 text-center md:pb-16">
-          <h2 className="text-3xl font-bold text-gray-900 md:text-4xl">
+          <h2 className="text-3xl font-bold text-gray-100 md:text-4xl">
             HealthConnect Empowers Everyone to Access Quality Care
           </h2>
-          <p className="mt-4 text-lg text-gray-600">
-            All the tools you need for better health, accessible to everyone
-            regardless of device or internet access
-          </p>
         </div>
 
-        {/* Planet visualization */}
-        <div className="relative mb-16 flex justify-center">
-          <div className="relative h-64 w-64 md:h-80 md:w-80">
-            {/* Planet core */}
-            <div className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 shadow-2xl">
-              {/* Planet rings/features */}
-              <div className="absolute -right-8 top-8 animate-pulse rounded-lg bg-white/10 p-3 backdrop-blur-sm">
-                <div className="h-2 w-16 rounded bg-white"></div>
-              </div>
-              <div className="absolute -left-8 top-16 animate-pulse rounded-lg bg-white/10 p-3 backdrop-blur-sm delay-300">
-                <div className="h-2 w-12 rounded bg-white"></div>
-              </div>
-              <div className="absolute bottom-12 left-12 animate-pulse rounded-lg bg-white/10 p-3 backdrop-blur-sm delay-500">
-                <div className="h-2 w-20 rounded bg-white"></div>
-              </div>
-              <div className="absolute -bottom-4 right-12 animate-pulse rounded-lg bg-white/10 p-3 backdrop-blur-sm delay-700">
-                <div className="h-2 w-14 rounded bg-white"></div>
+        {/* Planet */}
+        <div className="pb-16 md:pb-20">
+          <div className="text-center">
+            <div className="relative inline-flex rounded-full before:absolute before:inset-0 before:-z-10 before:scale-[.85] before:animate-pulse before:bg-gradient-to-b before:from-blue-600 before:to-blue-800/50 before:blur-3xl after:absolute after:inset-0 after:rounded-full after:bg-[radial-gradient(closest-side,rgb(59,130,246),transparent)]">
+              <img
+                className="rounded-full bg-gray-900"
+                src={IMAGES.PLANET}
+                width={400}
+                height={400}
+                alt="Health Planet"
+              />
+              <div className="pointer-events-none" aria-hidden="true">
+                <img
+                  className="absolute -right-64 -top-20 z-10 max-w-none"
+                  src={IMAGES.PLANET_OVERLAY}
+                  width={789}
+                  height={755}
+                  alt="Health Planet decoration"
+                />
+                <div>
+                  <img
+                    className="absolute -left-28 top-16 z-10 opacity-80 transition-opacity duration-500"
+                    src={IMAGES.TAG_01}
+                    width={253}
+                    height={56}
+                    alt="Symptom Checker Tag"
+                    style={{
+                      animation: "float 4s ease-in-out infinite both",
+                    }}
+                  />
+                  <img
+                    className="absolute left-56 top-7 z-10 opacity-30 transition-opacity duration-500"
+                    src={IMAGES.TAG_02}
+                    width={241}
+                    height={56}
+                    alt="Find Clinics Tag"
+                    style={{
+                      animation: "float 4s ease-in-out infinite 1s both",
+                    }}
+                  />
+                  <img
+                    className="absolute -left-20 bottom-24 z-10 opacity-25 transition-opacity duration-500"
+                    src={IMAGES.TAG_03}
+                    width={253}
+                    height={56}
+                    alt="Telemedicine Tag"
+                    style={{
+                      animation: "float 4s ease-in-out infinite 2s both",
+                    }}
+                  />
+                  <img
+                    className="absolute bottom-16 left-64 z-10 opacity-60 transition-opacity duration-500"
+                    src={IMAGES.TAG_04}
+                    width={241}
+                    height={56}
+                    alt="Nutrition Tag"
+                    style={{
+                      animation: "float 4s ease-in-out infinite 3s both",
+                    }}
+                  />
+                </div>
               </div>
             </div>
-
-            {/* Glow effect */}
-            <div className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-400/20 to-blue-600/20 blur-xl"></div>
           </div>
         </div>
 
         {/* Features grid */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-3 md:gap-8">
           {features.map((feature, index) => (
-            <div
+            <article
               key={index}
-              className="rounded-xl bg-white p-6 shadow-lg transition-all hover:shadow-xl"
+              className="rounded-lg border border-gray-700/50 bg-gray-800/50 p-6 backdrop-blur-sm transition-all hover:border-gray-600/50 hover:bg-gray-800/70"
             >
-              <div className="mb-4 inline-flex rounded-lg bg-blue-50 p-3">
+              <h3 className="mb-2 flex items-center space-x-2 font-medium text-gray-200">
                 {feature.icon}
-              </div>
-              <h3 className="mb-2 text-lg font-semibold text-gray-900">
-                {feature.title}
+                <span>{feature.title}</span>
               </h3>
-              <p className="text-gray-600">{feature.description}</p>
-            </div>
+              <p className="text-sm leading-relaxed text-gray-400">
+                {feature.description}
+              </p>
+            </article>
           ))}
         </div>
 
         {/* SMS Access Highlight */}
-        <div className="mt-16 rounded-2xl bg-gradient-to-r from-blue-600 to-blue-700 p-8 text-white">
+        <div className="mt-16 rounded-2xl bg-gradient-to-r from-blue-600 to-blue-700 p-8 text-white shadow-xl">
           <div className="text-center">
             <div className="mb-6 inline-flex items-center justify-center rounded-full bg-white/20 p-4">
               <svg className="h-8 w-8" fill="currentColor" viewBox="0 0 24 24">
@@ -159,6 +233,17 @@ export default function FeaturesPlanet() {
           </div>
         </div>
       </div>
+
+      <style>{`
+        @keyframes float {
+          0%, 100% {
+            transform: translateY(0px);
+          }
+          50% {
+            transform: translateY(-20px);
+          }
+        }
+      `}</style>
     </section>
   );
 }
