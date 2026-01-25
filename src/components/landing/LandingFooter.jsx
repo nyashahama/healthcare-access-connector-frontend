@@ -169,27 +169,27 @@ export default function LandingFooter({ border = false }) {
             <ul className="flex space-x-4">
               <li>
                 <a
-                  className="flex items-center justify-center text-gray-600 transition hover:text-blue-600"
+                  className="flex items-center justify-center text-blue-500 transition hover:text-blue-600"
                   href="#0"
                   aria-label="Twitter"
                 >
                   <svg
-                    className="fill-current h-5 w-5"
-                    viewBox="0 0 24 24"
+                    className="fill-current h-8 w-8"
+                    viewBox="0 0 32 32"
                     xmlns="http://www.w3.org/2000/svg"
                   >
-                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                    <path d="m13.063 9 3.495 4.475L20.601 9h2.454l-5.359 5.931L24 23h-4.938l-3.866-4.893L10.771 23H8.316l5.735-6.342L8 9h5.063Zm-.74 1.347h-1.457l8.875 11.232h1.36l-8.778-11.232Z"></path>
                   </svg>
                 </a>
               </li>
               <li>
                 <a
-                  className="flex items-center justify-center text-gray-600 transition hover:text-blue-600"
+                  className="flex items-center justify-center text-blue-500 transition hover:text-blue-600"
                   href="#0"
                   aria-label="Facebook"
                 >
                   <svg
-                    className="fill-current h-5 w-5"
+                    className="fill-current h-8 w-8"
                     viewBox="0 0 24 24"
                     xmlns="http://www.w3.org/2000/svg"
                   >
@@ -199,21 +199,46 @@ export default function LandingFooter({ border = false }) {
               </li>
               <li>
                 <a
-                  className="flex items-center justify-center text-gray-600 transition hover:text-blue-600"
+                  className="flex items-center justify-center text-blue-500 transition hover:text-blue-600"
                   href="#0"
                   aria-label="Instagram"
                 >
                   <svg
-                    className="fill-current h-5 w-5"
-                    viewBox="0 0 24 24"
+                    className="fill-current h-8 w-8"
+                    viewBox="0 0 32 32"
                     xmlns="http://www.w3.org/2000/svg"
                   >
-                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
+                    <circle cx="20.145" cy="11.892" r="1" />
+                    <path d="M16 20c-2.206 0-4-1.794-4-4s1.794-4 4-4 4 1.794 4 4-1.794 4-4 4zm0-6c-1.103 0-2 .897-2 2s.897 2 2 2 2-.897 2-2-.897-2-2-2z" />
+                    <path d="M20 24h-8c-2.056 0-4-1.944-4-4v-8c0-2.056 1.944-4 4-4h8c2.056 0 4 1.944 4 4v8c0 2.056-1.944 4-4 4zm-8-14c-1.019 0-2 .981-2 2v8c0 1.019.981 2 2 2h8c1.019 0 2-.981 2-2v-8c0-1.019-.981-2-2-2h-8z" />
+                    <path d="M16 0C7.164 0 0 7.164 0 16s7.164 16 16 16 16-7.164 16-16S24.836 0 16 0zm0 30c-7.732 0-14-6.268-14-14S8.268 2 16 2s14 6.268 14 14-6.268 14-14 14z" />
                   </svg>
                 </a>
               </li>
             </ul>
           </div>
+        </div>
+      </div>
+
+      {/* Big text */}
+      <div
+        className="relative -mt-16 h-60 w-full overflow-hidden"
+        aria-hidden="true"
+      >
+        <div className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2">
+          <h2
+            className="text-transparent select-none bg-gradient-to-b from-blue-200 via-blue-100 to-blue-50 bg-clip-text text-[200px] font-bold leading-none md:text-[280px] lg:text-[348px]"
+            style={{
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+            }}
+          >
+            Health
+          </h2>
+        </div>
+        {/* Glow */}
+        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-2/3">
+          <div className="h-56 w-56 rounded-full bg-blue-500/30 blur-3xl"></div>
         </div>
       </div>
     </footer>
