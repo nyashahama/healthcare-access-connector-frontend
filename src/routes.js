@@ -38,7 +38,8 @@ import Analytics from "views/admin/analytics";
 
 // Auth Views
 import SignIn from "views/auth/SignIn";
-import SignUp from "views/auth/SignUp";
+import PatientSignUp from "views/auth/PatientSignUp";
+import ProviderSignUp from "views/auth/ProviderSignUp";
 import ForgotPassword from "views/auth/ForgotPassword";
 import ResetPassword from "views/auth/ResetPassword";
 import VerifyEmail from "views/auth/VerifyEmail";
@@ -356,9 +357,16 @@ export const authRoutes = [
   {
     name: "Sign Up",
     layout: "/auth",
-    path: "sign-up",
+    path: "sign-up/patient",
     icon: <MdLock className="h-6 w-6" />,
-    component: <SignUp />,
+    component: <PatientSignUp />,
+  },
+  {
+    name: "Sign Up",
+    layout: "/auth",
+    path: "sign-up/provider",
+    icon: <MdLock className="h-6 w-6" />,
+    component: <ProviderSignUp />,
   },
   {
     name: "Forgot Password",

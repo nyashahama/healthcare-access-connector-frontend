@@ -51,17 +51,18 @@ export default function Hero() {
                 for everyone.
               </p>
 
-              <div className="mx-auto max-w-xs sm:flex sm:max-w-none sm:justify-center">
+              <div className="mx-auto max-w-md sm:flex sm:max-w-none sm:justify-center">
                 <Link
-                  to="/auth/sign-up"
+                  to="/auth/sign-up/patient"
                   className="mb-4 w-full rounded-lg bg-gradient-to-r from-blue-600 to-blue-500 px-6 py-3 text-center font-medium text-white shadow-lg hover:from-blue-700 hover:to-blue-600 sm:mb-0 sm:w-auto"
                 >
-                  <span className="inline-flex items-center">
-                    Get Started Free
-                    <span className="ml-2 transition-transform group-hover:translate-x-1">
-                      →
-                    </span>
-                  </span>
+                  Get Started Free
+                </Link>
+                <Link
+                  to="/auth/sign-up/provider"
+                  className="mb-4 w-full rounded-lg bg-gradient-to-r from-green-600 to-green-500 px-6 py-3 text-center font-medium text-white shadow-lg hover:from-green-700 hover:to-green-600 sm:mx-4 sm:mb-0 sm:w-auto"
+                >
+                  Register Your Clinic
                 </Link>
                 <Link
                   to="/#features"
