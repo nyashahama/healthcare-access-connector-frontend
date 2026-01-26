@@ -20,15 +20,21 @@ export default function Cta() {
             </p>
             <div className="mx-auto max-w-xs sm:flex sm:max-w-none sm:justify-center">
               <Link
-                to="/auth/sign-up"
+                to="/auth/sign-up/patient"
                 className="mb-4 w-full rounded-lg bg-gradient-to-r from-blue-500 to-blue-400 px-8 py-3 text-center text-lg font-semibold text-white shadow-lg hover:from-blue-600 hover:to-blue-500 sm:mb-0 sm:w-auto"
               >
                 <span className="inline-flex items-center">
-                  Start Your Health Journey
+                  Get Started as Patient
                   <span className="ml-2 transition-transform group-hover:translate-x-1">
                     →
                   </span>
                 </span>
+              </Link>
+              <Link
+                to="/auth/sign-up/provider"
+                className="w-full rounded-lg bg-gradient-to-r from-green-500 to-green-400 px-8 py-3 text-center text-lg font-semibold text-white shadow-lg hover:from-green-600 hover:to-green-500 sm:ml-4 sm:w-auto"
+              >
+                Register Your Clinic
               </Link>
               <Link
                 to="/auth/sign-in"

@@ -2,19 +2,11 @@ import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import InputField from "components/fields/InputField";
 import { FcGoogle } from "react-icons/fc";
-import {
-  FaUserInjured,
-  FaUserMd,
-  FaUserShield,
-  FaEye,
-  FaEyeSlash,
-} from "react-icons/fa";
-import Checkbox from "components/checkbox";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { useToast } from "hooks/useToast";
 import { useAuth } from "hooks/useAuth";
 
 export default function SignIn() {
-  const [userType, setUserType] = useState("patient");
   const [credentials, setCredentials] = useState({
     identifier: "",
     password: "",
@@ -67,8 +59,8 @@ export default function SignIn() {
             localStorage.removeItem("rememberMe");
           }
 
-          // Redirect based on user role
-          const role = user.role || userType;
+          // Redirect based on user role from backend
+          const role = user.role;
           setTimeout(() => {
             switch (role) {
               case "patient":
@@ -114,51 +106,6 @@ export default function SignIn() {
           Connecting healthcare with those who need it most
         </p>
 
-        {/* Role Selection */}
-        <div className="mb-6">
-          <p className="mb-3 text-sm font-medium text-navy-700 dark:text-white">
-            I am a:
-          </p>
-          <div className="grid grid-cols-3 gap-3">
-            <button
-              type="button"
-              onClick={() => setUserType("patient")}
-              className={`linear rounded-xl px-4 py-3 text-center transition duration-200 ${
-                userType === "patient"
-                  ? "bg-brand-500 text-white"
-                  : "bg-gray-100 text-gray-600 dark:bg-navy-800 dark:text-white"
-              }`}
-            >
-              <FaUserInjured className="mx-auto mb-2 h-6 w-6" />
-              <span className="text-sm font-medium">Patient</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setUserType("provider")}
-              className={`linear rounded-xl px-4 py-3 text-center transition duration-200 ${
-                userType === "provider"
-                  ? "bg-brand-500 text-white"
-                  : "bg-gray-100 text-gray-600 dark:bg-navy-800 dark:text-white"
-              }`}
-            >
-              <FaUserMd className="mx-auto mb-2 h-6 w-6" />
-              <span className="text-sm font-medium">Provider</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setUserType("admin")}
-              className={`linear rounded-xl px-4 py-3 text-center transition duration-200 ${
-                userType === "admin"
-                  ? "bg-brand-500 text-white"
-                  : "bg-gray-100 text-gray-600 dark:bg-navy-800 dark:text-white"
-              }`}
-            >
-              <FaUserShield className="mx-auto mb-2 h-6 w-6" />
-              <span className="text-sm font-medium">Admin</span>
-            </button>
-          </div>
-        </div>
-
         {/* SMS-Only Option */}
         <div className="mb-6 rounded-xl border border-gray-200 p-4 dark:border-navy-700">
           <p className="mb-2 text-sm font-medium text-navy-700 dark:text-white">
@@ -184,6 +131,7 @@ export default function SignIn() {
         <button
           onClick={handleGoogleLogin}
           className="mb-6 flex w-full items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white py-3 text-gray-700 transition hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300"
+          disabled={isLoading || authLoading}
         >
           <FcGoogle className="h-5 w-5" />
           <span>Continue with Google</span>
@@ -221,6 +169,7 @@ export default function SignIn() {
               type="button"
               className="absolute right-3 top-10 text-gray-500"
               onClick={() => setShowPassword(!showPassword)}
+              disabled={isLoading || authLoading}
             >
               {showPassword ? <FaEyeSlash /> : <FaEye />}
             </button>
@@ -229,10 +178,12 @@ export default function SignIn() {
           {/* Checkbox and Forgot Password */}
           <div className="mb-4 flex items-center justify-between px-2">
             <div className="flex items-center">
-              <Checkbox
+              <input
+                type="checkbox"
                 checked={rememberMe}
                 onChange={(e) => setRememberMe(e.target.checked)}
                 disabled={isLoading || authLoading}
+                className="h-4 w-4 rounded border-gray-300 text-brand-500 focus:ring-brand-500"
               />
               <p className="ml-2 text-sm font-medium text-navy-700 dark:text-white">
                 Keep me logged In
@@ -273,12 +224,37 @@ export default function SignIn() {
                 Signing in...
               </span>
             ) : (
-              `Sign In as ${
-                userType.charAt(0).toUpperCase() + userType.slice(1)
-              }`
+              "Sign In"
             )}
           </button>
         </form>
+
+        {/* Registration Links */}
+        <div className="mt-8 space-y-4">
+          <div className="text-center">
+            <span className="text-sm font-medium text-navy-700 dark:text-gray-300">
+              Need a patient account?
+            </span>
+            <Link
+              to="/auth/sign-up/patient"
+              className="ml-1 text-sm font-medium text-brand-500 hover:text-brand-600 dark:text-white"
+            >
+              Register as Patient
+            </Link>
+          </div>
+
+          <div className="text-center">
+            <span className="text-sm font-medium text-navy-700 dark:text-gray-300">
+              Healthcare provider?
+            </span>
+            <Link
+              to="/auth/sign-up/provider"
+              className="ml-1 text-sm font-medium text-brand-500 hover:text-brand-600 dark:text-white"
+            >
+              Register Your Clinic
+            </Link>
+          </div>
+        </div>
 
         {/* Emergency Notice */}
         <div className="mt-6 rounded-xl bg-red-50 p-4 dark:bg-red-900/20">
@@ -304,19 +280,6 @@ export default function SignIn() {
               </p>
             </div>
           </div>
-        </div>
-
-        {/* Sign Up Link */}
-        <div className="mt-6 text-center">
-          <span className="text-sm font-medium text-navy-700 dark:text-gray-300">
-            Not registered yet?
-          </span>
-          <Link
-            to="/auth/sign-up"
-            className="ml-1 text-sm font-medium text-brand-500 hover:text-brand-600 dark:text-white"
-          >
-            Create an account
-          </Link>
         </div>
       </div>
     </div>
