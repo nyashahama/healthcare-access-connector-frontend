@@ -60,30 +60,41 @@ export default function SignIn() {
             localStorage.removeItem("rememberMe");
           }
 
-          // Check patient profile
-          try {
-            const patientRes = await patientService.getCurrentPatientProfile();
-            const completion =
-              patientService.calculateProfileCompletion(patientRes);
-            if (user.role === "patient" && completion < 80) {
-              navigate("/auth/complete-patient-profile");
+          // Check patient profile ONLY for patient role
+          if (user.role === "patient") {
+            try {
+              const patientRes = await patientService.getPatientProfileByUserId(
+                user.id
+              );
+              const completion =
+                patientService.calculateProfileCompletion(patientRes);
+
+              // If profile is less than 50% complete, redirect to complete profile
+              if (completion < 50) {
+                navigate("/auth/complete-patient-profile");
+                return;
+              }
+
+              // Profile is complete enough, go to dashboard
+              navigate("/patient/dashboard");
+              return;
+            } catch (err) {
+              // If 404 (no profile found), redirect to complete profile
+              if (err.response?.status === 404) {
+                navigate("/auth/complete-patient-profile");
+                return;
+              }
+              // For other errors, still allow access to dashboard
+              console.error("Error checking patient profile:", err);
+              navigate("/patient/dashboard");
               return;
             }
-          } catch (err) {
-            if (user.role === "patient" && err.response?.status === 404) {
-              navigate("/auth/complete-patient-profile");
-              return;
-            }
-            // For other errors or non-patient roles, proceed
           }
 
-          // Redirect based on user role from backend
+          // Redirect based on user role from backend for non-patient users
           const role = user.role;
 
           switch (role) {
-            case "patient":
-              navigate("/patient/dashboard");
-              break;
             case "provider":
             case "doctor":
             case "nurse":

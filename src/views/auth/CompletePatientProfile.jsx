@@ -119,18 +119,27 @@ const CompletePatientProfile = () => {
 
     try {
       // Map formData to snake_case for backend
+      // Debug: log what we're sending
+
+      const userStr = localStorage.getItem("user");
+
+      const user = JSON.parse(userStr);
+
       const profileData = {
+        user_id: user ? user.id : undefined,
         first_name: formData.firstName,
         last_name: formData.lastName,
         preferred_name: formData.preferredName || undefined,
-        date_of_birth: formData.dateOfBirth || undefined,
+        date_of_birth: formData.dateOfBirth
+          ? formData.dateOfBirth + "T00:00:00Z"
+          : undefined,
         gender: formData.gender || undefined,
         preferred_gender_pronouns:
           formData.preferredGenderPronouns || undefined,
         primary_address: formData.primaryAddress,
         city: formData.city,
         province: formData.province,
-        country: formData.country,
+        country: formData.country, // This is CRITICAL
         postal_code: formData.postalCode || undefined,
         home_language: formData.homeLanguage || undefined,
         requires_interpreter: formData.requiresInterpreter,
