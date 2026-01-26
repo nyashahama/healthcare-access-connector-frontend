@@ -55,7 +55,7 @@ const ContactInformation = () => {
                 patientData.last_name || ""
               }`.trim() || "Not set",
             email: patientData.email || user.email || "Not set",
-            phone: patientData.phone || "Not set",
+            phone: patientData.phone || user.phone || "Not set",
             address: patientData.primary_address || "Not set",
             dateOfBirth: patientData.date_of_birth
               ? formatDate(patientData.date_of_birth)
@@ -130,37 +130,93 @@ const ContactInformation = () => {
     }));
   };
 
+  const getOriginalValue = (field) => {
+    let value = patient?.[field] || "";
+    if (field === "date_of_birth") {
+      value = patient?.date_of_birth?.split("T")[0] || "";
+    }
+    return value;
+  };
+
   const confirmEdit = async () => {
     setIsSaving(true);
 
     try {
-      // Map form data to patient profile format
-      const profileData = {
-        first_name: editForm.firstName,
-        last_name: editForm.lastName,
-        email: editForm.email,
-        phone: editForm.phone,
-        primary_address: editForm.address,
-        date_of_birth: editForm.dateOfBirth,
-        gender: editForm.gender,
-        home_language: editForm.language,
-      };
+      // Prepare partial updates by comparing with original patient data
+      const updates = {};
 
-      console.log(profileData);
+      if (
+        editForm.firstName &&
+        editForm.firstName !== (getOriginalValue("first_name") || "")
+      ) {
+        updates.first_name = editForm.firstName;
+      }
+
+      if (
+        editForm.lastName &&
+        editForm.lastName !== (getOriginalValue("last_name") || "")
+      ) {
+        updates.last_name = editForm.lastName;
+      }
+
+      if (
+        editForm.address &&
+        editForm.address !== (getOriginalValue("primary_address") || "")
+      ) {
+        updates.primary_address = editForm.address;
+      }
+
+      if (
+        editForm.dateOfBirth &&
+        editForm.dateOfBirth !== (getOriginalValue("date_of_birth") || "")
+      ) {
+        updates.date_of_birth = editForm.dateOfBirth + "T00:00:00Z";
+      }
+
+      if (
+        editForm.gender &&
+        editForm.gender !== (getOriginalValue("gender") || "")
+      ) {
+        updates.gender = editForm.gender;
+      }
+
+      if (editForm.language && editForm.language !== contactInfo.language) {
+        updates.home_language = editForm.language;
+      }
+
+      // Only proceed if there are changes
+      if (Object.keys(updates).length === 0) {
+        showToast("No changes detected", "info");
+        setEditModalOpen(false);
+        setIsSaving(false);
+        return;
+      }
+
+      console.log("Sending updates:", updates);
+
+      // Merge with current patient data
+      const merged = { ...patient, ...updates };
 
       if (patient?.id) {
-        const result = await updatePatientProfile(patient.id, profileData);
+        const result = await updatePatientProfile(patient.id, merged);
+        console.log(result);
 
         if (result.success) {
-          // Update local state
+          // Update local state with merged data
           const newContactInfo = {
-            fullName: `${editForm.firstName} ${editForm.lastName}`,
-            email: editForm.email,
-            phone: editForm.phone,
-            address: editForm.address,
-            dateOfBirth: formatDate(editForm.dateOfBirth),
-            gender: editForm.gender || "Not specified",
-            language: editForm.language || "Not specified",
+            fullName:
+              `${updates.first_name || patient.first_name || ""} ${
+                updates.last_name || patient.last_name || ""
+              }`.trim() || "Not set",
+            email: contactInfo.email,
+            phone: contactInfo.phone,
+            address:
+              updates.primary_address || patient.primary_address || "Not set",
+            dateOfBirth: formatDate(
+              updates.date_of_birth || patient.date_of_birth
+            ),
+            gender: updates.gender || patient.gender || "Not specified",
+            language: updates.home_language || contactInfo.language,
             smsNotifications: contactInfo.smsNotifications,
           };
           setContactInfo(newContactInfo);
@@ -223,32 +279,16 @@ const ContactInformation = () => {
         "An error occurred while updating notification preferences",
         "error"
       );
+      console.error("Toggle SMS error:", error);
     }
   };
 
-  if (patientLoading && !patient) {
-    return (
-      <Card extra={"w-full h-full p-6"}>
-        <div className="flex h-64 items-center justify-center">
-          <div className="text-center">
-            <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-brand-500"></div>
-            <p className="mt-4 text-gray-600 dark:text-gray-400">
-              Loading contact information...
-            </p>
-          </div>
-        </div>
-      </Card>
-    );
-  }
-
   return (
     <>
-      {/* Edit Contact Modal */}
       <Modal
         isOpen={editModalOpen}
         onClose={() => setEditModalOpen(false)}
         title="Edit Contact Information"
-        size="lg"
       >
         <div className="space-y-6">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -261,7 +301,7 @@ const ContactInformation = () => {
                 value={editForm.firstName}
                 onChange={(e) => handleFormChange("firstName", e.target.value)}
                 className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
-                placeholder="Enter first name"
+                placeholder="First Name"
                 disabled={isSaving}
               />
             </div>
@@ -274,35 +314,41 @@ const ContactInformation = () => {
                 value={editForm.lastName}
                 onChange={(e) => handleFormChange("lastName", e.target.value)}
                 className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
-                placeholder="Enter last name"
+                placeholder="Last Name"
                 disabled={isSaving}
               />
             </div>
             <div>
               <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Email Address *
+                Email
               </label>
               <input
                 type="email"
                 value={editForm.email}
                 onChange={(e) => handleFormChange("email", e.target.value)}
                 className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
-                placeholder="Enter email address"
+                placeholder="Email Address"
                 disabled={isSaving}
               />
+              <p className="mt-1 text-xs text-gray-500">
+                To update email, contact support or use account settings.
+              </p>
             </div>
             <div>
               <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Phone Number *
+                Phone
               </label>
               <input
                 type="tel"
                 value={editForm.phone}
                 onChange={(e) => handleFormChange("phone", e.target.value)}
                 className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
-                placeholder="Enter phone number"
+                placeholder="Phone Number"
                 disabled={isSaving}
               />
+              <p className="mt-1 text-xs text-gray-500">
+                To update phone, contact support or use account settings.
+              </p>
             </div>
             <div>
               <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -328,7 +374,7 @@ const ContactInformation = () => {
                 className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
                 disabled={isSaving}
               >
-                <option value="">Select gender</option>
+                <option value="">Select Gender</option>
                 <option value="Male">Male</option>
                 <option value="Female">Female</option>
                 <option value="Non-binary">Non-binary</option>
