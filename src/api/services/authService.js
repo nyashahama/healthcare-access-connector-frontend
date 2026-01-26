@@ -19,28 +19,6 @@ const authService = {
     return response.data;
   },
 
-  registerPatient: async (data) => {
-    const response = await apiClient.post(
-      "/api/v1/auth/register/patient",
-      data
-    );
-    return response.data;
-  },
-
-  // Provider registration (multi-step)
-  registerProvider: async (formData) => {
-    const response = await apiClient.post(
-      "/api/v1/auth/register/provider",
-      formData,
-      {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      }
-    );
-    return response.data;
-  },
-
   /**
    * Login user
    * @param {Object} credentials

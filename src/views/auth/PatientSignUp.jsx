@@ -109,7 +109,7 @@ const PatientSignUp = () => {
         });
 
         if (loginResult.success) {
-          navigate("/patient/dashboard");
+          navigate("/auth/complete-patient-profile");
         }
       } else {
         showToast(result.error || "Registration failed", "error");

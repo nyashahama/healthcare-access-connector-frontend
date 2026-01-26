@@ -61,24 +61,23 @@ export default function SignIn() {
 
           // Redirect based on user role from backend
           const role = user.role;
-          setTimeout(() => {
-            switch (role) {
-              case "patient":
-                navigate("/patient/dashboard");
-                break;
-              case "provider":
-              case "doctor":
-              case "nurse":
-              case "clinic_admin":
-                navigate("/provider/dashboard");
-                break;
-              case "admin":
-                navigate("/admin/dashboard");
-                break;
-              default:
-                navigate("/patient/dashboard");
-            }
-          }, 1000);
+
+          switch (role) {
+            case "patient":
+              navigate("/patient/dashboard");
+              break;
+            case "provider":
+            case "doctor":
+            case "nurse":
+            case "clinic_admin":
+              navigate("/provider/dashboard");
+              break;
+            case "admin":
+              navigate("/admin/dashboard");
+              break;
+            default:
+              navigate("/patient/dashboard");
+          }
         }
       } else {
         showToast(result.error || "Login failed", "error");
