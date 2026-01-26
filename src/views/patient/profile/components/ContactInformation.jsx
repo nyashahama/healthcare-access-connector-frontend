@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   MdEmail,
   MdPhone,
@@ -6,15 +6,28 @@ import {
   MdPerson,
   MdEdit,
   MdSave,
+  MdCake,
+  MdLanguage,
 } from "react-icons/md";
 import Card from "components/card";
 import Modal from "components/modal/Modal";
 import { useToast } from "hooks/useToast";
+import { usePatient } from "hooks/usePatient";
+import { useAuth } from "context/AuthContext";
 
 const ContactInformation = () => {
   const { showToast } = useToast();
+  const { user } = useAuth();
+  const {
+    patient,
+    loading: patientLoading,
+    updatePatientProfile,
+    getCurrentPatientProfile,
+  } = usePatient();
   const [editModalOpen, setEditModalOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
+  // Initialize contact info from patient data or defaults
   const [contactInfo, setContactInfo] = useState({
     fullName: "Sarah Johnson",
     email: "sarah.johnson@email.com",
@@ -28,8 +41,85 @@ const ContactInformation = () => {
 
   const [editForm, setEditForm] = useState({ ...contactInfo });
 
+  // Load patient data on component mount
+  useEffect(() => {
+    const loadPatientData = async () => {
+      if (user) {
+        const result = await getCurrentPatientProfile();
+        if (result.success && result.data) {
+          // Map patient data to contact info format
+          const patientData = result.data;
+          const newContactInfo = {
+            fullName:
+              `${patientData.first_name || ""} ${
+                patientData.last_name || ""
+              }`.trim() || "Not set",
+            email: patientData.email || user.email || "Not set",
+            phone: patientData.phone || "Not set",
+            address: patientData.primary_address || "Not set",
+            dateOfBirth: patientData.date_of_birth
+              ? formatDate(patientData.date_of_birth)
+              : "Not set",
+            gender: patientData.gender || "Not specified",
+            language:
+              patientData.home_language ||
+              patientData.language_preferences?.join(", ") ||
+              "Not specified",
+            smsNotifications:
+              patientData.sms_notifications !== undefined
+                ? patientData.sms_notifications
+                : true,
+          };
+          setContactInfo(newContactInfo);
+        }
+      }
+    };
+
+    loadPatientData();
+  }, [user, getCurrentPatientProfile]);
+
+  // Format date for display
+  const formatDate = (dateString) => {
+    if (!dateString) return "Not set";
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString("en-GB", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      });
+    } catch (error) {
+      return dateString;
+    }
+  };
+
+  // Parse date for form input
+  const parseDateForInput = (dateString) => {
+    if (!dateString || dateString === "Not set") return "";
+    try {
+      const date = new Date(dateString);
+      return date.toISOString().split("T")[0];
+    } catch (error) {
+      return "";
+    }
+  };
+
   const handleEditClick = () => {
-    setEditForm({ ...contactInfo });
+    // Pre-fill form with current data
+    const [firstName, ...lastNameParts] = contactInfo.fullName.split(" ");
+    const lastName = lastNameParts.join(" ");
+
+    setEditForm({
+      firstName: firstName || "",
+      lastName: lastName || "",
+      email: contactInfo.email === "Not set" ? "" : contactInfo.email,
+      phone: contactInfo.phone === "Not set" ? "" : contactInfo.phone,
+      address: contactInfo.address === "Not set" ? "" : contactInfo.address,
+      dateOfBirth: parseDateForInput(contactInfo.dateOfBirth),
+      gender: contactInfo.gender === "Not specified" ? "" : contactInfo.gender,
+      language:
+        contactInfo.language === "Not specified" ? "" : contactInfo.language,
+    });
     setEditModalOpen(true);
   };
 
@@ -40,24 +130,116 @@ const ContactInformation = () => {
     }));
   };
 
-  const confirmEdit = () => {
-    setContactInfo(editForm);
-    setEditModalOpen(false);
-    showToast("Contact information updated successfully!", "success");
+  const confirmEdit = async () => {
+    setIsSaving(true);
+
+    try {
+      // Map form data to patient profile format
+      const profileData = {
+        first_name: editForm.firstName,
+        last_name: editForm.lastName,
+        email: editForm.email,
+        phone: editForm.phone,
+        primary_address: editForm.address,
+        date_of_birth: editForm.dateOfBirth,
+        gender: editForm.gender,
+        home_language: editForm.language,
+      };
+
+      console.log(profileData);
+
+      if (patient?.id) {
+        const result = await updatePatientProfile(patient.id, profileData);
+
+        if (result.success) {
+          // Update local state
+          const newContactInfo = {
+            fullName: `${editForm.firstName} ${editForm.lastName}`,
+            email: editForm.email,
+            phone: editForm.phone,
+            address: editForm.address,
+            dateOfBirth: formatDate(editForm.dateOfBirth),
+            gender: editForm.gender || "Not specified",
+            language: editForm.language || "Not specified",
+            smsNotifications: contactInfo.smsNotifications,
+          };
+          setContactInfo(newContactInfo);
+
+          setEditModalOpen(false);
+          showToast("Contact information updated successfully!", "success");
+        } else {
+          showToast(
+            result.error || "Failed to update contact information",
+            "error"
+          );
+        }
+      } else {
+        showToast(
+          "Patient profile not found. Please complete your profile first.",
+          "error"
+        );
+      }
+    } catch (error) {
+      showToast(
+        "An error occurred while updating contact information",
+        "error"
+      );
+      console.error("Update error:", error);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const toggleSmsNotifications = () => {
-    setContactInfo((prev) => ({
-      ...prev,
-      smsNotifications: !prev.smsNotifications,
-    }));
-    showToast(
-      `SMS notifications ${
-        !contactInfo.smsNotifications ? "enabled" : "disabled"
-      }`,
-      "info"
-    );
+  const toggleSmsNotifications = async () => {
+    if (!patient?.id) {
+      showToast(
+        "Patient profile not found. Please complete your profile first.",
+        "error"
+      );
+      return;
+    }
+
+    const newSmsStatus = !contactInfo.smsNotifications;
+
+    try {
+      const result = await updatePatientProfile(patient.id, {
+        sms_notifications: newSmsStatus,
+      });
+
+      if (result.success) {
+        setContactInfo((prev) => ({
+          ...prev,
+          smsNotifications: newSmsStatus,
+        }));
+        showToast(
+          `SMS notifications ${newSmsStatus ? "enabled" : "disabled"}`,
+          "success"
+        );
+      } else {
+        showToast("Failed to update notification preferences", "error");
+      }
+    } catch (error) {
+      showToast(
+        "An error occurred while updating notification preferences",
+        "error"
+      );
+    }
   };
+
+  if (patientLoading && !patient) {
+    return (
+      <Card extra={"w-full h-full p-6"}>
+        <div className="flex h-64 items-center justify-center">
+          <div className="text-center">
+            <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-brand-500"></div>
+            <p className="mt-4 text-gray-600 dark:text-gray-400">
+              Loading contact information...
+            </p>
+          </div>
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <>
@@ -72,14 +254,28 @@ const ContactInformation = () => {
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
               <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Full Name *
+                First Name *
               </label>
               <input
                 type="text"
-                value={editForm.fullName}
-                onChange={(e) => handleFormChange("fullName", e.target.value)}
+                value={editForm.firstName}
+                onChange={(e) => handleFormChange("firstName", e.target.value)}
                 className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
-                placeholder="Enter full name"
+                placeholder="Enter first name"
+                disabled={isSaving}
+              />
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Last Name *
+              </label>
+              <input
+                type="text"
+                value={editForm.lastName}
+                onChange={(e) => handleFormChange("lastName", e.target.value)}
+                className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
+                placeholder="Enter last name"
+                disabled={isSaving}
               />
             </div>
             <div>
@@ -92,6 +288,7 @@ const ContactInformation = () => {
                 onChange={(e) => handleFormChange("email", e.target.value)}
                 className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
                 placeholder="Enter email address"
+                disabled={isSaving}
               />
             </div>
             <div>
@@ -104,6 +301,7 @@ const ContactInformation = () => {
                 onChange={(e) => handleFormChange("phone", e.target.value)}
                 className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
                 placeholder="Enter phone number"
+                disabled={isSaving}
               />
             </div>
             <div>
@@ -111,13 +309,13 @@ const ContactInformation = () => {
                 Date of Birth
               </label>
               <input
-                type="text"
+                type="date"
                 value={editForm.dateOfBirth}
                 onChange={(e) =>
                   handleFormChange("dateOfBirth", e.target.value)
                 }
                 className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
-                placeholder="DD Month YYYY"
+                disabled={isSaving}
               />
             </div>
             <div>
@@ -128,23 +326,27 @@ const ContactInformation = () => {
                 value={editForm.gender}
                 onChange={(e) => handleFormChange("gender", e.target.value)}
                 className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
+                disabled={isSaving}
               >
-                <option value="Female">Female</option>
+                <option value="">Select gender</option>
                 <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Non-binary">Non-binary</option>
                 <option value="Other">Other</option>
                 <option value="Prefer not to say">Prefer not to say</option>
               </select>
             </div>
-            <div>
+            <div className="md:col-span-2">
               <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Languages
+                Language(s)
               </label>
               <input
                 type="text"
                 value={editForm.language}
                 onChange={(e) => handleFormChange("language", e.target.value)}
                 className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
-                placeholder="Separate languages with commas"
+                placeholder="e.g., English, Zulu"
+                disabled={isSaving}
               />
             </div>
             <div className="md:col-span-2">
@@ -157,6 +359,7 @@ const ContactInformation = () => {
                 className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
                 rows="3"
                 placeholder="Enter full address"
+                disabled={isSaving}
               />
             </div>
           </div>
@@ -165,15 +368,26 @@ const ContactInformation = () => {
             <button
               onClick={() => setEditModalOpen(false)}
               className="rounded-lg border border-gray-300 px-6 py-3 font-medium hover:bg-gray-50 dark:border-gray-600"
+              disabled={isSaving}
             >
               Cancel
             </button>
             <button
               onClick={confirmEdit}
-              className="flex items-center gap-2 rounded-lg bg-brand-500 px-6 py-3 font-medium text-white hover:bg-brand-600"
+              disabled={isSaving}
+              className="flex items-center gap-2 rounded-lg bg-brand-500 px-6 py-3 font-medium text-white hover:bg-brand-600 disabled:opacity-50"
             >
-              <MdSave className="h-5 w-5" />
-              Save Changes
+              {isSaving ? (
+                <>
+                  <div className="h-5 w-5 animate-spin rounded-full border-b-2 border-white"></div>
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <MdSave className="h-5 w-5" />
+                  Save Changes
+                </>
+              )}
             </button>
           </div>
         </div>
@@ -186,7 +400,8 @@ const ContactInformation = () => {
           </h4>
           <button
             onClick={handleEditClick}
-            className="flex items-center text-sm font-medium text-brand-500 hover:text-brand-600"
+            disabled={patientLoading}
+            className="flex items-center text-sm font-medium text-brand-500 hover:text-brand-600 disabled:opacity-50"
           >
             <MdEdit className="mr-1 h-4 w-4" />
             Edit
@@ -235,9 +450,7 @@ const ContactInformation = () => {
           </div>
 
           <div className="flex items-start space-x-3">
-            <div className="mt-1 h-5 w-5">
-              <span className="text-gray-500">🎂</span>
-            </div>
+            <MdCake className="mt-1 text-gray-500" />
             <div>
               <p className="text-sm text-gray-600">Date of Birth</p>
               <p className="font-medium text-navy-700 dark:text-white">
@@ -247,11 +460,9 @@ const ContactInformation = () => {
           </div>
 
           <div className="flex items-start space-x-3">
-            <div className="mt-1 h-5 w-5">
-              <span className="text-gray-500">🌐</span>
-            </div>
+            <MdLanguage className="mt-1 text-gray-500" />
             <div>
-              <p className="text-sm text-gray-600">Languages</p>
+              <p className="text-sm text-gray-600">Language(s)</p>
               <p className="font-medium text-navy-700 dark:text-white">
                 {contactInfo.language}
               </p>
@@ -270,15 +481,25 @@ const ContactInformation = () => {
               </p>
             </div>
             <div className="flex items-center">
-              <div className="mr-2 h-2 w-2 rounded-full bg-green-500"></div>
+              <div
+                className={`mr-2 h-2 w-2 rounded-full ${
+                  contactInfo.smsNotifications ? "bg-green-500" : "bg-red-500"
+                }`}
+              ></div>
               <button
                 onClick={toggleSmsNotifications}
-                className="text-sm font-medium text-green-600 hover:text-green-700"
+                disabled={patientLoading || !patient?.id}
+                className="text-sm font-medium text-green-600 hover:text-green-700 disabled:opacity-50"
               >
                 {contactInfo.smsNotifications ? "Enabled" : "Disabled"}
               </button>
             </div>
           </div>
+          {!patient?.id && (
+            <p className="mt-2 text-xs text-yellow-600">
+              Complete your patient profile to enable SMS notifications
+            </p>
+          )}
         </div>
       </Card>
     </>
