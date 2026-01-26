@@ -5,6 +5,7 @@ import { FcGoogle } from "react-icons/fc";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { useToast } from "hooks/useToast";
 import { useAuth } from "hooks/useAuth";
+import patientService from "api/services/patientService";
 
 export default function SignIn() {
   const [credentials, setCredentials] = useState({
@@ -49,7 +50,7 @@ export default function SignIn() {
       if (result.success) {
         showToast("Login successful!", "success");
 
-        // Get user role and redirect accordingly
+        // Get user role
         const user = result.data?.user;
         if (user) {
           // Store remember me preference
@@ -59,26 +60,53 @@ export default function SignIn() {
             localStorage.removeItem("rememberMe");
           }
 
-          // Redirect based on user role from backend
-          const role = user.role;
-          setTimeout(() => {
-            switch (role) {
-              case "patient":
-                navigate("/patient/dashboard");
-                break;
-              case "provider":
-              case "doctor":
-              case "nurse":
-              case "clinic_admin":
-                navigate("/provider/dashboard");
-                break;
-              case "admin":
-                navigate("/admin/dashboard");
-                break;
-              default:
-                navigate("/patient/dashboard");
+          // Check patient profile ONLY for patient role
+          if (user.role === "patient") {
+            try {
+              const patientRes = await patientService.getPatientProfileByUserId(
+                user.id
+              );
+              const completion =
+                patientService.calculateProfileCompletion(patientRes);
+
+              // If profile is less than 50% complete, redirect to complete profile
+              if (completion < 50) {
+                navigate("/auth/complete-patient-profile");
+                return;
+              }
+
+              // Profile is complete enough, go to dashboard
+              navigate("/patient/dashboard");
+              return;
+            } catch (err) {
+              // If 404 (no profile found), redirect to complete profile
+              if (err.response?.status === 404) {
+                navigate("/auth/complete-patient-profile");
+                return;
+              }
+              // For other errors, still allow access to dashboard
+              console.error("Error checking patient profile:", err);
+              navigate("/patient/dashboard");
+              return;
             }
-          }, 1000);
+          }
+
+          // Redirect based on user role from backend for non-patient users
+          const role = user.role;
+
+          switch (role) {
+            case "provider":
+            case "doctor":
+            case "nurse":
+            case "clinic_admin":
+              navigate("/provider/dashboard");
+              break;
+            case "admin":
+              navigate("/admin/dashboard");
+              break;
+            default:
+              navigate("/patient/dashboard");
+          }
         }
       } else {
         showToast(result.error || "Login failed", "error");

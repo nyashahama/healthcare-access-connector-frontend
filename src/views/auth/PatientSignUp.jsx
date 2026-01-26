@@ -100,7 +100,6 @@ const PatientSignUp = () => {
 
       if (result.success) {
         showToast("Account created successfully! Logging you in...", "success");
-        navigate("/auth/sign-in");
 
         // Auto-login after registration
         const loginResult = await login({
@@ -109,7 +108,7 @@ const PatientSignUp = () => {
         });
 
         if (loginResult.success) {
-          navigate("/patient/dashboard");
+          navigate("/auth/complete-patient-profile");
         }
       } else {
         showToast(result.error || "Registration failed", "error");

@@ -74,6 +74,7 @@ import {
   MdForum,
 } from "react-icons/md";
 import { FaStethoscope } from "react-icons/fa";
+import CompletePatientProfile from "./views/auth/CompletePatientProfile";
 
 export const landingRoutes = [
   {
@@ -367,6 +368,14 @@ export const authRoutes = [
     path: "sign-up/provider",
     icon: <MdLock className="h-6 w-6" />,
     component: <ProviderSignUp />,
+  },
+  {
+    name: "Complete Patient Profile",
+    layout: "/auth",
+    path: "complete-patient-profile",
+    icon: <MdPerson className="h-6 w-6" />,
+    component: <CompletePatientProfile />,
+    sidebar: false,
   },
   {
     name: "Forgot Password",
