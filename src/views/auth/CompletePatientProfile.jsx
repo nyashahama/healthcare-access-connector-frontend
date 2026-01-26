@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import InputField from "components/fields/InputField";
 import { useToast } from "hooks/useToast";
-import { useAuth } from "hooks/useAuth";
+import { usePatient } from "hooks/usePatient";
 import {
   FaUser,
   FaCalendarAlt,
@@ -54,7 +54,7 @@ const CompletePatientProfile = () => {
 
   const navigate = useNavigate();
   const { showToast } = useToast();
-  const { getCurrentUser, getProfile, updatePassword } = useAuth();
+  const { upsertPatientProfile } = usePatient();
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -118,16 +118,8 @@ const CompletePatientProfile = () => {
     setIsLoading(true);
 
     try {
-      const user = getCurrentUser();
-      if (!user) {
-        showToast("Please log in first", "error");
-        navigate("/auth/sign-in");
-        return;
-      }
-
-      // Format data for backend
+      // Map formData to snake_case for backend
       const profileData = {
-        user_id: user.id,
         first_name: formData.firstName,
         last_name: formData.lastName,
         preferred_name: formData.preferredName || undefined,
@@ -159,24 +151,15 @@ const CompletePatientProfile = () => {
         language_preferences: formData.languagePreferences,
       };
 
-      // Call backend to create patient profile
-      const response = await fetch("/api/v1/patients", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-        body: JSON.stringify(profileData),
-      });
+      const result = await upsertPatientProfile(profileData);
 
-      if (response.ok) {
+      if (result.success) {
         showToast("Profile completed successfully!", "success");
         setTimeout(() => {
           navigate("/patient/dashboard");
         }, 1500);
       } else {
-        const error = await response.json();
-        showToast(error.error || "Failed to save profile", "error");
+        showToast(result.error || "Failed to save profile", "error");
       }
     } catch (error) {
       showToast("An unexpected error occurred", "error");
@@ -257,23 +240,16 @@ const CompletePatientProfile = () => {
                 <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
                   Date of Birth *
                 </label>
-                <input
-                  type="date"
+                <InputField
+                  variant="auth"
                   name="dateOfBirth"
                   value={formData.dateOfBirth}
                   onChange={handleInputChange}
-                  className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 dark:border-gray-600 dark:bg-gray-800"
-                  required
-                  disabled={isLoading}
+                  type="date"
                   max={new Date().toISOString().split("T")[0]}
+                  disabled={isLoading}
                 />
-                {formData.dateOfBirth && (
-                  <p className="mt-1 text-sm text-gray-500">
-                    Age: {calculateAge(formData.dateOfBirth)} years
-                  </p>
-                )}
               </div>
-
               <div>
                 <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
                   Gender
@@ -282,177 +258,28 @@ const CompletePatientProfile = () => {
                   name="gender"
                   value={formData.gender}
                   onChange={handleInputChange}
-                  className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 dark:border-gray-600 dark:bg-gray-800"
+                  className="w-full rounded-xl border border-gray-300 px-3 py-3 text-sm focus:border-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                   disabled={isLoading}
                 >
                   <option value="">Select gender</option>
                   <option value="male">Male</option>
                   <option value="female">Female</option>
-                  <option value="non_binary">Non-binary</option>
-                  <option value="prefer_not_to_say">Prefer not to say</option>
+                  <option value="non-binary">Non-binary</option>
+                  <option value="other">Other</option>
+                  <option value="prefer-not-to-say">Prefer not to say</option>
                 </select>
               </div>
             </div>
 
             <InputField
               variant="auth"
-              label="Preferred Gender Pronouns (Optional)"
-              placeholder="e.g., They/Them, She/Her, He/Him"
+              label="Preferred Pronouns (Optional)"
+              placeholder="e.g., he/him, she/her, they/them"
               name="preferredGenderPronouns"
               value={formData.preferredGenderPronouns}
               onChange={handleInputChange}
               disabled={isLoading}
             />
-
-            <div className="rounded-lg bg-blue-50 p-4 dark:bg-blue-900/20">
-              <p className="text-sm text-blue-800 dark:text-blue-300">
-                <span className="font-semibold">Why we ask:</span> This helps
-                healthcare providers address you respectfully and provide
-                personalized care.
-              </p>
-            </div>
-          </div>
-        );
-
-      case 2:
-        return (
-          <div className="space-y-6">
-            <div className="mb-6 flex items-center space-x-3">
-              <div className="rounded-full bg-green-100 p-3 dark:bg-green-900/30">
-                <FaMapMarkerAlt className="h-6 w-6 text-green-600 dark:text-green-400" />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  Location & Contact
-                </h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Help us find services near you
-                </p>
-              </div>
-            </div>
-
-            <InputField
-              variant="auth"
-              label="Street Address *"
-              placeholder="123 Main Street"
-              name="primaryAddress"
-              value={formData.primaryAddress}
-              onChange={handleInputChange}
-              required
-              disabled={isLoading}
-            />
-
-            <div className="grid grid-cols-2 gap-4">
-              <InputField
-                variant="auth"
-                label="City *"
-                placeholder="Johannesburg"
-                name="city"
-                value={formData.city}
-                onChange={handleInputChange}
-                required
-                disabled={isLoading}
-              />
-              <InputField
-                variant="auth"
-                label="Province"
-                placeholder="Gauteng"
-                name="province"
-                value={formData.province}
-                onChange={handleInputChange}
-                disabled={isLoading}
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <InputField
-                variant="auth"
-                label="Country *"
-                name="country"
-                value={formData.country}
-                onChange={handleInputChange}
-                required
-                disabled={isLoading}
-              />
-              <InputField
-                variant="auth"
-                label="Postal Code"
-                placeholder="2001"
-                name="postalCode"
-                value={formData.postalCode}
-                onChange={handleInputChange}
-                disabled={isLoading}
-              />
-            </div>
-
-            <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Home Language
-              </label>
-              <select
-                name="homeLanguage"
-                value={formData.homeLanguage}
-                onChange={handleInputChange}
-                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 dark:border-gray-600 dark:bg-gray-800"
-                disabled={isLoading}
-              >
-                <option value="">Select language</option>
-                <option value="english">English</option>
-                <option value="afrikaans">Afrikaans</option>
-                <option value="zulu">Zulu</option>
-                <option value="xhosa">Xhosa</option>
-                <option value="sotho">Sotho</option>
-                <option value="tswana">Tswana</option>
-                <option value="other">Other</option>
-              </select>
-            </div>
-
-            <div className="flex items-center space-x-3">
-              <input
-                type="checkbox"
-                id="requiresInterpreter"
-                name="requiresInterpreter"
-                checked={formData.requiresInterpreter}
-                onChange={handleInputChange}
-                className="h-4 w-4 rounded border-gray-300 text-brand-500 focus:ring-brand-500"
-                disabled={isLoading}
-              />
-              <label htmlFor="requiresInterpreter" className="text-sm">
-                I require interpreter services for medical appointments
-              </label>
-            </div>
-
-            <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Preferred Communication Method *
-              </label>
-              <div className="grid grid-cols-3 gap-3">
-                {["sms", "email", "phone"].map((method) => (
-                  <label
-                    key={method}
-                    className={`flex cursor-pointer flex-col items-center rounded-lg border p-3 transition ${
-                      formData.preferredCommunicationMethod === method
-                        ? "border-blue-500 bg-blue-50 dark:border-blue-400 dark:bg-blue-900/20"
-                        : "border-gray-200 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="preferredCommunicationMethod"
-                      value={method}
-                      checked={formData.preferredCommunicationMethod === method}
-                      onChange={handleInputChange}
-                      className="hidden"
-                      disabled={isLoading}
-                    />
-                    {method === "sms" && <FaPhone className="mb-2 h-5 w-5" />}
-                    {method === "email" && <FaUser className="mb-2 h-5 w-5" />}
-                    {method === "phone" && <FaPhone className="mb-2 h-5 w-5" />}
-                    <span className="text-sm capitalize">{method}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
 
             <div className="flex items-center space-x-3">
               <input
@@ -505,6 +332,138 @@ const CompletePatientProfile = () => {
               disabled={isLoading}
               helpText="13-digit ID number for faster service registration"
             />
+          </div>
+        );
+      case 2:
+        return (
+          <div className="space-y-6">
+            <div className="mb-6 flex items-center space-x-3">
+              <div className="rounded-full bg-blue-100 p-3 dark:bg-blue-900/30">
+                <FaMapMarkerAlt className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  Location & Preferences
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Help us connect you with local services
+                </p>
+              </div>
+            </div>
+
+            <InputField
+              variant="auth"
+              label="Primary Address *"
+              placeholder="Street address"
+              name="primaryAddress"
+              value={formData.primaryAddress}
+              onChange={handleInputChange}
+              disabled={isLoading}
+            />
+
+            <div className="grid grid-cols-2 gap-4">
+              <InputField
+                variant="auth"
+                label="City *"
+                placeholder="e.g., Johannesburg"
+                name="city"
+                value={formData.city}
+                onChange={handleInputChange}
+                disabled={isLoading}
+              />
+              <InputField
+                variant="auth"
+                label="Province"
+                placeholder="e.g., Gauteng"
+                name="province"
+                value={formData.province}
+                onChange={handleInputChange}
+                disabled={isLoading}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <InputField
+                variant="auth"
+                label="Country *"
+                placeholder="South Africa"
+                name="country"
+                value={formData.country}
+                onChange={handleInputChange}
+                disabled={isLoading}
+              />
+              <InputField
+                variant="auth"
+                label="Postal Code"
+                placeholder="e.g., 2196"
+                name="postalCode"
+                value={formData.postalCode}
+                onChange={handleInputChange}
+                disabled={isLoading}
+              />
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Home Language
+              </label>
+              <select
+                name="homeLanguage"
+                value={formData.homeLanguage}
+                onChange={handleInputChange}
+                className="w-full rounded-xl border border-gray-300 px-3 py-3 text-sm focus:border-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                disabled={isLoading}
+              >
+                <option value="">Select language</option>
+                <option value="english">English</option>
+                <option value="afrikaans">Afrikaans</option>
+                <option value="zulu">Zulu</option>
+                <option value="xhosa">Xhosa</option>
+                {/* Add more languages as needed */}
+              </select>
+            </div>
+
+            <div className="flex items-center space-x-3">
+              <input
+                type="checkbox"
+                id="requiresInterpreter"
+                name="requiresInterpreter"
+                checked={formData.requiresInterpreter}
+                onChange={handleInputChange}
+                className="h-4 w-4 rounded border-gray-300 text-brand-500 focus:ring-brand-500"
+                disabled={isLoading}
+              />
+              <label htmlFor="requiresInterpreter" className="text-sm">
+                I require an interpreter
+              </label>
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Preferred Communication Method
+              </label>
+              <div className="grid grid-cols-3 gap-4">
+                {["sms", "email", "phone"].map((method) => (
+                  <label key={method} className="flex flex-col items-center">
+                    <input
+                      type="radio"
+                      name="preferredCommunicationMethod"
+                      value={method}
+                      checked={formData.preferredCommunicationMethod === method}
+                      onChange={handleInputChange}
+                      disabled={isLoading}
+                      className="mb-2 h-5 w-5"
+                    />
+                    {method === "sms" && <FaGlobe className="mb-2 h-5 w-5" />}
+                    {method === "email" && <FaGlobe className="mb-2 h-5 w-5" />}
+                    {method === "phone" && <FaPhone className="mb-2 h-5 w-5" />}
+                    <span className="text-sm capitalize">{method}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Additional fields like employment, education, etc., can be added here if needed */}
           </div>
         );
     }

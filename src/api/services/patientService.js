@@ -17,7 +17,7 @@ const patientService = {
    * @returns {Promise<Object>} Created patient profile
    */
   createPatientProfile: async (data) => {
-    const response = await apiClient.post("/api/v1/patients", data);
+    const response = await apiClient.post("/api/v1/patients/patients", data);
     return response.data;
   },
 
@@ -27,7 +27,9 @@ const patientService = {
    * @returns {Promise<Object>} Patient profile
    */
   getPatientProfile: async (patientId) => {
-    const response = await apiClient.get(`/api/v1/patients/${patientId}`);
+    const response = await apiClient.get(
+      `/api/v1/patients/patients/${patientId}`
+    );
     return response.data;
   },
 
@@ -37,7 +39,9 @@ const patientService = {
    * @returns {Promise<Object>} Patient profile
    */
   getPatientProfileByUserId: async (userId) => {
-    const response = await apiClient.get(`/api/v1/patients/user/${userId}`);
+    const response = await apiClient.get(
+      `/api/v1/patients/patients/user/${userId}`
+    );
     return response.data;
   },
 
@@ -48,7 +52,7 @@ const patientService = {
    */
   getPatientByNationalId: async (nationalId) => {
     const response = await apiClient.get(
-      `/api/v1/patients/national-id/${nationalId}`
+      `/api/v1/patients/patients/national-id/${nationalId}`
     );
     return response.data;
   },
@@ -60,7 +64,10 @@ const patientService = {
    * @returns {Promise<Object>} Updated patient profile
    */
   updatePatientProfile: async (patientId, data) => {
-    const response = await apiClient.put(`/api/v1/patients/${patientId}`, data);
+    const response = await apiClient.put(
+      `/api/v1/patients/patients/${patientId}`,
+      data
+    );
     return response.data;
   },
 
@@ -70,7 +77,9 @@ const patientService = {
    * @returns {Promise<Object>} Success message
    */
   deletePatientProfile: async (patientId) => {
-    const response = await apiClient.delete(`/api/v1/patients/${patientId}`);
+    const response = await apiClient.delete(
+      `/api/v1/patients/patients/${patientId}`
+    );
     return response.data;
   },
 
@@ -80,7 +89,9 @@ const patientService = {
    * @returns {Promise<Object>} Success message
    */
   deletePatientProfileByUserId: async (userId) => {
-    const response = await apiClient.delete(`/api/v1/patients/user/${userId}`);
+    const response = await apiClient.delete(
+      `/api/v1/patients/patients/user/${userId}`
+    );
     return response.data;
   },
 
@@ -112,7 +123,7 @@ const patientService = {
     });
 
     const response = await apiClient.get(
-      `/api/v1/patients/search?${queryParams.toString()}`
+      `/api/v1/patients/patients/search?${queryParams.toString()}`
     );
     return response.data;
   },
@@ -122,7 +133,9 @@ const patientService = {
    * @returns {Promise<Object>} Demographics summary
    */
   getDemographicsSummary: async () => {
-    const response = await apiClient.get("/api/v1/patients/demographics");
+    const response = await apiClient.get(
+      "/api/v1/patients/patients/demographics"
+    );
     return response.data;
   },
 

@@ -5,6 +5,7 @@ import { FcGoogle } from "react-icons/fc";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { useToast } from "hooks/useToast";
 import { useAuth } from "hooks/useAuth";
+import patientService from "api/services/patientService";
 
 export default function SignIn() {
   const [credentials, setCredentials] = useState({
@@ -49,7 +50,7 @@ export default function SignIn() {
       if (result.success) {
         showToast("Login successful!", "success");
 
-        // Get user role and redirect accordingly
+        // Get user role
         const user = result.data?.user;
         if (user) {
           // Store remember me preference
@@ -57,6 +58,23 @@ export default function SignIn() {
             localStorage.setItem("rememberMe", "true");
           } else {
             localStorage.removeItem("rememberMe");
+          }
+
+          // Check patient profile
+          try {
+            const patientRes = await patientService.getCurrentPatientProfile();
+            const completion =
+              patientService.calculateProfileCompletion(patientRes);
+            if (user.role === "patient" && completion < 80) {
+              navigate("/auth/complete-patient-profile");
+              return;
+            }
+          } catch (err) {
+            if (user.role === "patient" && err.response?.status === 404) {
+              navigate("/auth/complete-patient-profile");
+              return;
+            }
+            // For other errors or non-patient roles, proceed
           }
 
           // Redirect based on user role from backend
