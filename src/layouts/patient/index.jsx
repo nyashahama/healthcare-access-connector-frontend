@@ -3,7 +3,6 @@ import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import PatientNavbar from "components/navbar/PatientNavbar";
 import PatientSidebar from "components/sidebar/PatientSidebar";
 import Footer from "components/footer/Footer";
-import ProfileCompletionGuard from "components/guards/ProfileCompletionGuard";
 import { patientRoutes } from "routes.js";
 
 export default function PatientLayout(props) {
@@ -49,36 +48,34 @@ export default function PatientLayout(props) {
   };
 
   return (
-    <ProfileCompletionGuard minCompletion={50}>
-      <div className="flex h-full w-full">
-        <PatientSidebar open={open} onClose={() => setOpen(false)} />
-        <div className="flex h-full w-full flex-col bg-lightPrimary dark:!bg-navy-900">
-          <main
-            className={`mx-[12px] flex h-full flex-col transition-all md:pr-2 xl:ml-[313px]`}
-          >
-            <div className="flex h-full flex-col">
-              <PatientNavbar
-                onOpenSidenav={() => setOpen(true)}
-                logoText={"Healthcare Access Connector"}
-                brandText={currentRoute}
-                {...rest}
-              />
-              <div className="flex-1 overflow-y-auto p-2 md:pr-2">
-                <Routes>
-                  {getRoutes(patientRoutes)}
-                  <Route
-                    path="/"
-                    element={<Navigate to="/patient/dashboard" replace />}
-                  />
-                </Routes>
-              </div>
-              <div className="shrink-0 p-3">
-                <Footer />
-              </div>
+    <div className="flex h-full w-full">
+      <PatientSidebar open={open} onClose={() => setOpen(false)} />
+      <div className="flex h-full w-full flex-col bg-lightPrimary dark:!bg-navy-900">
+        <main
+          className={`mx-[12px] flex h-full flex-col transition-all md:pr-2 xl:ml-[313px]`}
+        >
+          <div className="flex h-full flex-col">
+            <PatientNavbar
+              onOpenSidenav={() => setOpen(true)}
+              logoText={"Healthcare Access Connector"}
+              brandText={currentRoute}
+              {...rest}
+            />
+            <div className="flex-1 overflow-y-auto p-2 md:pr-2">
+              <Routes>
+                {getRoutes(patientRoutes)}
+                <Route
+                  path="/"
+                  element={<Navigate to="/patient/dashboard" replace />}
+                />
+              </Routes>
             </div>
-          </main>
-        </div>
+            <div className="shrink-0 p-3">
+              <Footer />
+            </div>
+          </div>
+        </main>
       </div>
-    </ProfileCompletionGuard>
+    </div>
   );
 }
