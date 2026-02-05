@@ -144,6 +144,11 @@ const FindClinic = () => {
       isVerified: clinic.is_verified || false,
       latitude: clinic.latitude,
       longitude: clinic.longitude,
+
+      coordinates: {
+        lat: clinic.latitude,
+        lng: clinic.longitude,
+      },
     };
   };
 
