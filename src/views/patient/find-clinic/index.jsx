@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   MdSearch,
   MdFilterList,
@@ -24,6 +24,7 @@ import ClinicMap from "../components/ClinicMap";
 import { useToast } from "hooks/useToast";
 import Modal from "components/modal/Modal";
 import BookingModal from "../components/BookingModal";
+import { useProvider } from "hooks/useProvider";
 
 const FindClinic = () => {
   const [viewMode, setViewMode] = useState("map");
@@ -53,87 +54,103 @@ const FindClinic = () => {
   const [bookingData, setBookingData] = useState(null);
 
   // Mock clinic data - In production, this would come from an API
-  const clinics = [
-    {
-      id: 1,
-      name: "Soweto Community Health Centre",
-      distance: "2.5 km",
-      status: "Open Now",
-      services: [
-        "Pediatrics",
-        "Vaccinations",
-        "General Check-ups",
-        "HIV Testing",
-      ],
-      waitTime: "15 min",
-      address: "123 Chris Hani Rd, Soweto, Johannesburg",
-      phone: "+27 11 984 1234",
-      hours: "Mon-Fri: 8:00-17:00, Sat: 8:00-13:00",
-      freeServices: true,
-      childHealth: true,
-      coordinates: { lat: -26.249, lng: 27.854 },
-      languages: ["English", "isiZulu", "Sesotho"],
-    },
-    {
-      id: 2,
-      name: "Charlotte Maxeke Hospital",
-      distance: "4.1 km",
-      status: "24/7 Emergency",
-      services: ["Emergency", "X-Ray", "Laboratory", "Surgery"],
-      waitTime: "30 min",
-      address: "1 Jubilee Rd, Parktown, Johannesburg",
-      phone: "+27 11 488 4911",
-      hours: "24/7",
-      freeServices: true,
-      emergency: true,
-      coordinates: { lat: -26.179, lng: 28.038 },
-      languages: ["English", "isiZulu", "Afrikaans"],
-    },
-    {
-      id: 3,
-      name: "Rahima Moosa Mother & Child Hospital",
-      distance: "3.2 km",
-      status: "Open Now",
-      services: ["Pediatrics", "Maternity", "Nutrition", "Vaccinations"],
-      waitTime: "20 min",
-      address: "Cnr Fuel & Oudtshoorn St, Coronationville",
-      phone: "+27 11 470 9000",
-      hours: "Mon-Fri: 7:30-16:00",
-      freeServices: true,
-      childHealth: true,
-      coordinates: { lat: -26.169, lng: 27.986 },
-      languages: ["English", "isiZulu"],
-    },
-    {
-      id: 4,
-      name: "Alexandra Clinic",
-      distance: "5.7 km",
-      status: "Closed",
-      services: ["Primary Care", "Chronic Medication", "TB Screening"],
-      waitTime: "N/A",
-      address: "12th Ave, Alexandra, Johannesburg",
-      phone: "+27 11 440 1212",
-      hours: "Mon-Fri: 8:00-16:00",
-      freeServices: true,
-      coordinates: { lat: -26.102, lng: 28.098 },
-      languages: ["English", "isiZulu"],
-    },
-    {
-      id: 5,
-      name: "Baragwanath Hospital",
-      distance: "8.3 km",
-      status: "24/7 Emergency",
-      services: ["Emergency", "Pediatrics", "Surgery", "ICU"],
-      waitTime: "45 min",
-      address: "Chris Hani Rd, Soweto, Johannesburg",
-      phone: "+27 11 933 8000",
-      hours: "24/7",
-      freeServices: true,
-      emergency: true,
-      coordinates: { lat: -26.262, lng: 27.931 },
-      languages: ["English", "isiZulu", "Sesotho"],
-    },
-  ];
+  const { clinics, loading, error, getClinics } = useProvider();
+
+  useEffect(() => {
+    // Only fetch if clinics don't already exist
+    if (!clinics || clinics.length === 0) {
+      getClinics();
+    }
+  }, []);
+
+  const formatClinicData = (clinic) => {
+    const getClinicStatus = () => {
+      const now = new Date();
+      const currentDay = now
+        .toLocaleDateString("en-US", { weekday: "long" })
+        .toLowerCase();
+      const currentTime = now.getHours() * 100 + now.getMinutes();
+      const hours = clinic.operating_hours?.[currentDay];
+
+      if (!hours || hours === "closed") return "Closed";
+
+      const openTime = parseInt(hours.open?.replace(":", "") || "0");
+      const closeTime = parseInt(hours.close?.replace(":", "") || "2400");
+
+      if (currentTime >= openTime && currentTime <= closeTime) {
+        return "Open Now";
+      } else {
+        return "Closed";
+      }
+    };
+
+    const formatOperatingHours = () => {
+      if (!clinic.operating_hours) return "Mon-Fri: 8am-6pm";
+
+      const days = [
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday",
+        "saturday",
+        "sunday",
+      ];
+      const hoursArray = days
+        .map((day) => {
+          const hours = clinic.operating_hours[day];
+          if (hours === "closed") return null;
+
+          const dayName = day.charAt(0).toUpperCase() + day.slice(1);
+          const openTime = hours?.open || "N/A";
+          const closeTime = hours?.close || "N/A";
+
+          return `${dayName}: ${openTime}-${closeTime}`;
+        })
+        .filter(Boolean);
+
+      return hoursArray.length > 0
+        ? hoursArray.join(", ")
+        : "Hours not available";
+    };
+
+    return {
+      id: clinic.id,
+      name: clinic.clinic_name || "Clinic",
+      distance: clinic.distance || "N/A",
+      address: `${clinic.physical_address || ""}, ${clinic.city || ""}, ${
+        clinic.province || ""
+      }`.trim(),
+      status: getClinicStatus(),
+      services: clinic.services || [],
+      specialties: clinic.specialties || [],
+      waitTime: clinic.average_wait_time_minutes
+        ? `${clinic.average_wait_time_minutes} min`
+        : "N/A",
+      hours: formatOperatingHours(),
+      phone: clinic.primary_phone || "N/A",
+      rating: clinic.rating || 0,
+      reviewCount: clinic.review_count || 0,
+      features: clinic.facilities || [],
+      languages: clinic.languages_spoken || [],
+      acceptsMedicalAid: clinic.accepts_medical_aid,
+      medicalAidProviders: clinic.medical_aid_providers || [],
+      paymentMethods: clinic.payment_methods || [],
+      email: clinic.email || "",
+      website: clinic.website || "",
+      description: clinic.description || "",
+      bedCount: clinic.bed_count || 0,
+      yearEstablished: clinic.year_established || "N/A",
+      isVerified: clinic.is_verified || false,
+      latitude: clinic.latitude,
+      longitude: clinic.longitude,
+
+      coordinates: {
+        lat: clinic.latitude,
+        lng: clinic.longitude,
+      },
+    };
+  };
 
   useEffect(() => {
     // Get user's location
@@ -167,7 +184,11 @@ const FindClinic = () => {
     }
   }, []);
 
-  const filteredClinics = clinics.filter((clinic) => {
+  const formattedClinics = useMemo(() => {
+    return clinics ? clinics.map(formatClinicData) : [];
+  }, [clinics]);
+
+  const filteredClinics = formattedClinics.filter((clinic) => {
     // Search filter
     if (
       searchQuery &&

@@ -24,23 +24,14 @@ const ClinicSuggestions = () => {
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const { showToast } = useToast();
 
-  const { getClinics, loading, error } = useProvider();
-  const [localClinics, setLocalClinics] = useState([]);
+  const { clinics, loading, error, getClinics } = useProvider();
 
   useEffect(() => {
-    fetchClinics();
-  }, []);
-
-  const fetchClinics = async () => {
-    const result = await getClinics();
-    const clinicsData = result.data?.data?.clinics || result.data?.clinics;
-
-    if (result.success && clinicsData) {
-      setLocalClinics(clinicsData);
-    } else {
-      showToast(error || "Failed to load clinics", "error");
+    // Only fetch if clinics don't already exist
+    if (!clinics || clinics.length === 0) {
+      getClinics();
     }
-  };
+  }, []);
 
   const formatClinicData = (clinic) => {
     const getClinicStatus = () => {
@@ -501,7 +492,7 @@ const ClinicSuggestions = () => {
                   {error}
                 </div>
                 <button
-                  onClick={fetchClinics}
+                  onClick={getClinics}
                   className="mt-3 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-700"
                 >
                   Try Again
@@ -512,7 +503,7 @@ const ClinicSuggestions = () => {
         )}
 
         {/* Empty State */}
-        {!loading && !error && (!localClinics || localClinics.length === 0) && (
+        {!loading && !error && (!clinics || clinics.length === 0) && (
           <div className="rounded-xl bg-gray-50 p-12 text-center dark:bg-navy-700">
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-200 dark:bg-navy-600">
               <MdLocalHospital className="h-8 w-8 text-gray-400" />
@@ -530,9 +521,9 @@ const ClinicSuggestions = () => {
         <div className="space-y-4">
           {!loading &&
             !error &&
-            localClinics &&
-            localClinics.length > 0 &&
-            localClinics.map((clinic) => {
+            clinics &&
+            clinics.length > 0 &&
+            clinics.map((clinic) => {
               const formattedClinic = formatClinicData(clinic);
 
               return (
