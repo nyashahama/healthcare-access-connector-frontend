@@ -137,8 +137,6 @@ const ClinicSuggestions = () => {
     window.location.href = "/patient/find-clinic";
   };
 
-  console.log(clinics);
-
   return (
     <>
       {/* Clinic Details Modal */}
