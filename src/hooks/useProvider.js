@@ -9,7 +9,7 @@ export const useProvider = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [clinic, setClinic] = useState(null);
-  const [clinics, setClinics] = useState(null);
+  const [clinics, setClinics] = useState([]);
   const [staff, setStaff] = useState(null);
   const [service, setService] = useState(null);
   const [credential, setCredential] = useState(null);
@@ -59,10 +59,11 @@ export const useProvider = () => {
 
     try {
       const response = await providerService.getClinics();
-      // Handle nested data structure: response.data.data.clinics
-      const clinicsData =
-        response.data?.data?.clinics || response.data?.clinics || [];
-      setClinics(Array.isArray(clinicsData) ? clinicsData : []);
+
+      const clinicsData = response.clinics || [];
+
+      setClinics(clinicsData);
+
       setLoading(false);
       return { success: true, data: response };
     } catch (err) {
