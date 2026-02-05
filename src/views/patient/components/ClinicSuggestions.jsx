@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   MdLocationOn,
   MdAccessTime,
@@ -9,6 +9,7 @@ import {
 } from "react-icons/md";
 import Modal from "components/modal/Modal";
 import { useToast } from "hooks/useToast";
+import { useProvider } from "hooks/useProvider";
 
 const ClinicSuggestions = () => {
   const [selectedClinic, setSelectedClinic] = useState(null);
@@ -16,55 +17,132 @@ const ClinicSuggestions = () => {
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const { showToast } = useToast();
 
-  const clinics = [
-    {
-      id: 1,
-      name: "Community Health Clinic",
-      distance: "2.5 km",
-      address: "123 Health St, Johannesburg",
-      status: "Open Now",
-      services: ["Pediatrics", "Vaccinations", "General Check-ups"],
-      waitTime: "15 min",
-      hours: "Mon-Fri: 8am-6pm, Sat: 8am-1pm",
-      phone: "+27 11 234 5678",
-      rating: "4.5/5",
-      features: ["Wheelchair Access", "Parking", "Medical Aid Accepted"],
-    },
-    {
-      id: 2,
-      name: "City Public Hospital",
-      distance: "4.1 km",
-      address: "456 Main Rd, Sandton",
-      status: "24/7 Emergency",
-      services: ["Emergency", "X-Ray", "Laboratory"],
-      waitTime: "30 min",
-      hours: "24/7",
-      phone: "+27 11 345 6789",
-      rating: "4.2/5",
-      features: ["Emergency Dept", "ICU", "Trauma Center"],
-    },
-    {
-      id: 3,
-      name: "Children's Health Center",
-      distance: "3.2 km",
-      address: "789 Child Ave, Randburg",
-      status: "Open Now",
-      services: ["Pediatrics", "Nutrition", "Vaccinations"],
-      waitTime: "20 min",
-      hours: "Mon-Fri: 7:30am-5pm",
-      phone: "+27 11 456 7890",
-      rating: "4.7/5",
-      features: ["Play Area", "Child Specialists", "Vaccination Clinic"],
-    },
-  ];
+  // Use the provider hook
+  const { getClinics, loading, error, clinics, clearError } = useProvider();
+
+  console.log(clinics);
+
+  // Fetch clinics on component mount
+  useEffect(() => {
+    fetchClinics();
+  }, []);
+
+  const [localClinics, setLocalClinics] = useState([]);
+
+  // Update fetchClinics to set local state
+  const fetchClinics = async () => {
+    const result = await getClinics();
+    console.log(result);
+
+    // Handle nested data structure: result.data.data.clinics
+    const clinicsData = result.data?.data?.clinics || result.data?.clinics;
+
+    if (result.success && clinicsData) {
+      setLocalClinics(clinicsData);
+    } else {
+      showToast(error || "Failed to load clinics", "error");
+    }
+  };
+  // Format clinic data from API to match component structure
+  const formatClinicData = (clinic) => {
+    // Determine status based on current time and operating hours
+    const getClinicStatus = () => {
+      const now = new Date();
+      const currentDay = now
+        .toLocaleDateString("en-US", { weekday: "long" })
+        .toLowerCase();
+      const currentTime = now.getHours() * 100 + now.getMinutes(); // HHMM format
+
+      const hours = clinic.operating_hours?.[currentDay];
+
+      if (!hours || hours === "closed") return "Closed";
+
+      const openTime = parseInt(hours.open?.replace(":", "") || "0");
+      const closeTime = parseInt(hours.close?.replace(":", "") || "2400");
+
+      if (currentTime >= openTime && currentTime <= closeTime) {
+        return "Open Now";
+      } else {
+        return "Closed";
+      }
+    };
+
+    // Format operating hours for display
+    const formatOperatingHours = () => {
+      if (!clinic.operating_hours) return "Mon-Fri: 8am-6pm";
+
+      const days = [
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday",
+        "saturday",
+        "sunday",
+      ];
+      const hoursArray = days
+        .map((day) => {
+          const hours = clinic.operating_hours[day];
+          if (hours === "closed") return null;
+
+          const dayName = day.charAt(0).toUpperCase() + day.slice(1);
+          const openTime = hours?.open || "N/A";
+          const closeTime = hours?.close || "N/A";
+
+          return `${dayName}: ${openTime}-${closeTime}`;
+        })
+        .filter(Boolean);
+
+      return hoursArray.length > 0
+        ? hoursArray.join(", ")
+        : "Hours not available";
+    };
+
+    return {
+      id: clinic.id,
+      name: clinic.clinic_name || "Clinic",
+      distance: clinic.distance || "N/A",
+      address: `${clinic.physical_address || ""}, ${clinic.city || ""}, ${
+        clinic.province || ""
+      }`.trim(),
+      status: getClinicStatus(),
+      services: clinic.services || [],
+      specialties: clinic.specialties || [],
+      waitTime: clinic.average_wait_time_minutes
+        ? `${clinic.average_wait_time_minutes} min`
+        : "N/A",
+      hours: formatOperatingHours(),
+      phone: clinic.primary_phone || "N/A",
+      rating: clinic.review_count
+        ? `${clinic.rating || "N/A"} (${clinic.review_count} reviews)`
+        : "No ratings yet",
+      features: clinic.facilities || [],
+      languages: clinic.languages_spoken || [],
+      acceptsMedicalAid: clinic.accepts_medical_aid,
+      medicalAidProviders: clinic.medical_aid_providers || [],
+      paymentMethods: clinic.payment_methods || [],
+      email: clinic.email || "",
+      website: clinic.website || "",
+      description: clinic.description || "",
+      bedCount: clinic.bed_count || 0,
+      yearEstablished: clinic.year_established || "N/A",
+      isVerified: clinic.is_verified || false,
+      contactPerson: clinic.contact_person_name || "N/A",
+      contactPersonRole: clinic.contact_person_role || "",
+      contactPersonPhone: clinic.contact_person_phone || "",
+      contactPersonEmail: clinic.contact_person_email || "",
+      latitude: clinic.latitude,
+      longitude: clinic.longitude,
+    };
+  };
 
   const handleViewDetails = (clinic) => {
-    setSelectedClinic(clinic);
+    setSelectedClinic(formatClinicData(clinic));
     setDetailsModalOpen(true);
   };
 
   const handleBookAppointment = (clinic) => {
-    setSelectedClinic(clinic);
+    setSelectedClinic(formatClinicData(clinic));
     setBookModalOpen(true);
   };
 
@@ -72,16 +150,14 @@ const ClinicSuggestions = () => {
     setBookModalOpen(false);
     showToast(`Appointment booking started for ${selectedClinic.name}`, "info");
     // Redirect to booking page or open booking modal
-    setTimeout(() => {
-      window.location.href = `/patient/book-appointment?clinic=${selectedClinic.id}`;
-    }, 1000);
+
+    window.location.href = `/patient/book-appointment?clinic=${selectedClinic.id}`;
   };
 
   const handleViewAll = () => {
     showToast("Opening clinic directory...", "info");
-    setTimeout(() => {
-      window.location.href = "/patient/clinics";
-    }, 1000);
+
+    window.location.href = "/patient/find-clinic";
   };
 
   return (
@@ -160,22 +236,24 @@ const ClinicSuggestions = () => {
             </div>
 
             {/* Features */}
-            <div>
-              <h5 className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                Features
-              </h5>
-              <div className="flex flex-wrap gap-2">
-                {selectedClinic.features.map((feature, idx) => (
-                  <span
-                    key={idx}
-                    className="flex items-center gap-1 rounded-full bg-green-50 px-3 py-1 text-sm text-green-700 dark:bg-green-900/30 dark:text-green-300"
-                  >
-                    <MdCheckCircle className="h-3 w-3" />
-                    {feature}
-                  </span>
-                ))}
+            {selectedClinic.features && selectedClinic.features.length > 0 && (
+              <div>
+                <h5 className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Features
+                </h5>
+                <div className="flex flex-wrap gap-2">
+                  {selectedClinic.features.map((feature, idx) => (
+                    <span
+                      key={idx}
+                      className="flex items-center gap-1 rounded-full bg-green-50 px-3 py-1 text-sm text-green-700 dark:bg-green-900/30 dark:text-green-300"
+                    >
+                      <MdCheckCircle className="h-3 w-3" />
+                      {feature}
+                    </span>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Hours */}
             <div>
@@ -307,76 +385,129 @@ const ClinicSuggestions = () => {
           </button>
         </div>
 
-        <div className="space-y-4">
-          {clinics.map((clinic) => (
-            <div
-              key={clinic.id}
-              className="rounded-xl border border-gray-200 p-4 transition-all duration-300 hover:scale-[1.005] hover:border-brand-500 dark:border-navy-700"
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <MdLocalHospital className="h-5 w-5 text-brand-500" />
-                    <h6 className="font-bold text-navy-700 dark:text-white">
-                      {clinic.name}
-                    </h6>
-                  </div>
+        {/* Loading State */}
+        {loading && (
+          <div className="flex justify-center py-8">
+            <div className="text-gray-500">Loading clinics...</div>
+          </div>
+        )}
 
-                  <div className="mt-3 grid grid-cols-2 gap-4">
-                    <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
-                      <MdLocationOn className="mr-2 h-4 w-4" />
-                      {clinic.distance} away
-                    </div>
-                    <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
-                      <MdAccessTime className="mr-2 h-4 w-4" />
-                      Wait: {clinic.waitTime}
-                    </div>
-                  </div>
-
-                  <div className="mt-3">
-                    <div className="flex flex-wrap gap-2">
-                      {clinic.services.map((service, idx) => (
-                        <span
-                          key={idx}
-                          className="rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-600 dark:bg-navy-700 dark:text-gray-300"
-                        >
-                          {service}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="ml-4">
-                  <span
-                    className={`rounded-full px-3 py-1 text-xs font-medium ${
-                      clinic.status === "Open Now" ||
-                      clinic.status === "24/7 Emergency"
-                        ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
-                        : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300"
-                    }`}
-                  >
-                    {clinic.status}
-                  </span>
-                </div>
-              </div>
-
-              <div className="mt-4 flex gap-3">
-                <button
-                  onClick={() => handleViewDetails(clinic)}
-                  className="flex-1 rounded-xl border border-gray-300 py-2 text-sm font-medium transition-all duration-200 hover:bg-gray-50 dark:border-gray-600"
-                >
-                  View Details
-                </button>
-                <button
-                  onClick={() => handleBookAppointment(clinic)}
-                  className="linear flex-1 rounded-xl bg-brand-500 py-2 text-sm font-medium text-white transition duration-200 hover:bg-brand-600"
-                >
-                  Book Appointment
-                </button>
-              </div>
+        {/* Error State */}
+        {error && !loading && (
+          <div className="rounded-lg bg-red-50 p-4 dark:bg-red-900/20">
+            <div className="flex items-center text-red-700 dark:text-red-300">
+              <MdWarning className="mr-2 h-5 w-5" />
+              <span>{error}</span>
             </div>
-          ))}
+            <button
+              onClick={fetchClinics}
+              className="mt-2 text-sm text-brand-500 hover:text-brand-600"
+            >
+              Retry
+            </button>
+          </div>
+        )}
+
+        {/* Empty State */}
+        {!loading && !error && (!localClinics || localClinics.length === 0) && (
+          <div className="rounded-lg bg-gray-50 p-8 text-center dark:bg-navy-700">
+            <MdLocalHospital className="mx-auto h-12 w-12 text-gray-400" />
+            <h4 className="mt-4 text-lg font-medium text-gray-700 dark:text-gray-300">
+              No clinics available
+            </h4>
+            <p className="mt-2 text-gray-500 dark:text-gray-400">
+              Check back later or try a different location.
+            </p>
+          </div>
+        )}
+
+        {/* Clinics List */}
+        <div className="space-y-4">
+          {!loading &&
+            !error &&
+            localClinics &&
+            localClinics.length > 0 &&
+            localClinics.map((clinic) => {
+              const formattedClinic = formatClinicData(clinic);
+
+              return (
+                <div
+                  key={clinic.id}
+                  className="rounded-xl border border-gray-200 p-4 transition-all duration-300 hover:scale-[1.005] hover:border-brand-500 dark:border-navy-700"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <MdLocalHospital className="h-5 w-5 text-brand-500" />
+                        <h6 className="font-bold text-navy-700 dark:text-white">
+                          {formattedClinic.name}
+                        </h6>
+                      </div>
+
+                      <div className="mt-3 grid grid-cols-2 gap-4">
+                        <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
+                          <MdLocationOn className="mr-2 h-4 w-4" />
+                          {formattedClinic.distance} away
+                        </div>
+                        <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
+                          <MdAccessTime className="mr-2 h-4 w-4" />
+                          Wait: {formattedClinic.waitTime}
+                        </div>
+                      </div>
+
+                      <div className="mt-3">
+                        <div className="flex flex-wrap gap-2">
+                          {formattedClinic.services
+                            .slice(0, 3)
+                            .map((service, idx) => (
+                              <span
+                                key={idx}
+                                className="rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-600 dark:bg-navy-700 dark:text-gray-300"
+                              >
+                                {service}
+                              </span>
+                            ))}
+                          {formattedClinic.services.length > 3 && (
+                            <span className="rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-600 dark:bg-navy-700 dark:text-gray-300">
+                              +{formattedClinic.services.length - 3} more
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="ml-4">
+                      <span
+                        className={`rounded-full px-3 py-1 text-xs font-medium ${
+                          formattedClinic.status === "Open Now" ||
+                          formattedClinic.status === "24/7 Emergency" ||
+                          formattedClinic.status.toLowerCase().includes("open")
+                            ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
+                            : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300"
+                        }`}
+                      >
+                        {formattedClinic.status}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 flex gap-3">
+                    <button
+                      onClick={() => handleViewDetails(clinic)}
+                      className="flex-1 rounded-xl border border-gray-300 py-2 text-sm font-medium transition-all duration-200 hover:bg-gray-50 dark:border-gray-600"
+                    >
+                      View Details
+                    </button>
+                    <button
+                      onClick={() => handleBookAppointment(clinic)}
+                      className="linear flex-1 rounded-xl bg-brand-500 py-2 text-sm font-medium text-white transition duration-200 hover:bg-brand-600"
+                    >
+                      Book Appointment
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
         </div>
       </div>
     </>

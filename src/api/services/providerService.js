@@ -1,13 +1,21 @@
 import apiClient from "../apiClient";
 
 const providerService = {
+  // Clinic routes
   registerClinic: async (data) => {
-    const respone = await apiClient.post("/api/v1/providers/clinics", data);
-    return respone.data;
+    const response = await apiClient.post("/api/v1/providers/clinics", data);
+    return response.data;
   },
 
   getClinic: async (clinicId) => {
-    const response = await apiClient.get(`/api/v1/providers/clinics/${id}`);
+    const response = await apiClient.get(
+      `/api/v1/providers/clinics/${clinicId}`
+    );
+    return response.data;
+  },
+
+  getClinics: async () => {
+    const response = await apiClient.get("/api/v1/providers/clinics");
     return response.data;
   },
 
@@ -36,32 +44,26 @@ const providerService = {
 
   updateVerifyClinic: async (clinicId, data) => {
     const response = await apiClient.put(
-      `/api/v1/clinics/${clinicId}/verification-status`,
+      `/api/v1/providers/clinics/${clinicId}/verification-status`,
       data
     );
     return response.data;
   },
 
   // Staff routes
-
   registerStaff: async (data) => {
-    const response = await apiClient.post(
-      "/api/v1/providers/clinics/staff",
-      data
-    );
+    const response = await apiClient.post("/api/v1/providers/staff", data);
     return response.data;
   },
 
   getStaff: async (staffId) => {
-    const response = await apiClient.get(
-      `/api/v1/providers/clinics/staff${staffId}`
-    );
+    const response = await apiClient.get(`/api/v1/providers/staff/${staffId}`);
     return response.data;
   },
 
   updateStaff: async (staffId, data) => {
     const response = await apiClient.put(
-      `/api/v1/providers/clinics/staff/${staffId}`,
+      `/api/v1/providers/staff/${staffId}`,
       data
     );
     return response.data;
@@ -69,14 +71,14 @@ const providerService = {
 
   deleteStaff: async (staffId) => {
     const response = await apiClient.delete(
-      `/api/v1/providers/clinics/staff${staffId}`
+      `/api/v1/providers/staff/${staffId}`
     );
     return response.data;
   },
 
   checkStaffStatus: async (staffId) => {
     const response = await apiClient.get(
-      `/api/v1/providers/clinics/staff${staffId}/exists`
+      `/api/v1/providers/staff/${staffId}/exists`
     );
     return response.data;
   },
@@ -98,7 +100,7 @@ const providerService = {
 
   // Service routes
   registerService: async (data) => {
-    const response = await apiClient.post(`/api/v1/providers/services`, data);
+    const response = await apiClient.post("/api/v1/providers/services", data);
     return response.data;
   },
 
@@ -124,7 +126,7 @@ const providerService = {
     return response.data;
   },
 
-  getService: async (serviceId) => {
+  checkServiceExists: async (serviceId) => {
     const response = await apiClient.get(
       `/api/v1/providers/services/${serviceId}/exists`
     );
@@ -141,8 +143,8 @@ const providerService = {
 
   // Credential routes
   registerCredential: async (data) => {
-    const response = await apiClient.get(
-      `/api/v1/providers/credentials/`,
+    const response = await apiClient.post(
+      "/api/v1/providers/credentials/",
       data
     );
     return response.data;
@@ -160,6 +162,7 @@ const providerService = {
     const response = await apiClient.get(
       `/api/v1/providers/staff/${staffId}/credentials`
     );
+    return response.data;
   },
 };
 
