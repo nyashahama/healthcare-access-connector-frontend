@@ -24,7 +24,6 @@ import ClinicMap from "../components/ClinicMap";
 import { useToast } from "hooks/useToast";
 import Modal from "components/modal/Modal";
 import BookingModal from "../components/BookingModal";
-import { useProvider } from "hooks/useProvider";
 
 const FindClinic = () => {
   const [viewMode, setViewMode] = useState("map");
@@ -53,230 +52,88 @@ const FindClinic = () => {
   const [selectedTime, setSelectedTime] = useState("");
   const [bookingData, setBookingData] = useState(null);
 
-  const {
-    getClinics,
-    loading,
-    error,
-    clinics: apiClinics,
-    clearError,
-  } = useProvider();
-
-  useEffect(() => {
-    fetchClinics();
-  }, []);
-
-  const fetchClinics = async () => {
-    await getClinics();
-  };
-
-  // Format clinic data from API to match component structure
-  const formatClinicData = (clinic) => {
-    // Determine status based on current time and operating hours
-    const getClinicStatus = () => {
-      const now = new Date();
-      const currentDay = now
-        .toLocaleDateString("en-US", { weekday: "long" })
-        .toLowerCase();
-      const currentTime = now.getHours() * 100 + now.getMinutes(); // HHMM format
-
-      const hours = clinic.operating_hours?.[currentDay];
-
-      if (!hours || hours === "closed") return "Closed";
-
-      const openTime = parseInt(hours.open?.replace(":", "") || "0");
-      const closeTime = parseInt(hours.close?.replace(":", "") || "2400");
-
-      if (currentTime >= openTime && currentTime <= closeTime) {
-        return "Open Now";
-      } else if (clinic.emergency_services) {
-        return "24/7 Emergency";
-      } else {
-        return "Closed";
-      }
-    };
-
-    // Format operating hours for display
-    const formatOperatingHours = () => {
-      if (!clinic.operating_hours) return "Mon-Fri: 8am-6pm";
-
-      const days = [
-        "monday",
-        "tuesday",
-        "wednesday",
-        "thursday",
-        "friday",
-        "saturday",
-        "sunday",
-      ];
-      const hoursArray = days
-        .map((day) => {
-          const hours = clinic.operating_hours[day];
-          if (hours === "closed") return null;
-
-          const dayName = day.charAt(0).toUpperCase() + day.slice(1);
-          const openTime = hours?.open || "N/A";
-          const closeTime = hours?.close || "N/A";
-
-          return `${dayName}: ${openTime}-${closeTime}`;
-        })
-        .filter(Boolean);
-
-      return hoursArray.length > 0
-        ? hoursArray.join(", ")
-        : "Hours not available";
-    };
-
-    // Calculate distance if user location is available
-    const calculateDistance = () => {
-      if (!userLocation || !clinic.latitude || !clinic.longitude) {
-        return "N/A";
-      }
-
-      const R = 6371; // Earth's radius in km
-      const dLat = ((clinic.latitude - userLocation.lat) * Math.PI) / 180;
-      const dLon = ((clinic.longitude - userLocation.lng) * Math.PI) / 180;
-      const a =
-        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-        Math.cos((userLocation.lat * Math.PI) / 180) *
-          Math.cos((clinic.latitude * Math.PI) / 180) *
-          Math.sin(dLon / 2) *
-          Math.sin(dLon / 2);
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-      const distance = R * c;
-
-      return `${distance.toFixed(1)} km`;
-    };
-
-    return {
-      id: clinic.id,
-      name: clinic.clinic_name || "Clinic",
-      distance: calculateDistance(),
-      address: `${clinic.physical_address || ""}, ${clinic.city || ""}, ${
-        clinic.province || ""
-      }`.trim(),
-      status: getClinicStatus(),
-      services: clinic.services || [],
-      waitTime: clinic.average_wait_time_minutes
-        ? `${clinic.average_wait_time_minutes} min`
-        : "N/A",
-      hours: formatOperatingHours(),
-      phone: clinic.primary_phone || "N/A",
-      freeServices:
-        clinic.payment_methods?.includes("Free") ||
-        clinic.accepts_medical_aid === false,
-      childHealth:
-        clinic.services?.some(
-          (service) =>
-            service.toLowerCase().includes("pediatric") ||
-            service.toLowerCase().includes("child") ||
-            service.toLowerCase().includes("maternity")
-        ) || false,
-      emergency:
-        clinic.emergency_services ||
-        clinic.services?.includes("Emergency") ||
-        false,
-      coordinates: {
-        lat: parseFloat(clinic.latitude) || -26.2041,
-        lng: parseFloat(clinic.longitude) || 28.0473,
-      },
-      languages: clinic.languages_spoken || ["English"],
-      // Add additional fields for filtering
-      hasVaccinations:
-        clinic.services?.some(
-          (service) =>
-            service.toLowerCase().includes("vaccination") ||
-            service.toLowerCase().includes("immunization")
-        ) || false,
-    };
-  };
-
-  // Format all clinics from API
-  const clinics =
-    apiClinics?.data?.data?.clinics || apiClinics?.data?.clinics || [];
-  const formattedClinics = clinics.map(formatClinicData);
-
   // Mock clinic data - In production, this would come from an API
-  // const clinics = [
-  //   {
-  //     id: 1,
-  //     name: "Soweto Community Health Centre",
-  //     distance: "2.5 km",
-  //     status: "Open Now",
-  //     services: [
-  //       "Pediatrics",
-  //       "Vaccinations",
-  //       "General Check-ups",
-  //       "HIV Testing",
-  //     ],
-  //     waitTime: "15 min",
-  //     address: "123 Chris Hani Rd, Soweto, Johannesburg",
-  //     phone: "+27 11 984 1234",
-  //     hours: "Mon-Fri: 8:00-17:00, Sat: 8:00-13:00",
-  //     freeServices: true,
-  //     childHealth: true,
-  //     coordinates: { lat: -26.249, lng: 27.854 },
-  //     languages: ["English", "isiZulu", "Sesotho"],
-  //   },
-  //   {
-  //     id: 2,
-  //     name: "Charlotte Maxeke Hospital",
-  //     distance: "4.1 km",
-  //     status: "24/7 Emergency",
-  //     services: ["Emergency", "X-Ray", "Laboratory", "Surgery"],
-  //     waitTime: "30 min",
-  //     address: "1 Jubilee Rd, Parktown, Johannesburg",
-  //     phone: "+27 11 488 4911",
-  //     hours: "24/7",
-  //     freeServices: true,
-  //     emergency: true,
-  //     coordinates: { lat: -26.179, lng: 28.038 },
-  //     languages: ["English", "isiZulu", "Afrikaans"],
-  //   },
-  //   {
-  //     id: 3,
-  //     name: "Rahima Moosa Mother & Child Hospital",
-  //     distance: "3.2 km",
-  //     status: "Open Now",
-  //     services: ["Pediatrics", "Maternity", "Nutrition", "Vaccinations"],
-  //     waitTime: "20 min",
-  //     address: "Cnr Fuel & Oudtshoorn St, Coronationville",
-  //     phone: "+27 11 470 9000",
-  //     hours: "Mon-Fri: 7:30-16:00",
-  //     freeServices: true,
-  //     childHealth: true,
-  //     coordinates: { lat: -26.169, lng: 27.986 },
-  //     languages: ["English", "isiZulu"],
-  //   },
-  //   {
-  //     id: 4,
-  //     name: "Alexandra Clinic",
-  //     distance: "5.7 km",
-  //     status: "Closed",
-  //     services: ["Primary Care", "Chronic Medication", "TB Screening"],
-  //     waitTime: "N/A",
-  //     address: "12th Ave, Alexandra, Johannesburg",
-  //     phone: "+27 11 440 1212",
-  //     hours: "Mon-Fri: 8:00-16:00",
-  //     freeServices: true,
-  //     coordinates: { lat: -26.102, lng: 28.098 },
-  //     languages: ["English", "isiZulu"],
-  //   },
-  //   {
-  //     id: 5,
-  //     name: "Baragwanath Hospital",
-  //     distance: "8.3 km",
-  //     status: "24/7 Emergency",
-  //     services: ["Emergency", "Pediatrics", "Surgery", "ICU"],
-  //     waitTime: "45 min",
-  //     address: "Chris Hani Rd, Soweto, Johannesburg",
-  //     phone: "+27 11 933 8000",
-  //     hours: "24/7",
-  //     freeServices: true,
-  //     emergency: true,
-  //     coordinates: { lat: -26.262, lng: 27.931 },
-  //     languages: ["English", "isiZulu", "Sesotho"],
-  //   },
-  // ];
+  const clinics = [
+    {
+      id: 1,
+      name: "Soweto Community Health Centre",
+      distance: "2.5 km",
+      status: "Open Now",
+      services: [
+        "Pediatrics",
+        "Vaccinations",
+        "General Check-ups",
+        "HIV Testing",
+      ],
+      waitTime: "15 min",
+      address: "123 Chris Hani Rd, Soweto, Johannesburg",
+      phone: "+27 11 984 1234",
+      hours: "Mon-Fri: 8:00-17:00, Sat: 8:00-13:00",
+      freeServices: true,
+      childHealth: true,
+      coordinates: { lat: -26.249, lng: 27.854 },
+      languages: ["English", "isiZulu", "Sesotho"],
+    },
+    {
+      id: 2,
+      name: "Charlotte Maxeke Hospital",
+      distance: "4.1 km",
+      status: "24/7 Emergency",
+      services: ["Emergency", "X-Ray", "Laboratory", "Surgery"],
+      waitTime: "30 min",
+      address: "1 Jubilee Rd, Parktown, Johannesburg",
+      phone: "+27 11 488 4911",
+      hours: "24/7",
+      freeServices: true,
+      emergency: true,
+      coordinates: { lat: -26.179, lng: 28.038 },
+      languages: ["English", "isiZulu", "Afrikaans"],
+    },
+    {
+      id: 3,
+      name: "Rahima Moosa Mother & Child Hospital",
+      distance: "3.2 km",
+      status: "Open Now",
+      services: ["Pediatrics", "Maternity", "Nutrition", "Vaccinations"],
+      waitTime: "20 min",
+      address: "Cnr Fuel & Oudtshoorn St, Coronationville",
+      phone: "+27 11 470 9000",
+      hours: "Mon-Fri: 7:30-16:00",
+      freeServices: true,
+      childHealth: true,
+      coordinates: { lat: -26.169, lng: 27.986 },
+      languages: ["English", "isiZulu"],
+    },
+    {
+      id: 4,
+      name: "Alexandra Clinic",
+      distance: "5.7 km",
+      status: "Closed",
+      services: ["Primary Care", "Chronic Medication", "TB Screening"],
+      waitTime: "N/A",
+      address: "12th Ave, Alexandra, Johannesburg",
+      phone: "+27 11 440 1212",
+      hours: "Mon-Fri: 8:00-16:00",
+      freeServices: true,
+      coordinates: { lat: -26.102, lng: 28.098 },
+      languages: ["English", "isiZulu"],
+    },
+    {
+      id: 5,
+      name: "Baragwanath Hospital",
+      distance: "8.3 km",
+      status: "24/7 Emergency",
+      services: ["Emergency", "Pediatrics", "Surgery", "ICU"],
+      waitTime: "45 min",
+      address: "Chris Hani Rd, Soweto, Johannesburg",
+      phone: "+27 11 933 8000",
+      hours: "24/7",
+      freeServices: true,
+      emergency: true,
+      coordinates: { lat: -26.262, lng: 27.931 },
+      languages: ["English", "isiZulu", "Sesotho"],
+    },
+  ];
 
   useEffect(() => {
     // Get user's location
