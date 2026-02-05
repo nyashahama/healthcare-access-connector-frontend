@@ -71,6 +71,11 @@ export default function SignIn() {
 
               // If profile is less than 50% complete, redirect to complete profile
               if (completion < 50) {
+                // Store where the user was trying to go (usually dashboard)
+                localStorage.setItem(
+                  "returnAfterProfile",
+                  "/patient/dashboard"
+                );
                 navigate("/auth/complete-patient-profile");
                 return;
               }
@@ -81,6 +86,10 @@ export default function SignIn() {
             } catch (err) {
               // If 404 (no profile found), redirect to complete profile
               if (err.response?.status === 404) {
+                localStorage.setItem(
+                  "returnAfterProfile",
+                  "/patient/dashboard"
+                );
                 navigate("/auth/complete-patient-profile");
                 return;
               }

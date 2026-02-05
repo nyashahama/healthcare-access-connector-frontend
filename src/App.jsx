@@ -1,6 +1,5 @@
 import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
-
 import LandingLayout from "layouts/landing";
 import LandingPage from "views/landing";
 import PatientLayout from "layouts/patient";
@@ -8,7 +7,7 @@ import ProviderLayout from "layouts/provider";
 import AdminLayout from "layouts/admin";
 import AuthLayout from "layouts/auth";
 import ToastContainer from "components/toast/ToastContainer";
-
+import ProfileCompletionGuard from "components/guards/ProfileCompletionGuard";
 import { ToastProvider } from "./hooks/useToast";
 
 const App = () => {
@@ -24,8 +23,16 @@ const App = () => {
         {/* Auth Routes */}
         <Route path="auth/*" element={<AuthLayout />} />
 
-        {/* Protected Routes */}
-        <Route path="patient/*" element={<PatientLayout />} />
+        {/* Protected Routes with Profile Completion Check */}
+        <Route
+          path="patient/*"
+          element={
+            <ProfileCompletionGuard minCompletion={50}>
+              <PatientLayout />
+            </ProfileCompletionGuard>
+          }
+        />
+
         <Route path="provider/*" element={<ProviderLayout />} />
         <Route path="admin/*" element={<AdminLayout />} />
 
