@@ -5,7 +5,7 @@
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 [![Live Demo](https://img.shields.io/badge/Live_Demo-Vercel-000000.svg)](https://healthcare-access-connector-web.vercel.app)
 
-![Healthcare Access Connector Dashboard](https://images.unsplash.com/photo-1579684385127-1ef15d508118?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80)
+![Healthcare Access Connector](/images/home_page.png)
 
 ## 🚀 Overview
 
