@@ -14,6 +14,7 @@ import {
   MdLanguage,
   MdPayment,
 } from "react-icons/md";
+import { useNavigate } from "react-router-dom";
 import Modal from "components/modal/Modal";
 import { useToast } from "hooks/useToast";
 import { useProvider } from "hooks/useProvider";
@@ -23,6 +24,7 @@ const ClinicSuggestions = () => {
   const [bookModalOpen, setBookModalOpen] = useState(false);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const { showToast } = useToast();
+  const navigate = useNavigate();
 
   const { clinics, loading, error, getClinics } = useProvider();
 
@@ -128,13 +130,17 @@ const ClinicSuggestions = () => {
   };
 
   const confirmBooking = () => {
-    setBookModalOpen(false);
-    showToast(`Redirecting to booking...`, "info");
-    window.location.href = `/patient/book-appointment?clinic=${selectedClinic.id}`;
+    if (selectedClinic) {
+      navigate("/patient/book-appointment", {
+        state: { clinic: selectedClinic },
+      });
+    } else {
+      showToast("Please select a clinic first", "warning");
+    }
   };
 
   const handleViewAll = () => {
-    window.location.href = "/patient/find-clinic";
+    navigate("/patient/find-clinic");
   };
 
   return (
@@ -338,7 +344,7 @@ const ClinicSuggestions = () => {
               <button
                 onClick={() => {
                   setDetailsModalOpen(false);
-                  setBookModalOpen(true);
+                  handleBookAppointment(selectedClinic);
                 }}
                 className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-500 to-brand-600 py-3 font-semibold text-white transition-all hover:from-brand-600 hover:to-brand-700 hover:shadow-lg"
               >
