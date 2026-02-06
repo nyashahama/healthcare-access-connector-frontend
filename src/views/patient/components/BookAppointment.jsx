@@ -93,10 +93,6 @@ const BookAppointment = () => {
 
       // First check for clinic in navigation state
       if (location.state?.clinic) {
-        console.log(
-          "Clinic loaded from navigation state:",
-          location.state.clinic
-        );
         setClinic(location.state.clinic);
         setIsLoadingClinic(false);
         return;
@@ -110,15 +106,13 @@ const BookAppointment = () => {
         try {
           const decodedClinicData = decodeURIComponent(clinicParam);
           const clinicData = JSON.parse(decodedClinicData);
-          console.log("Clinic loaded from URL:", clinicData);
+
           setClinic(clinicData);
         } catch (error) {
-          console.error("Error parsing clinic data:", error);
           showToast("Failed to load clinic information", "error");
           navigate("/patient/find-clinic");
         }
       } else {
-        console.error("No clinic data found");
         showToast("Please select a clinic first", "warning");
         navigate("/patient/find-clinic");
       }
@@ -135,7 +129,6 @@ const BookAppointment = () => {
       setIsLoadingPatient(true);
       try {
         const user = getCurrentUser();
-        console.log("Current user:", user);
 
         if (!user || !user.id) {
           showToast("Please log in to book an appointment", "error");
@@ -146,7 +139,6 @@ const BookAppointment = () => {
         setUserId(user.id);
 
         const result = await getPatientProfileByUserId(user.id);
-        console.log("Patient profile result:", result);
 
         if (result.success && result.data) {
           setPatientId(result.data.id);
@@ -156,16 +148,13 @@ const BookAppointment = () => {
               ""
           );
           setPatientPhone(result.data.phone_number || "");
-          console.log("Patient loaded:", result.data);
         } else {
-          console.warn("No patient profile found");
           showToast(
             "Please complete your patient profile before booking",
             "warning"
           );
         }
       } catch (error) {
-        console.error("Error loading patient:", error);
         showToast("Error loading patient profile", "error");
       } finally {
         setIsLoadingPatient(false);
@@ -216,9 +205,6 @@ const BookAppointment = () => {
 
     // Try multiple possible clinic ID fields
     const clinicId = clinic?.id || clinic?.clinic_id || clinic?.clinicId;
-
-    console.log("Clinic object:", clinic);
-    console.log("Extracted clinic ID:", clinicId);
 
     if (!clinicId) {
       console.error("All possible clinic ID fields:", {
@@ -286,23 +272,10 @@ const BookAppointment = () => {
   };
 
   const confirmBooking = async () => {
-    console.log("=== BOOKING DEBUG START ===");
-
     try {
       const appointmentData = prepareAppointmentData();
 
-      console.log("1. Clinic:", clinic);
-      console.log("2. Patient ID:", patientId);
-      console.log("3. Selected Date:", selectedDate);
-      console.log("4. Selected Time:", selectedTime);
-      console.log("5. Time in 24h:", convertTo24Hour(selectedTime));
-      console.log("6. Reason:", reason);
-      console.log("7. Prepared Data:", appointmentData);
-
       const result = await bookAppointment(appointmentData);
-
-      console.log("8. API Result:", result);
-      console.log("=== BOOKING DEBUG END ===");
 
       if (result.success) {
         setConfirmModalOpen(false);
