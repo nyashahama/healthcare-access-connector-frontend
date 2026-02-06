@@ -107,10 +107,11 @@ export default function SignIn() {
             case "provider":
             case "doctor":
             case "nurse":
+            case "caregiver":
             case "clinic_admin":
               navigate("/provider/dashboard");
               break;
-            case "admin":
+            case "system_admin":
               navigate("/admin/dashboard");
               break;
             default:
