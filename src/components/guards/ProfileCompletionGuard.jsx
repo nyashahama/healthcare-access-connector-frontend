@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import patientService from "api/services/patientService";
-import { useAuth } from "hooks/useAuth";
+import { useAuth } from "context/AuthContext";
 
 /**
  * ProfileCompletionGuard
@@ -12,15 +12,13 @@ const ProfileCompletionGuard = ({ children, minCompletion = 50 }) => {
   const [isChecking, setIsChecking] = useState(true);
   const [isAllowed, setIsAllowed] = useState(false);
   const navigate = useNavigate();
-  const { getCurrentUser } = useAuth();
+  const { user, isAuthenticated } = useAuth();
 
   useEffect(() => {
     const checkProfileCompletion = async () => {
       try {
-        const user = getCurrentUser();
-
-        // Only check for patient role
-        if (!user || user.role !== "patient") {
+        // Only check for authenticated patient users
+        if (!isAuthenticated || !user || user.role !== "patient") {
           setIsAllowed(true);
           setIsChecking(false);
           return;
@@ -54,7 +52,7 @@ const ProfileCompletionGuard = ({ children, minCompletion = 50 }) => {
     };
 
     checkProfileCompletion();
-  }, [navigate, getCurrentUser, minCompletion]);
+  }, [navigate, user, isAuthenticated, minCompletion]);
 
   // Show loading state while checking
   if (isChecking) {
