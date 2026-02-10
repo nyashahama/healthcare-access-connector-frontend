@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import patientService from "api/services/patientService";
-import { useAuth } from "context/AuthContext";
+import { useAuth } from "hooks/useAuth";
 
 /**
  * ProfileCompletionGuard
