@@ -137,6 +137,19 @@ const PatientSignUp = () => {
         {/* Main Card */}
         <div className="rounded-2xl bg-white p-6 shadow-xl dark:bg-navy-800">
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Email  */}
+            <InputField
+              variant="auth"
+              label="Email Address *"
+              placeholder="your.email@example.com"
+              id="email"
+              name="email"
+              value={formData.email}
+              onChange={handleInputChange}
+              type="email"
+              disabled={isLoading}
+            />
+
             {/* Phone (Required) */}
             <InputField
               variant="auth"
@@ -148,19 +161,6 @@ const PatientSignUp = () => {
               onChange={handleInputChange}
               type="tel"
               required
-              disabled={isLoading}
-            />
-
-            {/* Email (Optional) */}
-            <InputField
-              variant="auth"
-              label="Email Address (Optional)"
-              placeholder="your.email@example.com"
-              id="email"
-              name="email"
-              value={formData.email}
-              onChange={handleInputChange}
-              type="email"
               disabled={isLoading}
             />
 
