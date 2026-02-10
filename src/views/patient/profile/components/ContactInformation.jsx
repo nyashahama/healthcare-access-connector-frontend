@@ -26,26 +26,46 @@ const ContactInformation = () => {
   } = usePatient();
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Initialize contact info from patient data or defaults
+  // Initialize with empty/null values instead of other user's data
   const [contactInfo, setContactInfo] = useState({
-    fullName: "Sarah Johnson",
-    email: "sarah.johnson@email.com",
-    phone: "+27 72 123 4567",
-    address: "123 Main St, Johannesburg, Gauteng",
-    dateOfBirth: "15 March 1992",
-    gender: "Female",
-    language: "English, Zulu",
+    fullName: "",
+    email: "",
+    phone: "",
+    address: "",
+    dateOfBirth: "",
+    gender: "",
+    language: "",
     smsNotifications: true,
   });
 
-  const [editForm, setEditForm] = useState({ ...contactInfo });
+  const [editForm, setEditForm] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    address: "",
+    dateOfBirth: "",
+    gender: "",
+    language: "",
+  });
 
   // Load patient data on component mount
   useEffect(() => {
     const loadPatientData = async () => {
-      if (user) {
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+      setError(null);
+
+      try {
         const result = await getCurrentPatientProfile();
+
         if (result.success && result.data) {
           // Map patient data to contact info format
           const patientData = result.data;
@@ -53,25 +73,32 @@ const ContactInformation = () => {
             fullName:
               `${patientData.first_name || ""} ${
                 patientData.last_name || ""
-              }`.trim() || "Not set",
-            email: patientData.email || user.email || "Not set",
-            phone: patientData.phone || user.phone || "Not set",
-            address: patientData.primary_address || "Not set",
+              }`.trim() || "",
+            email: patientData.email || user.email || "",
+            phone: patientData.phone || user.phone || "",
+            address: patientData.primary_address || "",
             dateOfBirth: patientData.date_of_birth
               ? formatDate(patientData.date_of_birth)
-              : "Not set",
-            gender: patientData.gender || "Not specified",
+              : "",
+            gender: patientData.gender || "",
             language:
               patientData.home_language ||
               patientData.language_preferences?.join(", ") ||
-              "Not specified",
+              "",
             smsNotifications:
               patientData.sms_notifications !== undefined
                 ? patientData.sms_notifications
                 : true,
           };
           setContactInfo(newContactInfo);
+        } else {
+          setError("Failed to load patient data. Please try again.");
         }
+      } catch (error) {
+        console.error("Error loading patient data:", error);
+        setError("An error occurred while loading your information.");
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -80,7 +107,7 @@ const ContactInformation = () => {
 
   // Format date for display
   const formatDate = (dateString) => {
-    if (!dateString) return "Not set";
+    if (!dateString) return "";
     try {
       const date = new Date(dateString);
       return date.toLocaleDateString("en-GB", {
@@ -89,13 +116,14 @@ const ContactInformation = () => {
         year: "numeric",
       });
     } catch (error) {
+      console.error("Error formatting date:", error);
       return dateString;
     }
   };
 
   // Parse date for form input
   const parseDateForInput = (dateString) => {
-    if (!dateString || dateString === "Not set") return "";
+    if (!dateString) return "";
     try {
       const date = new Date(dateString);
       return date.toISOString().split("T")[0];
@@ -105,20 +133,19 @@ const ContactInformation = () => {
   };
 
   const handleEditClick = () => {
-    // Pre-fill form with current data
+    // Split full name into first and last
     const [firstName, ...lastNameParts] = contactInfo.fullName.split(" ");
     const lastName = lastNameParts.join(" ");
 
     setEditForm({
       firstName: firstName || "",
       lastName: lastName || "",
-      email: contactInfo.email === "Not set" ? "" : contactInfo.email,
-      phone: contactInfo.phone === "Not set" ? "" : contactInfo.phone,
-      address: contactInfo.address === "Not set" ? "" : contactInfo.address,
+      email: contactInfo.email || "",
+      phone: contactInfo.phone || "",
+      address: contactInfo.address || "",
       dateOfBirth: parseDateForInput(contactInfo.dateOfBirth),
-      gender: contactInfo.gender === "Not specified" ? "" : contactInfo.gender,
-      language:
-        contactInfo.language === "Not specified" ? "" : contactInfo.language,
+      gender: contactInfo.gender || "",
+      language: contactInfo.language || "",
     });
     setEditModalOpen(true);
   };
@@ -207,15 +234,14 @@ const ContactInformation = () => {
             fullName:
               `${updates.first_name || patient.first_name || ""} ${
                 updates.last_name || patient.last_name || ""
-              }`.trim() || "Not set",
+              }`.trim() || "",
             email: contactInfo.email,
             phone: contactInfo.phone,
-            address:
-              updates.primary_address || patient.primary_address || "Not set",
+            address: updates.primary_address || patient.primary_address || "",
             dateOfBirth: formatDate(
               updates.date_of_birth || patient.date_of_birth
             ),
-            gender: updates.gender || patient.gender || "Not specified",
+            gender: updates.gender || patient.gender || "",
             language: updates.home_language || contactInfo.language,
             smsNotifications: contactInfo.smsNotifications,
           };
@@ -282,6 +308,95 @@ const ContactInformation = () => {
       console.error("Toggle SMS error:", error);
     }
   };
+
+  // Helper function to display field value or placeholder
+  const displayValue = (value) => {
+    return value || <span className="italic text-gray-400">Not provided</span>;
+  };
+
+  // Loading state
+  if (loading || patientLoading) {
+    return (
+      <Card extra={"w-full h-full p-6"}>
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <div className="mx-auto h-10 w-10 animate-spin rounded-full border-b-2 border-t-2 border-brand-500"></div>
+            <p className="mt-4 text-gray-600 dark:text-gray-400">
+              Loading your information...
+            </p>
+          </div>
+        </div>
+      </Card>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <Card extra={"w-full h-full p-6"}>
+        <div className="flex flex-col items-center justify-center py-12">
+          <div className="rounded-full bg-red-50 p-4 dark:bg-red-900/20">
+            <svg
+              className="h-8 w-8 text-red-500"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+          </div>
+          <h3 className="mt-4 text-lg font-semibold text-gray-900 dark:text-white">
+            Unable to Load Information
+          </h3>
+          <p className="mt-2 text-center text-gray-600 dark:text-gray-400">
+            {error}
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-6 rounded-lg bg-brand-500 px-4 py-2 text-white hover:bg-brand-600"
+          >
+            Try Again
+          </button>
+        </div>
+      </Card>
+    );
+  }
+
+  // No user logged in
+  if (!user) {
+    return (
+      <Card extra={"w-full h-full p-6"}>
+        <div className="flex flex-col items-center justify-center py-12">
+          <div className="rounded-full bg-yellow-50 p-4 dark:bg-yellow-900/20">
+            <svg
+              className="h-8 w-8 text-yellow-500"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+              />
+            </svg>
+          </div>
+          <h3 className="mt-4 text-lg font-semibold text-gray-900 dark:text-white">
+            Please Sign In
+          </h3>
+          <p className="mt-2 text-center text-gray-600 dark:text-gray-400">
+            You need to be signed in to view your contact information.
+          </p>
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <>
@@ -446,7 +561,7 @@ const ContactInformation = () => {
           </h4>
           <button
             onClick={handleEditClick}
-            disabled={patientLoading}
+            disabled={loading}
             className="flex items-center text-sm font-medium text-brand-500 hover:text-brand-600 disabled:opacity-50"
           >
             <MdEdit className="mr-1 h-4 w-4" />
@@ -460,7 +575,7 @@ const ContactInformation = () => {
             <div>
               <p className="text-sm text-gray-600">Full Name</p>
               <p className="font-medium text-navy-700 dark:text-white">
-                {contactInfo.fullName}
+                {displayValue(contactInfo.fullName)}
               </p>
             </div>
           </div>
@@ -470,7 +585,7 @@ const ContactInformation = () => {
             <div>
               <p className="text-sm text-gray-600">Email Address</p>
               <p className="font-medium text-navy-700 dark:text-white">
-                {contactInfo.email}
+                {displayValue(contactInfo.email)}
               </p>
             </div>
           </div>
@@ -480,7 +595,7 @@ const ContactInformation = () => {
             <div>
               <p className="text-sm text-gray-600">Phone Number</p>
               <p className="font-medium text-navy-700 dark:text-white">
-                {contactInfo.phone}
+                {displayValue(contactInfo.phone)}
               </p>
             </div>
           </div>
@@ -490,7 +605,7 @@ const ContactInformation = () => {
             <div>
               <p className="text-sm text-gray-600">Address</p>
               <p className="font-medium text-navy-700 dark:text-white">
-                {contactInfo.address}
+                {displayValue(contactInfo.address)}
               </p>
             </div>
           </div>
@@ -500,7 +615,7 @@ const ContactInformation = () => {
             <div>
               <p className="text-sm text-gray-600">Date of Birth</p>
               <p className="font-medium text-navy-700 dark:text-white">
-                {contactInfo.dateOfBirth}
+                {displayValue(contactInfo.dateOfBirth)}
               </p>
             </div>
           </div>
@@ -510,7 +625,7 @@ const ContactInformation = () => {
             <div>
               <p className="text-sm text-gray-600">Language(s)</p>
               <p className="font-medium text-navy-700 dark:text-white">
-                {contactInfo.language}
+                {displayValue(contactInfo.language)}
               </p>
             </div>
           </div>
@@ -534,7 +649,7 @@ const ContactInformation = () => {
               ></div>
               <button
                 onClick={toggleSmsNotifications}
-                disabled={patientLoading || !patient?.id}
+                disabled={loading || !patient?.id}
                 className="text-sm font-medium text-green-600 hover:text-green-700 disabled:opacity-50"
               >
                 {contactInfo.smsNotifications ? "Enabled" : "Disabled"}
