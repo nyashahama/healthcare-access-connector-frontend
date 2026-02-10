@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   MdSearch,
   MdFilterList,
@@ -20,6 +20,7 @@ import {
   MdSave,
   MdLock,
   MdLockOpen,
+  MdRefresh,
 } from "react-icons/md";
 import {
   FaFileMedical,
@@ -30,11 +31,29 @@ import {
 import Card from "components/card";
 import Modal from "components/modal/Modal";
 import { useToast } from "hooks/useToast";
+import { useAuth } from "hooks/useAuth";
+import { useProvider } from "hooks/useProvider";
+import RegistrationQueue from "../components/RegistrationQueue";
 
 const ClinicVerification = () => {
   const [selectedTab, setSelectedTab] = useState("pending");
   const [searchQuery, setSearchQuery] = useState("");
   const { showToast } = useToast();
+  const { getCurrentUser } = useAuth();
+  const {
+    getClinics,
+    getClinic,
+    updateClinic,
+    deleteClinic,
+    verifyClinic,
+    updateVerifyClinic,
+    registerClinic,
+    loading,
+    error,
+    clinics,
+    clearError,
+    clearProviderState,
+  } = useProvider();
 
   // Modal states
   const [viewModalOpen, setViewModalOpen] = useState(false);
@@ -45,109 +64,116 @@ const ClinicVerification = () => {
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [selectedClinic, setSelectedClinic] = useState(null);
   const [rejectionReason, setRejectionReason] = useState("");
+  const [processingAction, setProcessingAction] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
 
   // Edit form state
   const [clinicForm, setClinicForm] = useState({
-    name: "",
-    type: "Private Clinic",
-    location: "",
-    contact: "",
+    clinic_name: "",
+    clinic_type: "private",
+    city: "",
+    province: "",
+    contact_number: "",
+    email: "",
     services: [],
-    documents: [],
+    operating_hours: "",
   });
 
-  const verificationStats = [
-    {
-      title: "Pending Review",
-      count: "8",
-      icon: <MdPendingActions className="h-6 w-6 text-yellow-500" />,
-      color: "yellow",
-      trend: "+2 this week",
-    },
-    {
-      title: "Approved This Month",
-      count: "24",
-      icon: <MdCheckCircle className="h-6 w-6 text-green-500" />,
-      color: "green",
-      trend: "+15%",
-    },
-    {
-      title: "Rejected",
-      count: "3",
-      icon: <MdCancel className="h-6 w-6 text-red-500" />,
-      color: "red",
-      trend: "-1 this month",
-    },
-    {
-      title: "Total Verified",
-      count: "247",
-      icon: <MdVerified className="h-6 w-6 text-blue-500" />,
-      color: "blue",
-      trend: "+12%",
-    },
-  ];
+  // Fetch current user and clinics on mount
+  useEffect(() => {
+    const user = getCurrentUser();
+    setCurrentUser(user);
+    fetchClinics();
+  }, []);
 
-  const pendingClinics = [
-    {
-      id: 1,
-      name: "Sunrise Medical Center",
-      location: "Johannesburg, Gauteng",
-      type: "Private Clinic",
-      submitted: "2024-01-15",
-      documents: [
-        { id: 1, name: "Registration Certificate", verified: true, url: "#" },
-        { id: 2, name: "Medical License", verified: true, url: "#" },
-        { id: 3, name: "Facility Photos", verified: false, url: "#" },
-      ],
-      services: ["Pediatrics", "Vaccinations", "Emergency Care"],
-      contact: "+27 11 234 5678",
-      email: "info@sunrisemedical.co.za",
-      status: "pending",
-      facilitySize: "Medium",
-      operatingHours: "Mon-Fri: 8am-6pm",
-      staffCount: 12,
-      accreditation: "HPCSA Registered",
-      facilities: ["X-Ray", "Lab", "Pharmacy"],
-    },
-    {
-      id: 2,
-      name: "Rural Health Outreach Clinic",
-      location: "Limpopo Province",
-      type: "NGO Clinic",
-      submitted: "2024-01-14",
-      documents: [
-        { id: 1, name: "NGO Certificate", verified: true, url: "#" },
-        { id: 2, name: "Facility Photos", verified: true, url: "#" },
-        { id: 3, name: "Staff Credentials", verified: false, url: "#" },
-      ],
-      services: ["Primary Care", "Maternal Health", "Nutrition"],
-      contact: "+27 15 345 6789",
-      email: "ruralhealth@ngo.org",
-      status: "pending",
-      facilitySize: "Small",
-      operatingHours: "Mon-Sat: 9am-5pm",
-      staffCount: 6,
-      accreditation: "Department of Health",
-      facilities: ["Consultation Rooms", "Dispensary"],
-    },
-  ];
+  // Clear errors on unmount
+  useEffect(() => {
+    return () => {
+      clearError();
+      clearProviderState();
+    };
+  }, []);
 
-  // Modal handlers
-  const handleViewDetails = (clinic) => {
+  // Fetch clinics based on selected tab
+  useEffect(() => {
+    if (selectedTab === "all") {
+      fetchClinics();
+    }
+  }, [selectedTab]);
+
+  const fetchClinics = async () => {
+    const result = await getClinics();
+    if (!result.success) {
+      showToast(result.error || "Failed to load clinics", "error");
+    }
+  };
+
+  const formatOperatingHours = (hours) => {
+    if (!hours) return "Not specified";
+
+    // If it's already a string, return it
+    if (typeof hours === "string") {
+      return hours;
+    }
+
+    // If it's an object (from API), format it nicely
+    if (typeof hours === "object" && hours !== null) {
+      const daysOrder = [
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday",
+        "saturday",
+        "sunday",
+      ];
+      const formattedDays = daysOrder
+        .filter((day) => {
+          const dayValue = hours[day];
+          // Check if the value exists, is a string, and is not "Closed"
+          return (
+            dayValue &&
+            typeof dayValue === "string" &&
+            dayValue !== "Closed" &&
+            dayValue.trim() !== ""
+          );
+        })
+        .map(
+          (day) =>
+            `${day.charAt(0).toUpperCase() + day.slice(1)}: ${hours[day]}`
+        );
+
+      return formattedDays.length > 0
+        ? formattedDays.join(", ")
+        : "Not specified";
+    }
+
+    return "Not specified";
+  };
+
+  const handleViewDetails = async (clinic) => {
     setSelectedClinic(clinic);
+    // Fetch full clinic details
+    const result = await getClinic(clinic.id);
+    if (result.success) {
+      setSelectedClinic(result.data);
+    } else {
+      showToast(result.error || "Failed to load clinic details", "error");
+    }
     setViewModalOpen(true);
   };
 
   const handleEditClick = (clinic) => {
     setSelectedClinic(clinic);
     setClinicForm({
-      name: clinic.name,
-      type: clinic.type,
-      location: clinic.location,
-      contact: clinic.contact,
+      clinic_name: clinic.clinic_name || "",
+      clinic_type: clinic.clinic_type || "private",
+      city: clinic.city || "",
+      province: clinic.province || "",
+      contact_number: clinic.contact_number || "",
       email: clinic.email || "",
-      services: [...clinic.services],
-      operatingHours: clinic.operatingHours || "",
+      services: clinic.services || [],
+      operating_hours: formatOperatingHours(clinic.operating_hours) || "",
     });
     setEditModalOpen(true);
   };
@@ -158,11 +184,19 @@ const ClinicVerification = () => {
   };
 
   const handleApproveClick = (clinic) => {
+    if (!currentUser || !currentUser.id) {
+      showToast("You must be logged in to approve clinics", "error");
+      return;
+    }
     setSelectedClinic(clinic);
     setApproveModalOpen(true);
   };
 
   const handleRejectClick = (clinic) => {
+    if (!currentUser || !currentUser.id) {
+      showToast("You must be logged in to reject clinics", "error");
+      return;
+    }
     setSelectedClinic(clinic);
     setRejectionReason("");
     setRejectModalOpen(true);
@@ -170,13 +204,14 @@ const ClinicVerification = () => {
 
   const handleCreateClick = () => {
     setClinicForm({
-      name: "",
-      type: "Private Clinic",
-      location: "",
-      contact: "",
+      clinic_name: "",
+      clinic_type: "private",
+      city: "",
+      province: "",
+      contact_number: "",
       email: "",
       services: [],
-      operatingHours: "",
+      operating_hours: "",
     });
     setCreateModalOpen(true);
   };
@@ -206,40 +241,178 @@ const ClinicVerification = () => {
   };
 
   // Action confirmations
-  const confirmEdit = () => {
-    console.log(`Editing clinic ${selectedClinic.id}`, clinicForm);
-    setEditModalOpen(false);
-    showToast("Clinic updated successfully!", "success");
+  const confirmEdit = async () => {
+    setProcessingAction(true);
+    const result = await updateClinic(selectedClinic.id, clinicForm);
+    setProcessingAction(false);
+
+    if (result.success) {
+      setEditModalOpen(false);
+      showToast("Clinic updated successfully!", "success");
+      fetchClinics(); // Refresh the list
+    } else {
+      showToast(result.error || "Failed to update clinic", "error");
+    }
   };
 
-  const confirmDelete = () => {
-    console.log(`Deleting clinic ${selectedClinic.id}`);
-    setDeleteModalOpen(false);
-    showToast("Clinic deleted successfully!", "error");
+  const confirmDelete = async () => {
+    setProcessingAction(true);
+    const result = await deleteClinic(selectedClinic.id);
+    setProcessingAction(false);
+
+    if (result.success) {
+      setDeleteModalOpen(false);
+      showToast("Clinic deleted successfully!", "success");
+      fetchClinics(); // Refresh the list
+    } else {
+      showToast(result.error || "Failed to delete clinic", "error");
+    }
   };
 
-  const confirmApprove = () => {
-    console.log(`Approving clinic ${selectedClinic.id}`);
-    setApproveModalOpen(false);
-    showToast("Clinic approved successfully!", "success");
+  const confirmApprove = async () => {
+    if (!selectedClinic || !currentUser?.id) {
+      showToast("Invalid request", "error");
+      return;
+    }
+
+    setProcessingAction(true);
+
+    // First mark as verified
+    const verifyResult = await verifyClinic(selectedClinic.id, {
+      verified_by: currentUser.id,
+      notes: `Clinic approved by ${currentUser.first_name || ""} ${
+        currentUser.last_name || ""
+      } on ${new Date().toLocaleDateString()}`,
+    });
+
+    if (verifyResult.success) {
+      // Update verification status to "verified"
+      const statusResult = await updateVerifyClinic(selectedClinic.id, {
+        verification_status: "verified",
+      });
+
+      setProcessingAction(false);
+
+      if (statusResult.success) {
+        setApproveModalOpen(false);
+        showToast("Clinic approved successfully!", "success");
+        fetchClinics(); // Refresh the list
+      } else {
+        showToast(
+          statusResult.error || "Failed to update verification status",
+          "error"
+        );
+      }
+    } else {
+      setProcessingAction(false);
+      showToast(verifyResult.error || "Failed to verify clinic", "error");
+    }
   };
 
-  const confirmReject = () => {
+  const confirmReject = async () => {
     if (!rejectionReason.trim()) {
       showToast("Please provide a rejection reason", "error");
       return;
     }
-    console.log(
-      `Rejecting clinic ${selectedClinic.id} with reason: ${rejectionReason}`
-    );
-    setRejectModalOpen(false);
-    showToast("Clinic has been rejected.", "warning");
+
+    if (!selectedClinic || !currentUser?.id) {
+      showToast("Invalid request", "error");
+      return;
+    }
+
+    setProcessingAction(true);
+
+    // Mark as verified with rejection note
+    const verifyResult = await verifyClinic(selectedClinic.id, {
+      verified_by: currentUser.id,
+      notes: rejectionReason,
+    });
+
+    if (verifyResult.success) {
+      // Update verification status to "rejected"
+      const statusResult = await updateVerifyClinic(selectedClinic.id, {
+        verification_status: "rejected",
+      });
+
+      setProcessingAction(false);
+
+      if (statusResult.success) {
+        setRejectModalOpen(false);
+        showToast("Clinic has been rejected.", "warning");
+        fetchClinics(); // Refresh the list
+      } else {
+        showToast(
+          statusResult.error || "Failed to update rejection status",
+          "error"
+        );
+      }
+    } else {
+      setProcessingAction(false);
+      showToast(verifyResult.error || "Failed to process rejection", "error");
+    }
   };
 
-  const confirmCreate = () => {
-    console.log("Creating new clinic", clinicForm);
-    setCreateModalOpen(false);
-    showToast("New clinic added for verification!", "success");
+  const confirmCreate = async () => {
+    if (
+      !clinicForm.clinic_name ||
+      !clinicForm.city ||
+      !clinicForm.contact_number
+    ) {
+      showToast("Please fill in all required fields", "error");
+      return;
+    }
+
+    setProcessingAction(true);
+    const result = await registerClinic({
+      ...clinicForm,
+      verification_status: "pending",
+    });
+    setProcessingAction(false);
+
+    if (result.success) {
+      setCreateModalOpen(false);
+      showToast("New clinic added for verification!", "success");
+      fetchClinics(); // Refresh the list
+    } else {
+      showToast(result.error || "Failed to create clinic", "error");
+    }
+  };
+
+  // Filter clinics based on selected tab and search query
+  const getFilteredClinics = () => {
+    let filtered = clinics || [];
+
+    // Filter by tab
+    if (selectedTab === "pending") {
+      filtered = filtered.filter(
+        (clinic) =>
+          clinic.verification_status === "pending" ||
+          clinic.verification_status === "in_review"
+      );
+    } else if (selectedTab === "approved") {
+      filtered = filtered.filter(
+        (clinic) => clinic.verification_status === "verified"
+      );
+    } else if (selectedTab === "rejected") {
+      filtered = filtered.filter(
+        (clinic) => clinic.verification_status === "rejected"
+      );
+    }
+
+    // Filter by search query
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(
+        (clinic) =>
+          clinic.clinic_name?.toLowerCase().includes(query) ||
+          clinic.city?.toLowerCase().includes(query) ||
+          clinic.province?.toLowerCase().includes(query) ||
+          clinic.clinic_type?.toLowerCase().includes(query) ||
+          clinic.email?.toLowerCase().includes(query)
+      );
+    }
+
+    return filtered;
   };
 
   const getStatusBadge = (status) => {
@@ -250,7 +423,13 @@ const ClinicVerification = () => {
         icon: <MdPendingActions className="h-3 w-3" />,
         text: "Pending",
       },
-      approved: {
+      in_review: {
+        color:
+          "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300",
+        icon: <MdVisibility className="h-3 w-3" />,
+        text: "In Review",
+      },
+      verified: {
         color:
           "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
         icon: <MdCheckCircle className="h-3 w-3" />,
@@ -260,11 +439,6 @@ const ClinicVerification = () => {
         color: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
         icon: <MdCancel className="h-3 w-3" />,
         text: "Rejected",
-      },
-      verified: {
-        color: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
-        icon: <MdVerified className="h-3 w-3" />,
-        text: "Verified",
       },
     };
 
@@ -279,37 +453,72 @@ const ClinicVerification = () => {
     );
   };
 
-  const DocumentStatus = ({ documents }) => {
-    const verifiedCount = documents.filter((doc) => doc.verified).length;
-    const totalCount = documents.length;
-
-    return (
-      <div className="flex items-center">
-        <span
-          className={`mr-2 font-bold ${
-            verifiedCount === totalCount
-              ? "text-green-500"
-              : verifiedCount > totalCount / 2
-              ? "text-yellow-500"
-              : "text-red-500"
-          }`}
-        >
-          {verifiedCount}/{totalCount}
-        </span>
-        <div className="flex">
-          {documents.map((doc, index) => (
-            <div
-              key={index}
-              className={`ml-1 h-2 w-2 rounded-full ${
-                doc.verified ? "bg-green-500" : "bg-red-500"
-              }`}
-              title={doc.name}
-            />
-          ))}
-        </div>
-      </div>
-    );
+  const getClinicTypeDisplay = (type) => {
+    const typeMap = {
+      private: "Private Clinic",
+      public: "Public Clinic",
+      ngo: "NGO Clinic",
+      mobile: "Mobile Clinic",
+      specialist: "Specialist Clinic",
+    };
+    return typeMap[type] || type;
   };
+
+  const getTimeAgo = (dateString) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInHours = Math.floor((now - date) / (1000 * 60 * 60));
+
+    if (diffInHours < 1) return "Less than 1 hour ago";
+    if (diffInHours < 24)
+      return `${diffInHours} hour${diffInHours > 1 ? "s" : ""} ago`;
+
+    const diffInDays = Math.floor(diffInHours / 24);
+    if (diffInDays < 7)
+      return `${diffInDays} day${diffInDays > 1 ? "s" : ""} ago`;
+
+    const diffInWeeks = Math.floor(diffInDays / 7);
+    return `${diffInWeeks} week${diffInWeeks > 1 ? "s" : ""} ago`;
+  };
+
+  // Calculate verification statistics
+  const verificationStats = [
+    {
+      title: "Pending Review",
+      count:
+        clinics?.filter(
+          (c) =>
+            c.verification_status === "pending" ||
+            c.verification_status === "in_review"
+        ).length || 0,
+      icon: <MdPendingActions className="h-6 w-6 text-yellow-500" />,
+      color: "yellow",
+    },
+    {
+      title: "Approved This Month",
+      count:
+        clinics?.filter((c) => c.verification_status === "verified").length ||
+        0,
+      icon: <MdCheckCircle className="h-6 w-6 text-green-500" />,
+      color: "green",
+    },
+    {
+      title: "Rejected",
+      count:
+        clinics?.filter((c) => c.verification_status === "rejected").length ||
+        0,
+      icon: <MdCancel className="h-6 w-6 text-red-500" />,
+      color: "red",
+    },
+    {
+      title: "Total Clinics",
+      count: clinics?.length || 0,
+      icon: <MdVerified className="h-6 w-6 text-blue-500" />,
+      color: "blue",
+    },
+  ];
+
+  const filteredClinics = getFilteredClinics();
 
   return (
     <div className="h-full">
@@ -327,16 +536,21 @@ const ClinicVerification = () => {
             <div className="flex items-start justify-between">
               <div>
                 <h4 className="text-2xl font-bold text-navy-700 dark:text-white">
-                  {selectedClinic.name}
+                  {selectedClinic.clinic_name}
                 </h4>
                 <div className="mt-2 flex items-center text-gray-600 dark:text-gray-300">
                   <MdLocationOn className="mr-2 h-5 w-5" />
-                  {selectedClinic.location}
+                  {selectedClinic.city && selectedClinic.province
+                    ? `${selectedClinic.city}, ${selectedClinic.province}`
+                    : selectedClinic.physical_address || "N/A"}
                 </div>
               </div>
-              <span className="rounded-full bg-blue-100 px-4 py-2 text-sm font-bold text-blue-800 dark:bg-blue-900 dark:text-blue-300">
-                {selectedClinic.type}
-              </span>
+              <div className="flex flex-col items-end gap-2">
+                {getStatusBadge(selectedClinic.verification_status)}
+                <span className="rounded-full bg-blue-100 px-4 py-2 text-sm font-bold text-blue-800 dark:bg-blue-900 dark:text-blue-300">
+                  {getClinicTypeDisplay(selectedClinic.clinic_type)}
+                </span>
+              </div>
             </div>
 
             {/* Clinic Info Grid */}
@@ -345,9 +559,9 @@ const ClinicVerification = () => {
                 <div className="flex items-center">
                   <MdCalendarToday className="mr-3 h-5 w-5 text-gray-400" />
                   <div>
-                    <div className="text-sm text-gray-500">Submitted</div>
+                    <div className="text-sm text-gray-500">Registered</div>
                     <div className="font-medium">
-                      {selectedClinic.submitted}
+                      {new Date(selectedClinic.created_at).toLocaleDateString()}
                     </div>
                   </div>
                 </div>
@@ -355,36 +569,64 @@ const ClinicVerification = () => {
                   <MdPhone className="mr-3 h-5 w-5 text-gray-400" />
                   <div>
                     <div className="text-sm text-gray-500">Contact</div>
-                    <div className="font-medium">{selectedClinic.contact}</div>
+                    <div className="font-medium">
+                      {selectedClinic.contact_number || "N/A"}
+                    </div>
                   </div>
                 </div>
                 <div className="flex items-center">
                   <MdEmail className="mr-3 h-5 w-5 text-gray-400" />
                   <div>
                     <div className="text-sm text-gray-500">Email</div>
-                    <div className="font-medium">{selectedClinic.email}</div>
+                    <div className="font-medium">
+                      {selectedClinic.email || "N/A"}
+                    </div>
                   </div>
                 </div>
+                {selectedClinic.registration_number && (
+                  <div className="flex items-center">
+                    <MdInfo className="mr-3 h-5 w-5 text-gray-400" />
+                    <div>
+                      <div className="text-sm text-gray-500">
+                        Registration #
+                      </div>
+                      <div className="font-medium">
+                        {selectedClinic.registration_number}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
               <div>
-                <div className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Services Offered
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {selectedClinic.services.map((service, index) => (
-                    <span
-                      key={index}
-                      className="rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-800 dark:bg-green-900 dark:text-green-300"
-                    >
-                      {service}
-                    </span>
-                  ))}
-                </div>
-                {selectedClinic.operatingHours && (
+                {selectedClinic.services &&
+                  selectedClinic.services.length > 0 && (
+                    <>
+                      <div className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Services Offered
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {Array.isArray(selectedClinic.services) ? (
+                          selectedClinic.services.map((service, index) => (
+                            <span
+                              key={index}
+                              className="rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-800 dark:bg-green-900 dark:text-green-300"
+                            >
+                              {service}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-gray-500">
+                            No services listed
+                          </span>
+                        )}
+                      </div>
+                    </>
+                  )}
+                {selectedClinic.operating_hours && (
                   <div className="mt-3">
                     <div className="text-sm text-gray-500">Operating Hours</div>
                     <div className="font-medium">
-                      {selectedClinic.operatingHours}
+                      {formatOperatingHours(selectedClinic.operating_hours)}
                     </div>
                   </div>
                 )}
@@ -393,61 +635,60 @@ const ClinicVerification = () => {
 
             {/* Additional Details */}
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-              {selectedClinic.facilitySize && (
+              <div className="rounded-lg bg-gray-50 p-4 dark:bg-navy-700">
+                <div className="text-sm text-gray-500">Clinic ID</div>
+                <div className="font-medium">{selectedClinic.id}</div>
+              </div>
+              {selectedClinic.accreditation_number && (
                 <div className="rounded-lg bg-gray-50 p-4 dark:bg-navy-700">
-                  <div className="text-sm text-gray-500">Facility Size</div>
+                  <div className="text-sm text-gray-500">Accreditation #</div>
                   <div className="font-medium">
-                    {selectedClinic.facilitySize}
+                    {selectedClinic.accreditation_number}
                   </div>
                 </div>
               )}
-              {selectedClinic.staffCount && (
+              {selectedClinic.contact_person_name && (
                 <div className="rounded-lg bg-gray-50 p-4 dark:bg-navy-700">
-                  <div className="text-sm text-gray-500">Staff Count</div>
-                  <div className="font-medium">{selectedClinic.staffCount}</div>
-                </div>
-              )}
-              {selectedClinic.accreditation && (
-                <div className="rounded-lg bg-gray-50 p-4 dark:bg-navy-700">
-                  <div className="text-sm text-gray-500">Accreditation</div>
+                  <div className="text-sm text-gray-500">Contact Person</div>
                   <div className="font-medium">
-                    {selectedClinic.accreditation}
+                    {selectedClinic.contact_person_name}
                   </div>
                 </div>
               )}
             </div>
 
-            {/* Documents Section */}
-            <div>
-              <h5 className="mb-3 text-lg font-semibold text-navy-700 dark:text-white">
-                Documents
-              </h5>
-              <div className="space-y-3">
-                {selectedClinic.documents.map((doc, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between rounded-lg border border-gray-200 p-4 dark:border-gray-700"
-                  >
-                    <div className="flex items-center">
-                      <FaRegFilePdf className="mr-3 h-6 w-6 text-red-500" />
-                      <div>
-                        <div className="font-medium">{doc.name}</div>
-                        <div
-                          className={`text-sm ${
-                            doc.verified ? "text-green-600" : "text-red-600"
-                          }`}
-                        >
-                          {doc.verified ? "✓ Verified" : "✗ Pending"}
-                        </div>
+            {/* Verification Details */}
+            {selectedClinic.verification_status !== "pending" && (
+              <div className="rounded-lg bg-blue-50 p-4 dark:bg-blue-900/20">
+                <h5 className="mb-2 text-lg font-semibold text-navy-700 dark:text-white">
+                  Verification Details
+                </h5>
+                <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+                  <div>
+                    <div className="text-sm text-gray-500">Status</div>
+                    <div className="font-medium">
+                      {selectedClinic.verification_status}
+                    </div>
+                  </div>
+                  {selectedClinic.verified_by && (
+                    <div>
+                      <div className="text-sm text-gray-500">Verified By</div>
+                      <div className="font-medium">
+                        User ID: {selectedClinic.verified_by}
                       </div>
                     </div>
-                    <button className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium transition-all duration-200 hover:scale-105 hover:bg-gray-50 dark:border-gray-600">
-                      View
-                    </button>
-                  </div>
-                ))}
+                  )}
+                  {selectedClinic.verification_notes && (
+                    <div className="md:col-span-2">
+                      <div className="text-sm text-gray-500">Notes</div>
+                      <div className="font-medium">
+                        {selectedClinic.verification_notes}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         )}
       </Modal>
@@ -468,8 +709,10 @@ const ClinicVerification = () => {
                 </label>
                 <input
                   type="text"
-                  value={clinicForm.name}
-                  onChange={(e) => handleFormChange("name", e.target.value)}
+                  value={clinicForm.clinic_name}
+                  onChange={(e) =>
+                    handleFormChange("clinic_name", e.target.value)
+                  }
                   className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
                   placeholder="Enter clinic name"
                 />
@@ -479,27 +722,41 @@ const ClinicVerification = () => {
                   Clinic Type *
                 </label>
                 <select
-                  value={clinicForm.type}
-                  onChange={(e) => handleFormChange("type", e.target.value)}
+                  value={clinicForm.clinic_type}
+                  onChange={(e) =>
+                    handleFormChange("clinic_type", e.target.value)
+                  }
                   className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
                 >
-                  <option value="Private Clinic">Private Clinic</option>
-                  <option value="Public Clinic">Public Clinic</option>
-                  <option value="NGO Clinic">NGO Clinic</option>
-                  <option value="Mobile Clinic">Mobile Clinic</option>
-                  <option value="Specialist Clinic">Specialist Clinic</option>
+                  <option value="private">Private Clinic</option>
+                  <option value="public">Public Clinic</option>
+                  <option value="ngo">NGO Clinic</option>
+                  <option value="mobile">Mobile Clinic</option>
+                  <option value="specialist">Specialist Clinic</option>
                 </select>
               </div>
               <div>
                 <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Location *
+                  City *
                 </label>
                 <input
                   type="text"
-                  value={clinicForm.location}
-                  onChange={(e) => handleFormChange("location", e.target.value)}
+                  value={clinicForm.city}
+                  onChange={(e) => handleFormChange("city", e.target.value)}
                   className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
-                  placeholder="Enter location"
+                  placeholder="Enter city"
+                />
+              </div>
+              <div>
+                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Province *
+                </label>
+                <input
+                  type="text"
+                  value={clinicForm.province}
+                  onChange={(e) => handleFormChange("province", e.target.value)}
+                  className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
+                  placeholder="Enter province"
                 />
               </div>
               <div>
@@ -508,8 +765,10 @@ const ClinicVerification = () => {
                 </label>
                 <input
                   type="tel"
-                  value={clinicForm.contact}
-                  onChange={(e) => handleFormChange("contact", e.target.value)}
+                  value={clinicForm.contact_number}
+                  onChange={(e) =>
+                    handleFormChange("contact_number", e.target.value)
+                  }
                   className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
                   placeholder="Enter contact number"
                 />
@@ -526,15 +785,15 @@ const ClinicVerification = () => {
                   placeholder="Enter email address"
                 />
               </div>
-              <div>
+              <div className="md:col-span-2">
                 <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
                   Operating Hours
                 </label>
                 <input
                   type="text"
-                  value={clinicForm.operatingHours}
+                  value={clinicForm.operating_hours}
                   onChange={(e) =>
-                    handleFormChange("operatingHours", e.target.value)
+                    handleFormChange("operating_hours", e.target.value)
                   }
                   className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
                   placeholder="e.g., Mon-Fri: 8am-6pm"
@@ -544,66 +803,66 @@ const ClinicVerification = () => {
 
             <div>
               <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Services Offered
+                Services Offered (comma-separated)
               </label>
-              <div className="mb-3 flex flex-wrap gap-2">
-                {clinicForm.services.map((service, index) => (
-                  <span
-                    key={index}
-                    className="flex items-center gap-1 rounded-full bg-green-100 px-3 py-1 text-sm text-green-700 dark:bg-green-900/30 dark:text-green-300"
-                  >
-                    {service}
-                    <button
-                      onClick={() => handleServiceRemove(service)}
-                      className="ml-1 hover:text-green-900"
-                    >
-                      ×
-                    </button>
-                  </span>
-                ))}
-              </div>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  placeholder="Add a service (e.g., Pediatrics)"
-                  className="flex-1 rounded-lg border border-gray-300 p-2 dark:border-gray-600 dark:bg-navy-700"
-                  onKeyPress={(e) => {
-                    if (e.key === "Enter") {
-                      handleServiceAdd(e.target.value);
-                      e.target.value = "";
-                    }
-                  }}
-                />
-                <button
-                  onClick={() => {
-                    const input = document.querySelector(
-                      'input[placeholder="Add a service (e.g., Pediatrics)"]'
-                    );
-                    if (input.value) {
-                      handleServiceAdd(input.value);
-                      input.value = "";
-                    }
-                  }}
-                  className="rounded-lg bg-green-500 px-4 py-2 text-white transition-all duration-200 hover:scale-105 hover:bg-green-600"
-                >
-                  Add
-                </button>
-              </div>
+              <input
+                type="text"
+                value={clinicForm.services.join(", ")}
+                onChange={(e) =>
+                  handleFormChange(
+                    "services",
+                    e.target.value.split(", ").filter((s) => s.trim())
+                  )
+                }
+                className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
+                placeholder="e.g., Pediatrics, Emergency Care, Vaccinations"
+              />
             </div>
 
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setEditModalOpen(false)}
-                className="rounded-lg border border-gray-300 px-6 py-3 font-medium transition-all duration-200 hover:scale-105 hover:bg-gray-50 dark:border-gray-600"
+                disabled={processingAction}
+                className="rounded-lg border border-gray-300 px-6 py-3 font-medium transition-all duration-200 hover:scale-105 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600"
               >
                 Cancel
               </button>
               <button
                 onClick={confirmEdit}
-                className="flex items-center gap-2 rounded-lg bg-green-500 px-6 py-3 font-medium text-white transition-all duration-200 hover:scale-105 hover:bg-green-600"
+                disabled={
+                  processingAction ||
+                  !clinicForm.clinic_name ||
+                  !clinicForm.city ||
+                  !clinicForm.contact_number
+                }
+                className="flex items-center gap-2 rounded-lg bg-green-500 px-6 py-3 font-medium text-white transition-all duration-200 hover:scale-105 hover:bg-green-600 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                <MdSave className="h-5 w-5" />
-                Save Changes
+                {processingAction ? (
+                  <>
+                    <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24">
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                        fill="none"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      />
+                    </svg>
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <MdSave className="h-5 w-5" />
+                    Save Changes
+                  </>
+                )}
               </button>
             </div>
           </div>
@@ -624,7 +883,7 @@ const ClinicVerification = () => {
             </div>
             <div>
               <h4 className="font-bold text-navy-700 dark:text-white">
-                Delete "{selectedClinic?.name}"?
+                Delete "{selectedClinic?.clinic_name}"?
               </h4>
               <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
                 This action cannot be undone. All clinic data will be
@@ -637,8 +896,8 @@ const ClinicVerification = () => {
             <div className="flex items-start">
               <MdWarning className="mr-2 mt-0.5 h-5 w-5 text-red-500" />
               <p className="text-sm text-red-700 dark:text-red-300">
-                This will also delete all associated documents and verification
-                history.
+                This will also delete all associated staff, services, and
+                documents.
               </p>
             </div>
           </div>
@@ -646,15 +905,17 @@ const ClinicVerification = () => {
           <div className="flex justify-end gap-3">
             <button
               onClick={() => setDeleteModalOpen(false)}
-              className="rounded-lg border border-gray-300 px-6 py-3 font-medium transition-all duration-200 hover:scale-105 hover:bg-gray-50 dark:border-gray-600"
+              disabled={processingAction}
+              className="rounded-lg border border-gray-300 px-6 py-3 font-medium transition-all duration-200 hover:scale-105 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600"
             >
               Cancel
             </button>
             <button
               onClick={confirmDelete}
-              className="rounded-lg bg-red-500 px-6 py-3 font-medium text-white transition-all duration-200 hover:scale-105 hover:bg-red-600"
+              disabled={processingAction}
+              className="rounded-lg bg-red-500 px-6 py-3 font-medium text-white transition-all duration-200 hover:scale-105 hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Delete Clinic
+              {processingAction ? "Deleting..." : "Delete Clinic"}
             </button>
           </div>
         </div>
@@ -673,7 +934,7 @@ const ClinicVerification = () => {
               <MdCheckCircle className="h-8 w-8 text-green-600" />
             </div>
             <h4 className="mb-2 text-xl font-bold text-navy-700 dark:text-white">
-              Approve {selectedClinic?.name}?
+              Approve {selectedClinic?.clinic_name}?
             </h4>
             <p className="text-gray-600 dark:text-gray-300">
               This clinic will be verified and become active in the system.
@@ -693,15 +954,17 @@ const ClinicVerification = () => {
           <div className="flex justify-end gap-3">
             <button
               onClick={() => setApproveModalOpen(false)}
-              className="rounded-lg border border-gray-300 px-6 py-3 font-medium transition-all duration-200 hover:scale-105 hover:bg-gray-50 dark:border-gray-600"
+              disabled={processingAction}
+              className="rounded-lg border border-gray-300 px-6 py-3 font-medium transition-all duration-200 hover:scale-105 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600"
             >
               Cancel
             </button>
             <button
               onClick={confirmApprove}
-              className="rounded-lg bg-green-500 px-6 py-3 font-medium text-white transition-all duration-200 hover:scale-105 hover:bg-green-600"
+              disabled={processingAction}
+              className="rounded-lg bg-green-500 px-6 py-3 font-medium text-white transition-all duration-200 hover:scale-105 hover:bg-green-600 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Approve Clinic
+              {processingAction ? "Approving..." : "Approve Clinic"}
             </button>
           </div>
         </div>
@@ -721,7 +984,7 @@ const ClinicVerification = () => {
             </div>
             <div>
               <h4 className="font-bold text-navy-700 dark:text-white">
-                Reject {selectedClinic?.name}?
+                Reject {selectedClinic?.clinic_name}?
               </h4>
               <p className="text-sm text-gray-600 dark:text-gray-300">
                 This clinic will be rejected and removed from the pending list.
@@ -745,16 +1008,17 @@ const ClinicVerification = () => {
           <div className="flex justify-end space-x-4">
             <button
               onClick={() => setRejectModalOpen(false)}
-              className="rounded-lg border border-gray-300 px-6 py-3 font-medium transition-all duration-200 hover:scale-105 hover:bg-gray-50 dark:border-gray-600"
+              disabled={processingAction}
+              className="rounded-lg border border-gray-300 px-6 py-3 font-medium transition-all duration-200 hover:scale-105 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600"
             >
               Cancel
             </button>
             <button
               onClick={confirmReject}
+              disabled={processingAction || !rejectionReason.trim()}
               className="rounded-lg bg-red-500 px-6 py-3 font-medium text-white transition-all duration-200 hover:scale-105 hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-50"
-              disabled={!rejectionReason.trim()}
             >
-              Reject Clinic
+              {processingAction ? "Rejecting..." : "Reject Clinic"}
             </button>
           </div>
         </div>
@@ -775,8 +1039,10 @@ const ClinicVerification = () => {
               </label>
               <input
                 type="text"
-                value={clinicForm.name}
-                onChange={(e) => handleFormChange("name", e.target.value)}
+                value={clinicForm.clinic_name}
+                onChange={(e) =>
+                  handleFormChange("clinic_name", e.target.value)
+                }
                 className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
                 placeholder="Enter clinic name"
               />
@@ -786,26 +1052,40 @@ const ClinicVerification = () => {
                 Clinic Type *
               </label>
               <select
-                value={clinicForm.type}
-                onChange={(e) => handleFormChange("type", e.target.value)}
+                value={clinicForm.clinic_type}
+                onChange={(e) =>
+                  handleFormChange("clinic_type", e.target.value)
+                }
                 className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
               >
-                <option value="Private Clinic">Private Clinic</option>
-                <option value="Public Clinic">Public Clinic</option>
-                <option value="NGO Clinic">NGO Clinic</option>
-                <option value="Mobile Clinic">Mobile Clinic</option>
+                <option value="private">Private Clinic</option>
+                <option value="public">Public Clinic</option>
+                <option value="ngo">NGO Clinic</option>
+                <option value="mobile">Mobile Clinic</option>
               </select>
             </div>
             <div>
               <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Location *
+                City *
               </label>
               <input
                 type="text"
-                value={clinicForm.location}
-                onChange={(e) => handleFormChange("location", e.target.value)}
+                value={clinicForm.city}
+                onChange={(e) => handleFormChange("city", e.target.value)}
                 className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
-                placeholder="Enter location"
+                placeholder="Enter city"
+              />
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Province *
+              </label>
+              <input
+                type="text"
+                value={clinicForm.province}
+                onChange={(e) => handleFormChange("province", e.target.value)}
+                className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
+                placeholder="Enter province"
               />
             </div>
             <div>
@@ -814,8 +1094,10 @@ const ClinicVerification = () => {
               </label>
               <input
                 type="tel"
-                value={clinicForm.contact}
-                onChange={(e) => handleFormChange("contact", e.target.value)}
+                value={clinicForm.contact_number}
+                onChange={(e) =>
+                  handleFormChange("contact_number", e.target.value)
+                }
                 className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
                 placeholder="Enter contact number"
               />
@@ -832,15 +1114,15 @@ const ClinicVerification = () => {
                 placeholder="Enter email address"
               />
             </div>
-            <div>
+            <div className="md:col-span-2">
               <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Operating Hours
               </label>
               <input
                 type="text"
-                value={clinicForm.operatingHours}
+                value={clinicForm.operating_hours}
                 onChange={(e) =>
-                  handleFormChange("operatingHours", e.target.value)
+                  handleFormChange("operating_hours", e.target.value)
                 }
                 className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
                 placeholder="e.g., Mon-Fri: 8am-6pm"
@@ -850,12 +1132,19 @@ const ClinicVerification = () => {
 
           <div>
             <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-              Initial Services
+              Services (comma-separated)
             </label>
             <input
               type="text"
-              placeholder="Enter services separated by commas (e.g., Pediatrics, Emergency Care, Vaccinations)"
+              value={clinicForm.services.join(", ")}
+              onChange={(e) =>
+                handleFormChange(
+                  "services",
+                  e.target.value.split(", ").filter((s) => s.trim())
+                )
+              }
               className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
+              placeholder="Enter services separated by commas (e.g., Pediatrics, Emergency Care, Vaccinations)"
             />
           </div>
 
@@ -872,16 +1161,47 @@ const ClinicVerification = () => {
           <div className="flex justify-end gap-3">
             <button
               onClick={() => setCreateModalOpen(false)}
-              className="rounded-lg border border-gray-300 px-6 py-3 font-medium transition-all duration-200 hover:scale-105 hover:bg-gray-50 dark:border-gray-600"
+              disabled={processingAction}
+              className="rounded-lg border border-gray-300 px-6 py-3 font-medium transition-all duration-200 hover:scale-105 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600"
             >
               Cancel
             </button>
             <button
               onClick={confirmCreate}
-              className="flex items-center gap-2 rounded-lg bg-brand-500 px-6 py-3 font-medium text-white transition-all duration-200 hover:scale-105 hover:bg-brand-600"
+              disabled={
+                processingAction ||
+                !clinicForm.clinic_name ||
+                !clinicForm.city ||
+                !clinicForm.contact_number
+              }
+              className="flex items-center gap-2 rounded-lg bg-brand-500 px-6 py-3 font-medium text-white transition-all duration-200 hover:scale-105 hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              <MdAdd className="h-5 w-5" />
-              Create Clinic
+              {processingAction ? (
+                <>
+                  <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24">
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                      fill="none"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    />
+                  </svg>
+                  Creating...
+                </>
+              ) : (
+                <>
+                  <MdAdd className="h-5 w-5" />
+                  Create Clinic
+                </>
+              )}
             </button>
           </div>
         </div>
@@ -898,9 +1218,15 @@ const ClinicVerification = () => {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <button className="linear flex items-center justify-center rounded-lg bg-lightPrimary px-4 py-2 text-sm font-medium text-brand-500 transition-all duration-200 hover:scale-105 hover:bg-gray-100 active:bg-gray-200 dark:bg-navy-700 dark:text-white dark:hover:bg-white/20">
-            <MdFilterList className="mr-2 h-4 w-4" />
-            Filter
+          <button
+            onClick={fetchClinics}
+            disabled={loading}
+            className="linear flex items-center justify-center rounded-lg bg-lightPrimary px-4 py-2 text-sm font-medium text-brand-500 transition-all duration-200 hover:scale-105 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-navy-700 dark:text-white dark:hover:bg-white/20"
+          >
+            <MdRefresh
+              className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`}
+            />
+            Refresh
           </button>
           <button
             onClick={handleCreateClick}
@@ -910,6 +1236,15 @@ const ClinicVerification = () => {
             Add New Clinic
           </button>
         </div>
+      </div>
+
+      {/* Registration Queue Component */}
+      <div className="mb-6">
+        <RegistrationQueue
+          onApprove={() => fetchClinics()}
+          onReject={() => fetchClinics()}
+          onViewAll={() => setSelectedTab("pending")}
+        />
       </div>
 
       {/* Stats Grid */}
@@ -940,9 +1275,6 @@ const ClinicVerification = () => {
                 {stat.icon}
               </div>
             </div>
-            <div className="mt-3 text-xs font-medium text-gray-600 dark:text-gray-300">
-              {stat.trend}
-            </div>
           </div>
         ))}
       </div>
@@ -965,7 +1297,8 @@ const ClinicVerification = () => {
               <button
                 key={tab}
                 onClick={() => setSelectedTab(tab)}
-                className={`rounded-lg px-4 py-2 text-sm font-medium capitalize transition-all duration-200 hover:scale-105 ${
+                disabled={loading}
+                className={`rounded-lg px-4 py-2 text-sm font-medium capitalize transition-all duration-200 hover:scale-105 disabled:cursor-not-allowed disabled:opacity-50 ${
                   selectedTab === tab
                     ? "bg-brand-500 text-white"
                     : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-navy-700 dark:text-gray-300 dark:hover:bg-navy-600"
@@ -980,138 +1313,160 @@ const ClinicVerification = () => {
 
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Pending Verification List */}
+        {/* Clinic List */}
         <div className="lg:col-span-2">
           <Card extra="p-6">
             <div className="mb-6 flex items-center justify-between">
               <div>
                 <h4 className="text-lg font-bold text-navy-700 dark:text-white">
-                  Pending Verification
+                  {selectedTab === "pending"
+                    ? "Pending Verification"
+                    : selectedTab === "approved"
+                    ? "Approved Clinics"
+                    : selectedTab === "rejected"
+                    ? "Rejected Clinics"
+                    : "All Clinics"}
                 </h4>
                 <p className="text-sm text-gray-600">
-                  {pendingClinics.length} clinics awaiting review
+                  {loading
+                    ? "Loading..."
+                    : `${filteredClinics.length} clinics found`}
                 </p>
               </div>
               <div className="flex items-center gap-3">
                 <select className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm transition-all duration-200 hover:bg-gray-50 dark:border-gray-600 dark:bg-navy-700">
                   <option>Sort by: Newest First</option>
                   <option>Oldest First</option>
-                  <option>Location</option>
+                  <option>Name A-Z</option>
                 </select>
-                <button className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium transition-all duration-200 hover:scale-105 hover:bg-gray-50 dark:border-gray-600">
-                  <FaDownload className="h-4 w-4" />
-                </button>
               </div>
             </div>
 
-            <div className="space-y-4">
-              {pendingClinics.map((clinic) => (
-                <div
-                  key={clinic.id}
-                  className="rounded-lg border border-gray-200 p-4 transition-all duration-300 hover:scale-[1.005] hover:border-brand-200 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-navy-700"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
+            {loading && filteredClinics.length === 0 ? (
+              <div className="py-12 text-center">
+                <div className="border-current border-r-transparent inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
+                <p className="mt-2 text-gray-500">Loading clinics...</p>
+              </div>
+            ) : filteredClinics.length === 0 ? (
+              <div className="py-12 text-center">
+                <MdPendingActions className="mx-auto h-12 w-12 text-gray-400" />
+                <h3 className="mt-4 text-lg font-medium text-gray-900 dark:text-white">
+                  No clinics found
+                </h3>
+                <p className="mt-2 text-gray-500 dark:text-gray-400">
+                  {searchQuery
+                    ? "No clinics match your search criteria."
+                    : selectedTab === "pending"
+                    ? "No clinics pending verification."
+                    : `No ${selectedTab} clinics found.`}
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className="space-y-4">
+                  {filteredClinics.map((clinic) => (
+                    <div
+                      key={clinic.id}
+                      className="rounded-lg border border-gray-200 p-4 transition-all duration-300 hover:scale-[1.005] hover:border-brand-200 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-navy-700"
+                    >
                       <div className="flex items-start justify-between">
-                        <div>
-                          <div className="flex items-center">
-                            <h5 className="text-lg font-bold text-navy-700 dark:text-white">
-                              {clinic.name}
-                            </h5>
-                            <span className="ml-2 rounded-full bg-gray-100 px-2 py-1 text-xs text-gray-600 transition-all duration-200 hover:scale-105 dark:bg-navy-700 dark:text-gray-300">
-                              {clinic.type}
-                            </span>
+                        <div className="flex-1">
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <div className="flex items-center">
+                                <h5 className="text-lg font-bold text-navy-700 dark:text-white">
+                                  {clinic.clinic_name}
+                                </h5>
+                                <span className="ml-2 rounded-full bg-gray-100 px-2 py-1 text-xs text-gray-600 transition-all duration-200 hover:scale-105 dark:bg-navy-700 dark:text-gray-300">
+                                  {getClinicTypeDisplay(clinic.clinic_type)}
+                                </span>
+                              </div>
+                              <div className="mt-2 flex items-center text-sm text-gray-600 dark:text-gray-300">
+                                <MdLocationOn className="mr-2 h-4 w-4" />
+                                {clinic.city && clinic.province
+                                  ? `${clinic.city}, ${clinic.province}`
+                                  : clinic.physical_address ||
+                                    "Location not specified"}
+                              </div>
+                              <div className="mt-2 flex items-center text-sm text-gray-500">
+                                <MdCalendarToday className="mr-2 h-4 w-4" />
+                                Registered {getTimeAgo(clinic.created_at)}
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className="mb-2">
+                                {getStatusBadge(clinic.verification_status)}
+                              </div>
+                              <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                {clinic.contact_number || "No contact"}
+                              </div>
+                            </div>
                           </div>
-                          <div className="mt-2 flex items-center text-sm text-gray-600 dark:text-gray-300">
-                            <MdLocationOn className="mr-2 h-4 w-4" />
-                            {clinic.location}
-                          </div>
-                          <div className="mt-2 flex items-center text-sm">
-                            <FaFileMedical className="mr-2 h-4 w-4 text-gray-400" />
-                            <DocumentStatus documents={clinic.documents} />
-                            <span className="ml-2 text-gray-500">
-                              Documents
-                            </span>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-sm text-gray-500">
-                            Submitted: {clinic.submitted}
-                          </div>
-                          <div className="mt-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                            {clinic.contact}
-                          </div>
+
+                          {clinic.services && clinic.services.length > 0 && (
+                            <div className="mt-4 flex flex-wrap gap-2">
+                              {Array.isArray(clinic.services)
+                                ? clinic.services
+                                    .slice(0, 3)
+                                    .map((service, index) => (
+                                      <span
+                                        key={index}
+                                        className="rounded-full bg-blue-50 px-3 py-1 text-xs text-blue-700 transition-all duration-200 hover:scale-105 dark:bg-blue-900/30 dark:text-blue-300"
+                                      >
+                                        {service}
+                                      </span>
+                                    ))
+                                : null}
+                              {Array.isArray(clinic.services) &&
+                                clinic.services.length > 3 && (
+                                  <span className="rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-600">
+                                    +{clinic.services.length - 3} more
+                                  </span>
+                                )}
+                            </div>
+                          )}
                         </div>
                       </div>
 
-                      <div className="mt-4 flex flex-wrap gap-2">
-                        {clinic.services.map((service, index) => (
-                          <span
-                            key={index}
-                            className="rounded-full bg-blue-50 px-3 py-1 text-xs text-blue-700 transition-all duration-200 hover:scale-105 dark:bg-blue-900/30 dark:text-blue-300"
-                          >
-                            {service}
-                          </span>
-                        ))}
+                      <div className="mt-4 flex justify-end space-x-3 border-t border-gray-100 pt-4 dark:border-gray-700">
+                        <button
+                          onClick={() => handleViewDetails(clinic)}
+                          className="flex items-center rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-all duration-200 hover:scale-105 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-300"
+                        >
+                          <MdVisibility className="mr-2 h-4 w-4" />
+                          View Details
+                        </button>
+                        {clinic.verification_status === "pending" && (
+                          <>
+                            <button
+                              onClick={() => handleEditClick(clinic)}
+                              className="flex items-center rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-all duration-200 hover:scale-105 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-300"
+                            >
+                              <MdEdit className="mr-2 h-4 w-4" />
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleDeleteClick(clinic)}
+                              className="flex items-center rounded-lg border border-red-300 bg-red-50 px-4 py-2 text-sm font-medium text-red-700 transition-all duration-200 hover:scale-105 hover:bg-red-100 dark:border-red-700 dark:bg-red-900/20 dark:text-red-300"
+                            >
+                              <MdDelete className="mr-2 h-4 w-4" />
+                              Delete
+                            </button>
+                            <button
+                              onClick={() => handleApproveClick(clinic)}
+                              className="flex items-center rounded-lg bg-green-500 px-4 py-2 text-sm font-medium text-white transition-all duration-200 hover:scale-105 hover:bg-green-600"
+                            >
+                              <MdCheckCircle className="mr-2 h-4 w-4" />
+                              Approve
+                            </button>
+                          </>
+                        )}
                       </div>
                     </div>
-                  </div>
-
-                  <div className="mt-4 flex justify-end space-x-3 border-t border-gray-100 pt-4 dark:border-gray-700">
-                    <button
-                      onClick={() => handleViewDetails(clinic)}
-                      className="flex items-center rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-all duration-200 hover:scale-105 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-300"
-                    >
-                      <MdVisibility className="mr-2 h-4 w-4" />
-                      View Details
-                    </button>
-                    <button
-                      onClick={() => handleEditClick(clinic)}
-                      className="flex items-center rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-all duration-200 hover:scale-105 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-300"
-                    >
-                      <MdEdit className="mr-2 h-4 w-4" />
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDeleteClick(clinic)}
-                      className="flex items-center rounded-lg border border-red-300 bg-red-50 px-4 py-2 text-sm font-medium text-red-700 transition-all duration-200 hover:scale-105 hover:bg-red-100 dark:border-red-700 dark:bg-red-900/20 dark:text-red-300"
-                    >
-                      <MdDelete className="mr-2 h-4 w-4" />
-                      Delete
-                    </button>
-                    <button
-                      onClick={() => handleApproveClick(clinic)}
-                      className="flex items-center rounded-lg bg-green-500 px-4 py-2 text-sm font-medium text-white transition-all duration-200 hover:scale-105 hover:bg-green-600"
-                    >
-                      <MdCheckCircle className="mr-2 h-4 w-4" />
-                      Approve
-                    </button>
-                  </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-
-            {/* Pagination */}
-            <div className="mt-6 flex items-center justify-between">
-              <div className="text-sm text-gray-600 dark:text-gray-300">
-                Showing 1-{pendingClinics.length} of {pendingClinics.length}{" "}
-                clinics
-              </div>
-              <div className="flex items-center space-x-2">
-                <button className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm transition-all duration-200 hover:scale-105 hover:bg-gray-50 dark:border-gray-600">
-                  Previous
-                </button>
-                <button className="rounded-lg bg-brand-500 px-3 py-1.5 text-sm text-white transition-all duration-200 hover:scale-105 hover:bg-brand-600">
-                  1
-                </button>
-                <button className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm transition-all duration-200 hover:scale-105 hover:bg-gray-50 dark:border-gray-600">
-                  2
-                </button>
-                <button className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm transition-all duration-200 hover:scale-105 hover:bg-gray-50 dark:border-gray-600">
-                  Next
-                </button>
-              </div>
-            </div>
+              </>
+            )}
           </Card>
         </div>
 
@@ -1123,46 +1478,30 @@ const ClinicVerification = () => {
               Recent Verifications
             </h4>
             <div className="space-y-4">
-              {[
-                {
-                  id: 101,
-                  name: "Hillbrow Community Clinic",
-                  location: "Johannesburg, Gauteng",
-                  type: "Public Clinic",
-                  verifiedDate: "2024-01-10",
-                  verifiedBy: "Dr. Sarah Johnson",
-                  status: "approved",
-                },
-                {
-                  id: 102,
-                  name: "Khayelitsha Health Center",
-                  location: "Cape Town, WC",
-                  type: "Public Clinic",
-                  verifiedDate: "2024-01-09",
-                  verifiedBy: "Dr. Michael Chen",
-                  status: "approved",
-                },
-              ].map((clinic) => (
-                <div
-                  key={clinic.id}
-                  className="rounded-lg border border-gray-200 p-3 transition-all duration-300 hover:scale-[1.02] hover:border-brand-200 dark:border-gray-700"
-                >
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <div className="font-medium text-navy-700 dark:text-white">
-                        {clinic.name}
+              {clinics
+                ?.filter((c) => c.verification_status !== "pending")
+                .slice(0, 3)
+                .map((clinic) => (
+                  <div
+                    key={clinic.id}
+                    className="rounded-lg border border-gray-200 p-3 transition-all duration-300 hover:scale-[1.02] hover:border-brand-200 dark:border-gray-700"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <div className="font-medium text-navy-700 dark:text-white">
+                          {clinic.clinic_name}
+                        </div>
+                        <div className="mt-1 text-sm text-gray-600 dark:text-gray-300">
+                          {clinic.city}, {clinic.province}
+                        </div>
                       </div>
-                      <div className="mt-1 text-sm text-gray-600 dark:text-gray-300">
-                        {clinic.location}
-                      </div>
+                      {getStatusBadge(clinic.verification_status)}
                     </div>
-                    {getStatusBadge(clinic.status)}
+                    <div className="mt-2 text-xs text-gray-500">
+                      Updated {getTimeAgo(clinic.updated_at)}
+                    </div>
                   </div>
-                  <div className="mt-2 text-xs text-gray-500">
-                    Verified {clinic.verifiedDate} by {clinic.verifiedBy}
-                  </div>
-                </div>
-              ))}
+                ))}
             </div>
             <button className="mt-4 w-full rounded-lg border border-gray-300 py-2 text-sm font-medium text-gray-700 transition-all duration-200 hover:scale-105 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300">
               View All History →
@@ -1209,7 +1548,13 @@ const ClinicVerification = () => {
                   className="flex items-start transition-all duration-300 hover:scale-[1.02]"
                 >
                   <div
-                    className={`mr-3 rounded-full bg-${item.color}-100 p-1 dark:bg-${item.color}-900`}
+                    className={`mr-3 rounded-full p-1 ${
+                      item.color === "green"
+                        ? "bg-green-100 dark:bg-green-900"
+                        : item.color === "yellow"
+                        ? "bg-yellow-100 dark:bg-yellow-900"
+                        : "bg-blue-100 dark:bg-blue-900"
+                    }`}
                   >
                     {item.icon}
                   </div>
@@ -1232,7 +1577,13 @@ const ClinicVerification = () => {
               ⚡ Bulk Actions
             </h4>
             <div className="space-y-3">
-              <button className="w-full rounded-lg bg-brand-50 py-3 text-sm font-medium text-brand-600 transition-all duration-200 hover:scale-105 hover:bg-brand-100 dark:bg-brand-900/20 dark:text-brand-300">
+              <button
+                onClick={() => {
+                  // Bulk approve logic
+                  showToast("Bulk approve feature coming soon!", "info");
+                }}
+                className="w-full rounded-lg bg-brand-50 py-3 text-sm font-medium text-brand-600 transition-all duration-200 hover:scale-105 hover:bg-brand-100 dark:bg-brand-900/20 dark:text-brand-300"
+              >
                 Approve All Complete Applications
               </button>
               <button className="w-full rounded-lg border border-gray-300 py-3 text-sm font-medium text-gray-700 transition-all duration-200 hover:scale-105 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300">
