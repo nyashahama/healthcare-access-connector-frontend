@@ -9,19 +9,19 @@ export default function Cta() {
           {/* Glow effect */}
           <div className="absolute -inset-10 bg-gradient-to-r from-blue-500 to-blue-600 opacity-20 blur-3xl"></div>
 
-          <div className="relative px-4 py-12 md:px-12 md:py-20">
-            <h2 className="mb-6 text-3xl font-bold text-white md:text-4xl">
+          <div className="relative px-4 py-12 sm:px-8 md:px-12 md:py-20">
+            <h2 className="mb-4 text-2xl font-bold text-white sm:mb-6 sm:text-3xl md:text-4xl">
               Join HealthConnect Today for Better Tomorrow
             </h2>
-            <p className="mx-auto mb-8 max-w-2xl text-lg text-blue-100">
+            <p className="mx-auto mb-6 max-w-2xl text-base text-blue-100 sm:mb-8 sm:text-lg">
               Start your health journey today. Access quality healthcare from
               anywhere, with any device. Join thousands who have already
               transformed their healthcare experience.
             </p>
-            <div className="mx-auto max-w-xs sm:flex sm:max-w-none sm:justify-center">
+            <div className="mx-auto flex max-w-xs flex-col gap-3 sm:max-w-none sm:flex-row sm:justify-center">
               <Link
                 to="/auth/sign-up/patient"
-                className="mb-4 w-full rounded-lg bg-gradient-to-r from-blue-500 to-blue-400 px-8 py-3 text-center text-lg font-semibold text-white shadow-lg hover:from-blue-600 hover:to-blue-500 sm:mb-0 sm:w-auto"
+                className="rounded-lg bg-gradient-to-r from-blue-500 to-blue-400 px-6 py-3 text-center text-base font-semibold text-white shadow-lg hover:from-blue-600 hover:to-blue-500 sm:px-8 sm:text-lg"
               >
                 <span className="inline-flex items-center">
                   Get Started as Patient
@@ -32,20 +32,23 @@ export default function Cta() {
               </Link>
               <Link
                 to="/auth/sign-up/provider"
-                className="w-full rounded-lg bg-gradient-to-r from-green-500 to-green-400 px-8 py-3 text-center text-lg font-semibold text-white shadow-lg hover:from-green-600 hover:to-green-500 sm:ml-4 sm:w-auto"
+                className="rounded-lg bg-gradient-to-r from-green-500 to-green-400 px-6 py-3 text-center text-base font-semibold text-white shadow-lg hover:from-green-600 hover:to-green-500 sm:px-8 sm:text-lg"
               >
                 Register Your Clinic
               </Link>
               <Link
                 to="/auth/sign-in"
-                className="w-full rounded-lg bg-white/10 px-8 py-3 text-center text-lg font-semibold text-white backdrop-blur-sm hover:bg-white/20 sm:ml-4 sm:w-auto"
+                className="rounded-lg bg-white/10 px-6 py-3 text-center text-base font-semibold text-white backdrop-blur-sm hover:bg-white/20 sm:px-8 sm:text-lg"
               >
-                Already have an account? Sign In
+                <span className="hidden sm:inline">
+                  Already have an account?{" "}
+                </span>
+                Sign In
               </Link>
             </div>
 
             {/* Features list */}
-            <div className="mt-12 grid grid-cols-2 gap-4 md:grid-cols-4">
+            <div className="mt-8 grid grid-cols-2 gap-3 sm:mt-12 sm:gap-4 md:grid-cols-4">
               {[
                 { label: "AI Symptom Check", value: "Instant" },
                 { label: "Clinic Access", value: "24/7" },
@@ -53,10 +56,12 @@ export default function Cta() {
                 { label: "Response Time", value: "< 2min" },
               ].map((stat, idx) => (
                 <div key={idx} className="text-center">
-                  <div className="text-2xl font-bold text-white">
+                  <div className="text-xl font-bold text-white sm:text-2xl">
                     {stat.value}
                   </div>
-                  <div className="text-sm text-blue-200">{stat.label}</div>
+                  <div className="text-xs text-blue-200 sm:text-sm">
+                    {stat.label}
+                  </div>
                 </div>
               ))}
             </div>

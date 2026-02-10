@@ -105,73 +105,102 @@ const features = [
 
 export default function FeaturesPlanet() {
   return (
-    <section className="relative bg-gray-900 py-12 md:py-20">
+    <section id="features" className="relative bg-gray-900 py-12 md:py-20">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         {/* Section header */}
-        <div className="mx-auto max-w-3xl pb-12 text-center md:pb-16">
-          <h2 className="text-3xl font-bold text-gray-100 md:text-4xl">
+        <div className="mx-auto max-w-3xl pb-8 text-center sm:pb-12 md:pb-16">
+          <h2 className="text-2xl font-bold text-gray-100 sm:text-3xl md:text-4xl">
             HealthConnect Empowers Everyone to Access Quality Care
           </h2>
         </div>
 
-        {/* Planet */}
-        <div className="pb-16 md:pb-20">
+        {/* Planet - Responsive with scaled images */}
+        <div className="pb-12 md:pb-16 lg:pb-20">
           <div className="text-center">
             <div className="relative inline-flex rounded-full before:absolute before:inset-0 before:-z-10 before:scale-[.85] before:animate-pulse before:bg-gradient-to-b before:from-blue-600 before:to-blue-800/50 before:blur-3xl after:absolute after:inset-0 after:rounded-full after:bg-[radial-gradient(closest-side,rgb(59,130,246),transparent)]">
+              {/* Main planet image - responsive sizing */}
               <img
                 className="rounded-full bg-gray-900"
                 src={IMAGES.PLANET}
                 width={400}
                 height={400}
                 alt="Health Planet"
+                style={{
+                  width: "clamp(250px, 60vw, 400px)",
+                  height: "clamp(250px, 60vw, 400px)",
+                }}
               />
-              <div className="pointer-events-none" aria-hidden="true">
+
+              {/* Decorative overlays and tags - hidden on small mobile, visible on tablet+ */}
+              <div
+                className="pointer-events-none hidden sm:block"
+                aria-hidden="true"
+              >
                 <img
-                  className="absolute -right-64 -top-20 z-10 max-w-none"
+                  className="absolute -right-32 -top-10 z-10 max-w-none sm:-right-48 sm:-top-16 lg:-right-64 lg:-top-20"
                   src={IMAGES.PLANET_OVERLAY}
                   width={789}
                   height={755}
                   alt="Health Planet decoration"
+                  style={{
+                    width: "clamp(400px, 80vw, 789px)",
+                    height: "auto",
+                  }}
                 />
                 <div>
+                  {/* Tag 1 - Symptom Checker */}
                   <img
-                    className="absolute -left-28 top-16 z-10 opacity-80 transition-opacity duration-500"
+                    className="absolute -left-14 top-8 z-10 opacity-80 transition-opacity duration-500 sm:-left-20 sm:top-12 lg:-left-28 lg:top-16"
                     src={IMAGES.TAG_01}
                     width={253}
                     height={56}
                     alt="Symptom Checker Tag"
                     style={{
                       animation: "float 4s ease-in-out infinite both",
+                      width: "clamp(150px, 25vw, 253px)",
+                      height: "auto",
                     }}
                   />
+
+                  {/* Tag 2 - Find Clinics */}
                   <img
-                    className="absolute left-56 top-7 z-10 opacity-30 transition-opacity duration-500"
+                    className="absolute left-28 top-4 z-10 opacity-30 transition-opacity duration-500 sm:left-40 sm:top-5 lg:left-56 lg:top-7"
                     src={IMAGES.TAG_02}
                     width={241}
                     height={56}
                     alt="Find Clinics Tag"
                     style={{
                       animation: "float 4s ease-in-out infinite 1s both",
+                      width: "clamp(140px, 24vw, 241px)",
+                      height: "auto",
                     }}
                   />
+
+                  {/* Tag 3 - Telemedicine */}
                   <img
-                    className="absolute -left-20 bottom-24 z-10 opacity-25 transition-opacity duration-500"
+                    className="sm:bottom-18 absolute -left-10 bottom-12 z-10 opacity-25 transition-opacity duration-500 sm:-left-14 lg:-left-20 lg:bottom-24"
                     src={IMAGES.TAG_03}
                     width={253}
                     height={56}
                     alt="Telemedicine Tag"
                     style={{
                       animation: "float 4s ease-in-out infinite 2s both",
+                      width: "clamp(150px, 25vw, 253px)",
+                      height: "auto",
                     }}
                   />
+
+                  {/* Tag 4 - Nutrition */}
                   <img
-                    className="absolute bottom-16 left-64 z-10 opacity-60 transition-opacity duration-500"
+                    className="absolute bottom-8 left-32 z-10 opacity-60 transition-opacity duration-500 sm:bottom-12 sm:left-48 lg:bottom-16 lg:left-64"
                     src={IMAGES.TAG_04}
                     width={241}
                     height={56}
                     alt="Nutrition Tag"
                     style={{
                       animation: "float 4s ease-in-out infinite 3s both",
+                      width: "clamp(140px, 24vw, 241px)",
+                      height: "auto",
                     }}
                   />
                 </div>
@@ -181,7 +210,7 @@ export default function FeaturesPlanet() {
         </div>
 
         {/* Features grid */}
-        <div className="grid gap-6 md:grid-cols-3 md:gap-8">
+        <div className="grid gap-6 sm:grid-cols-2 md:gap-8 lg:grid-cols-3">
           {features.map((feature, index) => (
             <article
               key={index}
@@ -199,22 +228,26 @@ export default function FeaturesPlanet() {
         </div>
 
         {/* SMS Access Highlight */}
-        <div className="mt-16 rounded-2xl bg-gradient-to-r from-blue-600 to-blue-700 p-8 text-white shadow-xl">
+        <div className="mt-12 rounded-2xl bg-gradient-to-r from-blue-600 to-blue-700 p-6 text-white shadow-xl sm:p-8 md:mt-16">
           <div className="text-center">
-            <div className="mb-6 inline-flex items-center justify-center rounded-full bg-white/20 p-4">
-              <svg className="h-8 w-8" fill="currentColor" viewBox="0 0 24 24">
+            <div className="mb-4 inline-flex items-center justify-center rounded-full bg-white/20 p-3 sm:mb-6 sm:p-4">
+              <svg
+                className="h-6 w-6 sm:h-8 sm:w-8"
+                fill="currentColor"
+                viewBox="0 0 24 24"
+              >
                 <path d="M4 6h18V4H4c-1.1 0-2 .9-2 2v11H0v3h14v-3H4V6zm19 2h-6c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h6c.55 0 1-.45 1-1V9c0-.55-.45-1-1-1zm-1 9h-4v-7h4v7z" />
               </svg>
             </div>
-            <h3 className="mb-4 text-2xl font-bold">
+            <h3 className="mb-3 text-xl font-bold sm:mb-4 sm:text-2xl">
               No Smartphone? No Problem!
             </h3>
-            <p className="mx-auto mb-6 max-w-2xl text-lg">
+            <p className="mx-auto mb-4 max-w-2xl text-sm sm:mb-6 sm:text-base lg:text-lg">
               HealthConnect works with any basic phone. Simply text{" "}
               <span className="font-bold">HELP</span> to{" "}
               <span className="font-bold">12345</span> for immediate access to:
             </p>
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
               {[
                 "Find Clinics",
                 "Health Tips",
@@ -223,10 +256,10 @@ export default function FeaturesPlanet() {
               ].map((item, idx) => (
                 <div
                   key={idx}
-                  className="rounded-lg bg-white/10 p-4 text-center backdrop-blur-sm"
+                  className="rounded-lg bg-white/10 p-3 text-center backdrop-blur-sm sm:p-4"
                 >
-                  <div className="text-2xl font-bold">{idx + 1}</div>
-                  <div className="text-sm">{item}</div>
+                  <div className="text-xl font-bold sm:text-2xl">{idx + 1}</div>
+                  <div className="text-xs sm:text-sm">{item}</div>
                 </div>
               ))}
             </div>

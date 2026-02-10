@@ -35,32 +35,34 @@ export default function HowItWorks() {
   return (
     <section id="how-it-works" className="bg-white py-12 md:py-20">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <div className="mb-12 text-center">
-          <h2 className="text-3xl font-bold text-gray-900 md:text-4xl">
+        <div className="mb-8 text-center sm:mb-12">
+          <h2 className="text-2xl font-bold text-gray-900 sm:text-3xl md:text-4xl">
             How HealthConnect Works
           </h2>
-          <p className="mt-4 text-lg text-gray-600">
+          <p className="mt-3 text-base text-gray-600 sm:mt-4 sm:text-lg">
             Simple steps to better healthcare access for everyone
           </p>
         </div>
 
-        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-6 sm:grid-cols-2 sm:gap-8 lg:grid-cols-4">
           {steps.map((step, index) => (
             <div key={index} className="relative">
               <div className="h-full rounded-xl bg-gradient-to-b from-blue-50 to-white p-6 shadow-lg">
                 <div className="mb-4 flex items-center justify-between">
-                  <div className="text-4xl">{step.icon}</div>
-                  <div className="text-3xl font-bold text-blue-600">
+                  <div className="text-3xl sm:text-4xl">{step.icon}</div>
+                  <div className="text-2xl font-bold text-blue-600 sm:text-3xl">
                     {step.number}
                   </div>
                 </div>
-                <h3 className="mb-3 text-xl font-semibold text-gray-900">
+                <h3 className="mb-3 text-lg font-semibold text-gray-900 sm:text-xl">
                   {step.title}
                 </h3>
-                <p className="text-gray-600">{step.description}</p>
+                <p className="text-sm text-gray-600 sm:text-base">
+                  {step.description}
+                </p>
               </div>
 
-              {/* Connector line (except for last item) */}
+              {/* Connector line (except for last item, hidden on mobile) */}
               {index < steps.length - 1 && (
                 <div className="absolute right-0 top-1/2 hidden h-0.5 w-8 translate-x-4 transform bg-blue-200 lg:block"></div>
               )}
@@ -69,8 +71,8 @@ export default function HowItWorks() {
         </div>
 
         {/* Additional Info */}
-        <div className="mt-16 grid gap-8 md:grid-cols-2">
-          <div className="rounded-2xl bg-gradient-to-r from-blue-50 to-white p-8">
+        <div className="mt-12 grid gap-6 sm:gap-8 md:mt-16 md:grid-cols-2">
+          <div className="rounded-2xl bg-gradient-to-r from-blue-50 to-white p-6 sm:p-8">
             <div className="mb-4 inline-flex rounded-lg bg-blue-100 p-3">
               <svg
                 className="h-6 w-6 text-blue-600"
@@ -86,16 +88,16 @@ export default function HowItWorks() {
                 />
               </svg>
             </div>
-            <h3 className="mb-3 text-xl font-semibold text-gray-900">
+            <h3 className="mb-3 text-lg font-semibold text-gray-900 sm:text-xl">
               Secure & Private
             </h3>
-            <p className="text-gray-600">
+            <p className="text-sm text-gray-600 sm:text-base">
               Your health data is encrypted and protected. We comply with all
               healthcare privacy regulations to keep your information safe.
             </p>
           </div>
 
-          <div className="rounded-2xl bg-gradient-to-r from-blue-50 to-white p-8">
+          <div className="rounded-2xl bg-gradient-to-r from-blue-50 to-white p-6 sm:p-8">
             <div className="mb-4 inline-flex rounded-lg bg-blue-100 p-3">
               <svg
                 className="h-6 w-6 text-blue-600"
@@ -111,10 +113,10 @@ export default function HowItWorks() {
                 />
               </svg>
             </div>
-            <h3 className="mb-3 text-xl font-semibold text-gray-900">
+            <h3 className="mb-3 text-lg font-semibold text-gray-900 sm:text-xl">
               Community Driven
             </h3>
-            <p className="text-gray-600">
+            <p className="text-sm text-gray-600 sm:text-base">
               Join thousands of patients and providers in our community forums.
               Share experiences and get support from others on similar journeys.
             </p>

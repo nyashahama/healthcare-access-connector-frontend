@@ -1,7 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
 
-// Mock avatars - you can replace with actual images
 const avatars = [
   { id: 1, alt: "Patient 01" },
   { id: 2, alt: "Caregiver 01" },
@@ -12,6 +11,21 @@ const avatars = [
 ];
 
 export default function Hero() {
+  const scrollToFeatures = (e) => {
+    e.preventDefault();
+    const element = document.getElementById("features");
+    if (element) {
+      const offset = 100;
+      const elementPosition = element.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - offset;
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: "smooth",
+      });
+    }
+  };
+
   return (
     <section className="relative overflow-hidden bg-gradient-to-b from-blue-50 to-white pb-12 pt-24 md:pb-20 md:pt-32">
       {/* Background decorations */}
@@ -21,7 +35,6 @@ export default function Hero() {
       </div>
 
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        {/* Hero content */}
         <div className="pb-12 md:pb-20">
           {/* Section header */}
           <div className="pb-12 text-center md:pb-16">
@@ -31,54 +44,54 @@ export default function Hero() {
                 {avatars.map((avatar) => (
                   <div
                     key={avatar.id}
-                    className="box-content h-10 w-10 rounded-full border-2 border-white bg-gradient-to-r from-blue-400 to-blue-600"
+                    className="box-content h-8 w-8 rounded-full border-2 border-white bg-gradient-to-r from-blue-400 to-blue-600 sm:h-10 sm:w-10"
                     title={avatar.alt}
                   />
                 ))}
               </div>
             </div>
 
-            <h1 className="mb-6 text-4xl font-bold text-gray-900 md:text-6xl">
+            <h1 className="mb-6 text-3xl font-bold leading-tight text-gray-900 sm:text-4xl md:text-5xl lg:text-6xl">
               Connecting You to Better Health <br className="hidden lg:block" />
               in 2025 and Beyond
             </h1>
 
             <div className="mx-auto max-w-3xl">
-              <p className="mb-8 text-lg text-gray-600">
+              <p className="mb-8 text-base text-gray-600 sm:text-lg">
                 HealthConnect is an AI-powered platform that bridges healthcare
                 gaps. Find clinics, check symptoms, chat with doctors, and
                 access nutrition resources—available on web, app, or even SMS
                 for everyone.
               </p>
 
-              <div className="mx-auto max-w-md sm:flex sm:max-w-none sm:justify-center">
+              <div className="mx-auto flex max-w-md flex-col gap-3 sm:max-w-none sm:flex-row sm:justify-center">
                 <Link
                   to="/auth/sign-up/patient"
-                  className="mb-4 w-full rounded-lg bg-gradient-to-r from-blue-600 to-blue-500 px-6 py-3 text-center font-medium text-white shadow-lg hover:from-blue-700 hover:to-blue-600 sm:mb-0 sm:w-auto"
+                  className="rounded-lg bg-gradient-to-r from-blue-600 to-blue-500 px-6 py-3 text-center font-medium text-white shadow-lg hover:from-blue-700 hover:to-blue-600"
                 >
                   Get Started Free
                 </Link>
                 <Link
                   to="/auth/sign-up/provider"
-                  className="mb-4 w-full rounded-lg bg-gradient-to-r from-green-600 to-green-500 px-6 py-3 text-center font-medium text-white shadow-lg hover:from-green-700 hover:to-green-600 sm:mx-4 sm:mb-0 sm:w-auto"
+                  className="rounded-lg bg-gradient-to-r from-green-600 to-green-500 px-6 py-3 text-center font-medium text-white shadow-lg hover:from-green-700 hover:to-green-600"
                 >
                   Register Your Clinic
                 </Link>
-                <Link
-                  to="/#features"
-                  className="w-full rounded-lg bg-white px-6 py-3 text-center font-medium text-gray-800 shadow hover:bg-gray-50 sm:ml-4 sm:w-auto"
+                <button
+                  onClick={scrollToFeatures}
+                  className="rounded-lg bg-white px-6 py-3 text-center font-medium text-gray-800 shadow hover:bg-gray-50"
                 >
                   Learn More
-                </Link>
+                </button>
               </div>
             </div>
           </div>
 
           {/* Mockup/Preview */}
-          <div className="mx-auto max-w-3xl">
-            <div className="relative rounded-2xl bg-gray-900 p-6 shadow-2xl">
-              <div className="mb-6 flex items-center justify-between border-b border-gray-700 pb-4">
-                <span className="text-sm font-medium text-white">
+          <div className="mx-auto max-w-3xl px-4">
+            <div className="relative rounded-2xl bg-gray-900 p-4 shadow-2xl sm:p-6">
+              <div className="mb-4 flex items-center justify-between border-b border-gray-700 pb-3 sm:mb-6 sm:pb-4">
+                <span className="text-xs font-medium text-white sm:text-sm">
                   healthconnect.org
                 </span>
                 <div className="flex space-x-2">
@@ -88,9 +101,9 @@ export default function Hero() {
                 </div>
               </div>
 
-              <div className="font-mono text-sm">
-                <div className="mb-2 flex items-center">
-                  <div className="mr-2 h-2 w-2 rounded-full bg-green-500"></div>
+              <div className="font-mono text-xs sm:text-sm">
+                <div className="mb-2 flex items-start">
+                  <div className="mr-2 mt-1 h-2 w-2 shrink-0 rounded-full bg-green-500"></div>
                   <span className="text-green-400">✓ Symptom Check: Fever</span>
                 </div>
                 <div className="mb-2 ml-4 text-blue-300">
@@ -100,8 +113,8 @@ export default function Hero() {
                   Book Clinic if symptoms persist for 48h
                 </div>
 
-                <div className="mt-6 flex items-center">
-                  <div className="mr-2 h-2 w-2 rounded-full bg-blue-500"></div>
+                <div className="mt-4 flex items-start sm:mt-6">
+                  <div className="mr-2 mt-1 h-2 w-2 shrink-0 rounded-full bg-blue-500"></div>
                   <span className="text-white">Chat with Doctor</span>
                 </div>
                 <div className="ml-4 text-green-300">

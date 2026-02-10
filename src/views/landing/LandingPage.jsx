@@ -58,11 +58,11 @@ export default function LandingPage() {
       {/* FAQ Section */}
       <section id="faq" className="bg-white py-12 md:py-20">
         <div className="mx-auto max-w-4xl px-4 sm:px-6">
-          <div className="mb-12 text-center">
-            <h2 className="text-3xl font-bold text-gray-900 md:text-4xl">
+          <div className="mb-8 text-center sm:mb-12">
+            <h2 className="text-2xl font-bold text-gray-900 sm:text-3xl md:text-4xl">
               Frequently Asked Questions
             </h2>
-            <p className="mt-4 text-lg text-gray-600">
+            <p className="mt-3 text-base text-gray-600 sm:mt-4 sm:text-lg">
               Get answers to common questions about HealthConnect
             </p>
           </div>
@@ -75,13 +75,13 @@ export default function LandingPage() {
                 id={faq.id}
                 active={activeFaq === faq.id}
               >
-                <p>{faq.content}</p>
+                <p className="text-sm sm:text-base">{faq.content}</p>
               </Accordion>
             ))}
           </div>
 
-          <div className="mt-12 text-center">
-            <p className="text-gray-600">
+          <div className="mt-8 text-center sm:mt-12">
+            <p className="text-sm text-gray-600 sm:text-base">
               Still have questions?{" "}
               <a
                 href="mailto:support@healthconnect.org"

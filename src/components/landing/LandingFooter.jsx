@@ -10,7 +10,7 @@ export default function LandingFooter({ border = false }) {
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         {/* Top area: Blocks */}
         <div
-          className={`grid gap-10 py-8 sm:grid-cols-12 md:py-12 ${
+          className={`grid gap-8 py-8 sm:grid-cols-12 md:py-12 ${
             border ? "border-t border-gray-200" : ""
           }`}
         >
@@ -220,9 +220,9 @@ export default function LandingFooter({ border = false }) {
         </div>
       </div>
 
-      {/* Big text */}
+      {/* Big text - Hidden on mobile for better performance */}
       <div
-        className="relative -mt-16 h-60 w-full overflow-hidden"
+        className="relative -mt-16 hidden h-60 w-full overflow-hidden md:block"
         aria-hidden="true"
       >
         <div className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2">
