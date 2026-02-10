@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   MdBusiness,
   MdDescription,
@@ -10,32 +10,95 @@ import {
   MdSave,
   MdWarning,
 } from "react-icons/md";
+import { useProvider } from "hooks/useProvider";
 import Card from "components/card";
 import Modal from "components/modal/Modal";
 import { useToast } from "hooks/useToast";
 
-const ClinicInformation = () => {
+const ClinicInformation = ({ clinicId }) => {
+  const { getClinic, updateClinic, clinic, loading } = useProvider();
+  const [clinicData, setClinicData] = useState(null);
   const [clinicInfo, setClinicInfo] = useState({
-    name: "Sunninghill Community Clinic",
-    type: "Public Health Facility",
-    description:
-      "Providing comprehensive healthcare services including immunizations, chronic disease management, maternal and child health, and health education.",
-    facilities: [
-      "Wheelchair Accessible",
-      "Pharmacy",
-      "Laboratory",
-      "Ambulance Services",
-    ],
-    languages: ["English", "Zulu", "Afrikaans", "Sotho"],
-    paymentMethods: ["Free Services", "Medical Aid", "Cash"],
-    accreditation: "Department of Health Accredited",
-    operatingSince: "2015",
+    clinic_type: "",
+    description: "",
+    facilities: [],
+    languages: [],
+    payment_methods: [],
+    accreditation_body: "",
+    year_established: "",
   });
 
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [saveConfirmModalOpen, setSaveConfirmModalOpen] = useState(false);
   const [editForm, setEditForm] = useState({ ...clinicInfo });
   const { showToast } = useToast();
+
+  useEffect(() => {
+    const fetchClinicData = async () => {
+      if (clinicId) {
+        const result = await getClinic(clinicId);
+        if (result.success) {
+          setClinicData(result.data);
+
+          const info = {
+            clinic_type: result.data.clinic_type || "",
+            description: result.data.description || "",
+            facilities: result.data.facilities || [],
+            languages: result.data.languages_spoken || [],
+            payment_methods: result.data.payment_methods || [],
+            accreditation_body: result.data.accreditation_body || "",
+            year_established: result.data.year_established?.toString() || "",
+          };
+
+          setClinicInfo(info);
+          setEditForm(info);
+        }
+      }
+    };
+
+    fetchClinicData();
+  }, [clinicId, getClinic]);
+
+  const formatClinicType = (type) => {
+    if (!type) return "";
+    return type
+      .split("_")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
+  };
+
+  const formatLanguage = (langCode) => {
+    const langMap = {
+      en: "English",
+      zu: "Zulu",
+      af: "Afrikaans",
+      xh: "Xhosa",
+      st: "Sotho",
+      ts: "Tsonga",
+      tn: "Tswana",
+      ve: "Venda",
+      nr: "Ndebele",
+      ss: "Swazi",
+      nso: "Northern Sotho",
+    };
+    return langMap[langCode] || langCode;
+  };
+
+  const formatPaymentMethod = (method) => {
+    if (!method) return "";
+    return method
+      .split("_")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
+  };
+
+  const formatFacility = (facility) => {
+    if (!facility) return "";
+    return facility
+      .split("_")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
+  };
 
   const handleEditClick = () => {
     setEditForm({ ...clinicInfo });
@@ -48,10 +111,32 @@ const ClinicInformation = () => {
     showToast("Clinic information updated successfully!", "success");
   };
 
-  const handleSaveConfirm = () => {
-    setClinicInfo({ ...editForm });
-    setSaveConfirmModalOpen(false);
-    showToast("Clinic information saved successfully!", "success");
+  const handleSaveConfirm = async () => {
+    if (!clinicId) {
+      showToast("No clinic ID provided", "error");
+      return;
+    }
+
+    const updateData = {
+      clinic_type: editForm.clinic_type,
+      description: editForm.description,
+      facilities: editForm.facilities,
+      languages_spoken: editForm.languages,
+      payment_methods: editForm.payment_methods,
+      accreditation_body: editForm.accreditation_body,
+      year_established: parseInt(editForm.year_established) || null,
+    };
+
+    const result = await updateClinic(clinicId, updateData);
+
+    if (result.success) {
+      setClinicInfo({ ...editForm });
+      setClinicData(result.data);
+      setSaveConfirmModalOpen(false);
+      showToast("Clinic information saved successfully!", "success");
+    } else {
+      showToast("Failed to save clinic information", "error");
+    }
   };
 
   const handleFacilityAdd = (facility) => {
@@ -86,6 +171,22 @@ const ClinicInformation = () => {
     });
   };
 
+  if (loading && !clinicData) {
+    return (
+      <Card extra={"w-full h-full p-6"}>
+        <div className="animate-pulse space-y-4">
+          <div className="h-6 w-1/3 rounded bg-gray-200 dark:bg-navy-700"></div>
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="space-y-2">
+              <div className="h-4 w-1/4 rounded bg-gray-200 dark:bg-navy-700"></div>
+              <div className="h-8 rounded bg-gray-200 dark:bg-navy-700"></div>
+            </div>
+          ))}
+        </div>
+      </Card>
+    );
+  }
+
   return (
     <Card extra={"w-full h-full p-6"}>
       {/* Edit Clinic Details Modal */}
@@ -101,21 +202,20 @@ const ClinicInformation = () => {
               Clinic Type *
             </label>
             <select
-              value={editForm.type}
+              value={editForm.clinic_type}
               onChange={(e) =>
-                setEditForm({ ...editForm, type: e.target.value })
+                setEditForm({ ...editForm, clinic_type: e.target.value })
               }
               className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
             >
-              <option value="Public Health Facility">
-                Public Health Facility
-              </option>
-              <option value="Private Clinic">Private Clinic</option>
-              <option value="Community Health Center">
+              <option value="public_clinic">Public Clinic</option>
+              <option value="private_clinic">Private Clinic</option>
+              <option value="community_health_center">
                 Community Health Center
               </option>
-              <option value="Specialist Clinic">Specialist Clinic</option>
-              <option value="Mobile Clinic">Mobile Clinic</option>
+              <option value="specialist_clinic">Specialist Clinic</option>
+              <option value="mobile_clinic">Mobile Clinic</option>
+              <option value="district_hospital">District Hospital</option>
             </select>
           </div>
 
@@ -144,7 +244,7 @@ const ClinicInformation = () => {
                   key={index}
                   className="flex items-center gap-1 rounded-full bg-green-100 px-3 py-1 text-sm text-green-700 dark:bg-green-900/30 dark:text-green-300"
                 >
-                  {facility}
+                  {formatFacility(facility)}
                   <button
                     onClick={() => handleFacilityRemove(facility)}
                     className="ml-1 hover:text-green-900"
@@ -161,7 +261,9 @@ const ClinicInformation = () => {
                 className="flex-1 rounded-lg border border-gray-300 p-2 dark:border-gray-600 dark:bg-navy-700"
                 onKeyPress={(e) => {
                   if (e.key === "Enter") {
-                    handleFacilityAdd(e.target.value);
+                    handleFacilityAdd(
+                      e.target.value.toLowerCase().replace(/ /g, "_")
+                    );
                     e.target.value = "";
                   }
                 }}
@@ -172,7 +274,9 @@ const ClinicInformation = () => {
                     'input[placeholder="Add a facility (e.g., WiFi, Parking)"]'
                   );
                   if (input.value) {
-                    handleFacilityAdd(input.value);
+                    handleFacilityAdd(
+                      input.value.toLowerCase().replace(/ /g, "_")
+                    );
                     input.value = "";
                   }
                 }}
@@ -193,7 +297,7 @@ const ClinicInformation = () => {
                   key={index}
                   className="flex items-center gap-1 rounded-full bg-blue-100 px-3 py-1 text-sm text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
                 >
-                  {language}
+                  {formatLanguage(language)}
                   <button
                     onClick={() => handleLanguageRemove(language)}
                     className="ml-1 hover:text-blue-900"
@@ -204,31 +308,28 @@ const ClinicInformation = () => {
               ))}
             </div>
             <div className="flex gap-2">
-              <input
-                type="text"
-                placeholder="Add a language"
+              <select
                 className="flex-1 rounded-lg border border-gray-300 p-2 dark:border-gray-600 dark:bg-navy-700"
-                onKeyPress={(e) => {
-                  if (e.key === "Enter") {
+                onChange={(e) => {
+                  if (e.target.value) {
                     handleLanguageAdd(e.target.value);
                     e.target.value = "";
                   }
                 }}
-              />
-              <button
-                onClick={() => {
-                  const input = document.querySelector(
-                    'input[placeholder="Add a language"]'
-                  );
-                  if (input.value) {
-                    handleLanguageAdd(input.value);
-                    input.value = "";
-                  }
-                }}
-                className="rounded-lg bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
               >
-                Add
-              </button>
+                <option value="">Select a language</option>
+                <option value="en">English</option>
+                <option value="zu">Zulu</option>
+                <option value="af">Afrikaans</option>
+                <option value="xh">Xhosa</option>
+                <option value="st">Sotho</option>
+                <option value="ts">Tsonga</option>
+                <option value="tn">Tswana</option>
+                <option value="ve">Venda</option>
+                <option value="nr">Ndebele</option>
+                <option value="ss">Swazi</option>
+                <option value="nso">Northern Sotho</option>
+              </select>
             </div>
           </div>
 
@@ -239,11 +340,15 @@ const ClinicInformation = () => {
               </label>
               <input
                 type="text"
-                value={editForm.accreditation}
+                value={editForm.accreditation_body}
                 onChange={(e) =>
-                  setEditForm({ ...editForm, accreditation: e.target.value })
+                  setEditForm({
+                    ...editForm,
+                    accreditation_body: e.target.value,
+                  })
                 }
                 className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
+                placeholder="e.g., HPCSA, DOH"
               />
             </div>
             <div>
@@ -251,13 +356,15 @@ const ClinicInformation = () => {
                 Operating Since
               </label>
               <input
-                type="text"
-                value={editForm.operatingSince}
+                type="number"
+                value={editForm.year_established}
                 onChange={(e) =>
-                  setEditForm({ ...editForm, operatingSince: e.target.value })
+                  setEditForm({ ...editForm, year_established: e.target.value })
                 }
                 className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
                 placeholder="Year"
+                min="1900"
+                max={new Date().getFullYear()}
               />
             </div>
           </div>
@@ -319,9 +426,10 @@ const ClinicInformation = () => {
             </button>
             <button
               onClick={handleSaveConfirm}
-              className="rounded-lg bg-green-500 px-6 py-3 font-medium text-white hover:bg-green-600"
+              disabled={loading}
+              className="rounded-lg bg-green-500 px-6 py-3 font-medium text-white hover:bg-green-600 disabled:opacity-50"
             >
-              Update Information
+              {loading ? "Updating..." : "Update Information"}
             </button>
           </div>
         </div>
@@ -347,7 +455,7 @@ const ClinicInformation = () => {
           <div>
             <p className="text-sm text-gray-600">Clinic Type</p>
             <p className="font-medium text-navy-700 dark:text-white">
-              {clinicInfo.type}
+              {formatClinicType(clinicInfo.clinic_type)}
             </p>
           </div>
         </div>
@@ -357,7 +465,7 @@ const ClinicInformation = () => {
           <div>
             <p className="text-sm text-gray-600">Description</p>
             <p className="font-medium text-navy-700 dark:text-white">
-              {clinicInfo.description}
+              {clinicInfo.description || "No description available"}
             </p>
           </div>
         </div>
@@ -367,14 +475,20 @@ const ClinicInformation = () => {
           <div>
             <p className="text-sm text-gray-600">Facilities & Accessibility</p>
             <div className="mt-2 flex flex-wrap gap-2">
-              {clinicInfo.facilities.map((facility, index) => (
-                <span
-                  key={index}
-                  className="rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-800 dark:bg-green-900 dark:text-green-300"
-                >
-                  {facility}
+              {clinicInfo.facilities.length > 0 ? (
+                clinicInfo.facilities.map((facility, index) => (
+                  <span
+                    key={index}
+                    className="rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-800 dark:bg-green-900 dark:text-green-300"
+                  >
+                    {formatFacility(facility)}
+                  </span>
+                ))
+              ) : (
+                <span className="text-sm text-gray-500">
+                  No facilities listed
                 </span>
-              ))}
+              )}
             </div>
           </div>
         </div>
@@ -384,14 +498,20 @@ const ClinicInformation = () => {
           <div>
             <p className="text-sm text-gray-600">Languages Spoken</p>
             <div className="mt-2 flex flex-wrap gap-2">
-              {clinicInfo.languages.map((language, index) => (
-                <span
-                  key={index}
-                  className="rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-800 dark:bg-blue-900 dark:text-blue-300"
-                >
-                  {language}
+              {clinicInfo.languages.length > 0 ? (
+                clinicInfo.languages.map((language, index) => (
+                  <span
+                    key={index}
+                    className="rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-800 dark:bg-blue-900 dark:text-blue-300"
+                  >
+                    {formatLanguage(language)}
+                  </span>
+                ))
+              ) : (
+                <span className="text-sm text-gray-500">
+                  No languages listed
                 </span>
-              ))}
+              )}
             </div>
           </div>
         </div>
@@ -401,14 +521,20 @@ const ClinicInformation = () => {
           <div>
             <p className="text-sm text-gray-600">Payment Methods</p>
             <div className="mt-2 flex flex-wrap gap-2">
-              {clinicInfo.paymentMethods.map((method, index) => (
-                <span
-                  key={index}
-                  className="rounded-full bg-purple-100 px-3 py-1 text-xs font-medium text-purple-800 dark:bg-purple-900 dark:text-purple-300"
-                >
-                  {method}
+              {clinicInfo.payment_methods.length > 0 ? (
+                clinicInfo.payment_methods.map((method, index) => (
+                  <span
+                    key={index}
+                    className="rounded-full bg-purple-100 px-3 py-1 text-xs font-medium text-purple-800 dark:bg-purple-900 dark:text-purple-300"
+                  >
+                    {formatPaymentMethod(method)}
+                  </span>
+                ))
+              ) : (
+                <span className="text-sm text-gray-500">
+                  No payment methods listed
                 </span>
-              ))}
+              )}
             </div>
           </div>
         </div>
@@ -417,13 +543,13 @@ const ClinicInformation = () => {
           <div>
             <p className="text-sm text-gray-600">Accreditation</p>
             <p className="font-medium text-navy-700 dark:text-white">
-              {clinicInfo.accreditation}
+              {clinicInfo.accreditation_body || "N/A"}
             </p>
           </div>
           <div>
             <p className="text-sm text-gray-600">Operating Since</p>
             <p className="font-medium text-navy-700 dark:text-white">
-              {clinicInfo.operatingSince}
+              {clinicInfo.year_established || "N/A"}
             </p>
           </div>
         </div>
