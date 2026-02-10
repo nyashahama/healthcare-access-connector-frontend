@@ -55,7 +55,7 @@ const QuickActions = () => {
     setModalState((prev) => ({ ...prev, findClinic: false }));
     showToast("Opening clinic finder...", "info");
     setTimeout(() => {
-      window.location.href = "/patient/clinics";
+      window.location.href = "/patient/find-clinic";
     }, 1000);
   };
 

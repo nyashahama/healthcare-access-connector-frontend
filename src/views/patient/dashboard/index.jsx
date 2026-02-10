@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { IoMdCalendar, IoMdMedical, IoMdChatbubbles } from "react-icons/io";
 import { FaStethoscope, FaMapMarkerAlt, FaAppleAlt } from "react-icons/fa";
 import { MdInfo, MdWarning } from "react-icons/md";
@@ -9,6 +9,9 @@ import ClinicSuggestions from "../components/ClinicSuggestions";
 import HealthTipsCarousel from "../components/HealthTipsCarousel";
 import Modal from "components/modal/Modal";
 import { useToast } from "hooks/useToast";
+import { usePatient } from "hooks/usePatient";
+import { useAppointment } from "hooks/useAppointment";
+import { useAuth } from "hooks/useAuth";
 
 const PatientDashboard = () => {
   const [modalState, setModalState] = useState({
@@ -18,11 +21,83 @@ const PatientDashboard = () => {
     nutritionTipDetails: false,
   });
   const [selectedTip, setSelectedTip] = useState(null);
+  const [upcomingCount, setUpcomingCount] = useState(0);
+  const [nextAppointment, setNextAppointment] = useState(null);
   const { showToast } = useToast();
+  const { patient, getPatientProfileByUserId } = usePatient();
+  const {
+    appointments,
+    getAppointmentsByPatient,
+    loading: appointmentsLoading,
+  } = useAppointment();
+  const { getCurrentUser } = useAuth();
+
+  const user = getCurrentUser();
+  const patientId = patient?.user_id;
+
+  // Load patient data on component mount
+  useEffect(() => {
+    if (user?.id) {
+      loadPatientData();
+    }
+  }, [user?.id]);
+
+  // Load appointments when patient is available
+  useEffect(() => {
+    if (patientId) {
+      loadAppointments();
+    }
+  }, [patientId]);
+
+  // Calculate upcoming appointments and next appointment
+  useEffect(() => {
+    if (appointments.length > 0) {
+      const now = new Date();
+      const upcoming = appointments.filter((appointment) => {
+        const appointmentDate = new Date(appointment.appointment_datetime);
+        const isUpcoming = appointmentDate > now;
+        const isNotCancelled = appointment.status !== "cancelled";
+        return isUpcoming && isNotCancelled;
+      });
+
+      setUpcomingCount(upcoming.length);
+
+      // Find the next appointment (soonest)
+      if (upcoming.length > 0) {
+        const sorted = [...upcoming].sort(
+          (a, b) =>
+            new Date(a.appointment_datetime) - new Date(b.appointment_datetime)
+        );
+        setNextAppointment(sorted[0]);
+      } else {
+        setNextAppointment(null);
+      }
+    } else {
+      setUpcomingCount(0);
+      setNextAppointment(null);
+    }
+  }, [appointments]);
+
+  const loadPatientData = async () => {
+    if (user?.id) {
+      await getPatientProfileByUserId(user.id);
+    }
+  };
+
+  const loadAppointments = async () => {
+    if (patientId) {
+      await getAppointmentsByPatient(patientId);
+    }
+  };
 
   // Appointment reminder modal handler
   const handleAppointmentClick = () => {
-    setModalState((prev) => ({ ...prev, appointmentReminder: true }));
+    if (upcomingCount > 0) {
+      setModalState((prev) => ({ ...prev, appointmentReminder: true }));
+    } else {
+      showToast("No upcoming appointments", "info");
+      window.location.href = "/patient/find-clinic";
+    }
   };
 
   const handleHealthScoreClick = () => {
@@ -35,7 +110,6 @@ const PatientDashboard = () => {
 
   const handleNutritionClick = () => {
     setModalState((prev) => ({ ...prev, nutritionTipDetails: true }));
-    // Get current nutrition tip from carousel or other source
     setSelectedTip({
       title: "Daily Nutrition Guide",
       content:
@@ -49,6 +123,66 @@ const PatientDashboard = () => {
       window.location.href = "/patient/symptom-checker";
     }, 1000);
   };
+
+  const getPatientName = () => {
+    if (patient?.first_name) {
+      return patient.first_name;
+    }
+    if (user?.first_name) {
+      return user.first_name;
+    }
+    return "User";
+  };
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const now = new Date();
+
+    // Check if it's today
+    if (date.toDateString() === now.toDateString()) {
+      return "today";
+    }
+
+    // Check if it's tomorrow
+    const tomorrow = new Date(now);
+    tomorrow.setDate(now.getDate() + 1);
+    if (date.toDateString() === tomorrow.toDateString()) {
+      return "tomorrow";
+    }
+
+    // Return relative time
+    const diffTime = Math.abs(date - now);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays < 7) {
+      return `in ${diffDays} day${diffDays > 1 ? "s" : ""}`;
+    } else if (diffDays < 30) {
+      const weeks = Math.floor(diffDays / 7);
+      return `in ${weeks} week${weeks > 1 ? "s" : ""}`;
+    } else {
+      const months = Math.floor(diffDays / 30);
+      return `in ${months} month${months > 1 ? "s" : ""}`;
+    }
+  };
+
+  // Get upcoming appointments for modal
+  const getUpcomingForModal = () => {
+    const now = new Date();
+    return appointments
+      .filter((appointment) => {
+        const appointmentDate = new Date(appointment.appointment_datetime);
+        const isUpcoming = appointmentDate > now;
+        const isNotCancelled = appointment.status !== "cancelled";
+        return isUpcoming && isNotCancelled;
+      })
+      .sort(
+        (a, b) =>
+          new Date(a.appointment_datetime) - new Date(b.appointment_datetime)
+      )
+      .slice(0, 3); // Show only next 3 appointments
+  };
+
+  const modalAppointments = getUpcomingForModal();
 
   return (
     <div>
@@ -71,37 +205,57 @@ const PatientDashboard = () => {
               Upcoming Appointments
             </h4>
             <p className="text-gray-600 dark:text-gray-300">
-              You have 3 scheduled appointments
+              You have {upcomingCount} scheduled appointment
+              {upcomingCount !== 1 ? "s" : ""}
             </p>
           </div>
 
-          <div className="space-y-3">
-            <div className="rounded-lg border border-gray-200 p-3 dark:border-gray-700">
-              <div className="flex justify-between">
-                <div>
-                  <div className="font-medium">Child Check-up</div>
-                  <div className="text-sm text-gray-500">
-                    Tomorrow, 10:00 AM
+          {modalAppointments.length > 0 ? (
+            <div className="space-y-3">
+              {modalAppointments.map((appointment) => (
+                <div
+                  key={appointment.id}
+                  className="rounded-lg border border-gray-200 p-3 dark:border-gray-700"
+                >
+                  <div className="flex justify-between">
+                    <div>
+                      <div className="font-medium">
+                        {appointment.reason_for_visit || "Appointment"}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        {new Date(
+                          appointment.appointment_datetime
+                        ).toLocaleDateString("en-US", {
+                          weekday: "short",
+                          month: "short",
+                          day: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </div>
+                    </div>
+                    <span
+                      className={`rounded-full px-2 py-1 text-xs font-medium ${
+                        appointment.status === "confirmed"
+                          ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
+                          : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300"
+                      }`}
+                    >
+                      {appointment.status === "confirmed"
+                        ? "Confirmed"
+                        : "Pending"}
+                    </span>
                   </div>
                 </div>
-                <span className="rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-800 dark:bg-green-900 dark:text-green-300">
-                  Confirmed
-                </span>
-              </div>
+              ))}
             </div>
-
-            <div className="rounded-lg border border-gray-200 p-3 dark:border-gray-700">
-              <div className="flex justify-between">
-                <div>
-                  <div className="font-medium">Follow-up Visit</div>
-                  <div className="text-sm text-gray-500">Dec 20, 2:30 PM</div>
-                </div>
-                <span className="rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-800 dark:bg-green-900 dark:text-green-300">
-                  Confirmed
-                </span>
-              </div>
+          ) : (
+            <div className="rounded-lg border border-gray-200 p-4 text-center dark:border-gray-700">
+              <p className="text-gray-500 dark:text-gray-400">
+                No upcoming appointments scheduled
+              </p>
             </div>
-          </div>
+          )}
 
           <div className="flex justify-end gap-3">
             <button
@@ -143,46 +297,56 @@ const PatientDashboard = () => {
               <IoMdMedical className="h-8 w-8 text-green-600 dark:text-green-300" />
             </div>
             <h4 className="text-lg font-bold text-navy-700 dark:text-white">
-              Your Health Score: Good
+              Your Health Status
             </h4>
             <p className="text-gray-600 dark:text-gray-300">
-              Based on recent health metrics
+              {patient?.health_status || "No health status recorded yet"}
             </p>
           </div>
 
           <div className="space-y-3">
             <div className="flex justify-between">
               <span className="text-gray-700 dark:text-gray-300">
-                Vaccination Status
+                Upcoming Appointments
               </span>
-              <span className="font-medium text-green-600">Complete</span>
+              <span className="font-medium text-blue-600">{upcomingCount}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-700 dark:text-gray-300">
-                Check-ups
+                Recent Visits
               </span>
-              <span className="font-medium text-green-600">Up to date</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-700 dark:text-gray-300">
-                Growth Metrics
+              <span className="font-medium text-green-600">
+                {appointments.filter((a) => a.status === "completed").length}
               </span>
-              <span className="font-medium text-yellow-600">Normal range</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-700 dark:text-gray-300">
-                Nutrition Score
-              </span>
-              <span className="font-medium text-blue-600">85%</span>
-            </div>
+            {patient?.blood_type && (
+              <div className="flex justify-between">
+                <span className="text-gray-700 dark:text-gray-300">
+                  Blood Type
+                </span>
+                <span className="font-medium text-red-600">
+                  {patient.blood_type}
+                </span>
+              </div>
+            )}
+            {patient?.allergies && (
+              <div className="flex justify-between">
+                <span className="text-gray-700 dark:text-gray-300">
+                  Allergies
+                </span>
+                <span className="font-medium text-yellow-600">
+                  {patient.allergies.split(",").length} recorded
+                </span>
+              </div>
+            )}
           </div>
 
           <div className="rounded-lg bg-blue-50 p-3 dark:bg-blue-900/20">
             <div className="flex items-start">
               <MdInfo className="mr-2 mt-0.5 h-5 w-5 text-blue-500" />
               <p className="text-sm text-blue-700 dark:text-blue-300">
-                Regular check-ups and vaccinations contribute to maintaining a
-                good health score.
+                Regular check-ups and maintaining your health profile contribute
+                to better healthcare outcomes.
               </p>
             </div>
           </div>
@@ -194,7 +358,7 @@ const PatientDashboard = () => {
             }}
             className="w-full rounded-lg bg-green-500 py-2 text-sm font-medium text-white hover:bg-green-600"
           >
-            View Detailed Health Tracker
+            View Health Profile
           </button>
         </div>
       </Modal>
@@ -262,6 +426,44 @@ const PatientDashboard = () => {
               </div>
             </div>
           </div>
+
+          {patient?.emergency_contact_name && (
+            <div className="rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-900/20">
+              <div className="mb-2 font-bold text-green-700 dark:text-green-300">
+                Your Emergency Contact
+              </div>
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-gray-700 dark:text-gray-300">
+                    Contact Name
+                  </span>
+                  <span className="font-bold">
+                    {patient.emergency_contact_name}
+                  </span>
+                </div>
+                {patient.emergency_contact_phone && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-700 dark:text-gray-300">
+                      Contact Phone
+                    </span>
+                    <span className="font-bold">
+                      {patient.emergency_contact_phone}
+                    </span>
+                  </div>
+                )}
+                {patient.emergency_contact_relationship && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-700 dark:text-gray-300">
+                      Relationship
+                    </span>
+                    <span className="font-bold">
+                      {patient.emergency_contact_relationship}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           <div className="rounded-lg bg-yellow-50 p-4 dark:bg-yellow-900/20">
             <div className="flex items-start">
@@ -373,11 +575,19 @@ const PatientDashboard = () => {
       {/* Welcome Header */}
       <div className="mb-6">
         <h3 className="text-2xl font-bold text-navy-700 dark:text-white">
-          Welcome back, Sarah! 👋
+          Welcome back, {getPatientName()}! 👋
         </h3>
-        <p className="text-gray-600 dark:text-gray-300">
-          Your child's next check-up is in 2 weeks. Stay healthy!
-        </p>
+        {nextAppointment ? (
+          <p className="text-gray-600 dark:text-gray-300">
+            Your next appointment is{" "}
+            {formatDate(nextAppointment.appointment_datetime)}. Stay healthy!
+          </p>
+        ) : (
+          <p className="text-gray-600 dark:text-gray-300">
+            You have no upcoming appointments. Book a check-up to stay on top of
+            your health!
+          </p>
+        )}
       </div>
 
       {/* Quick Stats */}
@@ -385,21 +595,22 @@ const PatientDashboard = () => {
         <Widget
           icon={<IoMdCalendar className="h-7 w-7" />}
           title={"Upcoming Appointments"}
-          subtitle={"3"}
+          subtitle={upcomingCount.toString()}
           onClick={handleAppointmentClick}
           bgColor="bg-blue-500"
+          isLoading={appointmentsLoading}
         />
         <Widget
           icon={<IoMdMedical className="h-7 w-7" />}
-          title={"Health Score"}
-          subtitle={"Good"}
+          title={"Health Status"}
+          subtitle={patient?.health_status || "Not set"}
           onClick={handleHealthScoreClick}
           bgColor="bg-green-500"
         />
         <Widget
           icon={<IoMdChatbubbles className="h-7 w-7" />}
           title={"Unread Messages"}
-          subtitle={"2"}
+          subtitle={"0"}
           onClick={() => {
             showToast("Opening messages...", "info");
             window.location.href = "/patient/telemedicine";
@@ -415,13 +626,27 @@ const PatientDashboard = () => {
         />
       </div>
 
+      {/* Loading State for Appointments */}
+      {appointmentsLoading && (
+        <div className="mt-6 rounded-[20px] bg-white p-6 shadow-sm dark:bg-navy-800">
+          <div className="flex items-center justify-center py-8">
+            <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-t-2 border-brand-500"></div>
+            <span className="ml-3 text-gray-600 dark:text-gray-300">
+              Loading appointments...
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Quick Actions */}
-      <div className="mt-6">
-        <h4 className="mb-4 text-xl font-bold text-navy-700 dark:text-white">
-          Quick Actions
-        </h4>
-        <QuickActions />
-      </div>
+      {!appointmentsLoading && (
+        <div className="mt-6">
+          <h4 className="mb-4 text-xl font-bold text-navy-700 dark:text-white">
+            Quick Actions
+          </h4>
+          <QuickActions />
+        </div>
+      )}
 
       {/* Health Tips Carousel */}
       <div className="mt-6">
@@ -490,6 +715,54 @@ const PatientDashboard = () => {
               </li>
             </ul>
           </div>
+
+          {/* Health Profile Summary */}
+          {patient && (
+            <div className="rounded-[20px] bg-gradient-to-r from-green-500 to-teal-400 p-6 text-white">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h5 className="text-xl font-bold">Health Profile</h5>
+                  <p className="mt-2 text-green-100">
+                    Your health information at a glance
+                  </p>
+                </div>
+                <IoMdMedical className="h-12 w-12 opacity-80" />
+              </div>
+              <div className="mt-4 space-y-2">
+                {patient.blood_type && (
+                  <div className="flex justify-between">
+                    <span>Blood Type</span>
+                    <span className="font-bold">{patient.blood_type}</span>
+                  </div>
+                )}
+                {patient.allergies && (
+                  <div className="flex justify-between">
+                    <span>Allergies</span>
+                    <span className="font-bold">
+                      {patient.allergies.split(",").length} recorded
+                    </span>
+                  </div>
+                )}
+                {patient.medications && (
+                  <div className="flex justify-between">
+                    <span>Medications</span>
+                    <span className="font-bold">
+                      {patient.medications.split(",").length} active
+                    </span>
+                  </div>
+                )}
+              </div>
+              <button
+                onClick={() => {
+                  window.location.href = "/patient/health-profile";
+                  showToast("Opening health profile...", "info");
+                }}
+                className="linear mt-4 w-full rounded-xl bg-white py-3 font-medium text-green-600 transition duration-200 hover:bg-gray-100"
+              >
+                View Full Profile
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
