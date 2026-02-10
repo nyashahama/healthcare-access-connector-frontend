@@ -1,51 +1,63 @@
 import { useToast } from "hooks/useToast";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { MdAccessTime, MdPerson, MdInfo, MdCheckCircle } from "react-icons/md";
 import Modal from "components/modal/Modal";
+import { useAppointment } from "hooks/useAppointment";
+import { useAuth } from "hooks/useAuth";
 
 const TodaySchedule = () => {
   const { showToast } = useToast();
+  const { getCurrentUser } = useAuth();
+  const {
+    todayAppointments,
+    loading,
+    getTodayAppointments,
+    completeAppointment,
+  } = useAppointment();
+
+  const currentUser = getCurrentUser();
   const [viewDetailsModalOpen, setViewDetailsModalOpen] = useState(false);
   const [markCompleteModalOpen, setMarkCompleteModalOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
-  const schedule = [
-    {
-      time: "09:00 AM",
-      patient: "John Doe",
-      reason: "Routine Check-up",
-      status: "completed",
-    },
-    {
-      time: "10:30 AM",
-      patient: "Sarah Johnson",
-      reason: "Fever & Cough",
-      status: "completed",
-    },
-    {
-      time: "12:00 PM",
-      patient: "Michael Brown",
-      reason: "Vaccination",
-      status: "in-progress",
-    },
-    {
-      time: "02:00 PM",
-      patient: "Lisa Anderson",
-      reason: "Follow-up Visit",
-      status: "upcoming",
-    },
-    {
-      time: "03:30 PM",
-      patient: "Robert Wilson",
-      reason: "Child Health",
-      status: "upcoming",
-    },
-    {
-      time: "05:00 PM",
-      patient: "Emily Davis",
-      reason: "Consultation",
-      status: "upcoming",
-    },
-  ];
+
+  // Load today's appointments on mount
+  useEffect(() => {
+    if (currentUser?.clinic_id) {
+      getTodayAppointments(currentUser.clinic_id);
+    }
+  }, [currentUser?.clinic_id, getTodayAppointments]);
+
+  // Map database appointments to schedule format
+  const schedule = React.useMemo(() => {
+    return (todayAppointments || []).map((apt) => ({
+      id: apt.id,
+      time: apt.appointment_time || "N/A",
+      patient: apt.patient_name || "Unknown Patient",
+      reason: apt.reason_for_visit || "No reason provided",
+      status: mapAppointmentStatus(apt.status),
+      rawStatus: apt.status,
+      patientPhone: apt.patient_phone,
+      patientEmail: apt.patient_email,
+      notes: apt.notes,
+      confirmedBy: apt.confirmed_by,
+      confirmedAt: apt.confirmed_at,
+    }));
+  }, [todayAppointments]);
+
+  // Map database status to display status
+  function mapAppointmentStatus(dbStatus) {
+    switch (dbStatus) {
+      case "completed":
+        return "completed";
+      case "confirmed":
+      case "in-progress":
+        return "in-progress";
+      case "pending":
+        return "upcoming";
+      default:
+        return "upcoming";
+    }
+  }
 
   const handleViewDetails = (appointment) => {
     setSelectedAppointment(appointment);
@@ -57,10 +69,26 @@ const TodaySchedule = () => {
     setMarkCompleteModalOpen(true);
   };
 
-  const confirmMarkComplete = () => {
-    console.log(`Marking ${selectedAppointment.patient} as complete`);
-    setMarkCompleteModalOpen(false);
-    showToast(`${selectedAppointment.patient} marked as complete!`, "success");
+  const confirmMarkComplete = async () => {
+    if (!selectedAppointment?.id) return;
+
+    const result = await completeAppointment(selectedAppointment.id);
+
+    if (result.success) {
+      setMarkCompleteModalOpen(false);
+      showToast(
+        `${selectedAppointment.patient} marked as complete!`,
+        "success"
+      );
+      setSelectedAppointment(null);
+
+      // Refresh today's appointments
+      if (currentUser?.clinic_id) {
+        getTodayAppointments(currentUser.clinic_id);
+      }
+    } else {
+      showToast(result.error || "Failed to complete appointment", "error");
+    }
   };
 
   const getStatusColor = (status) => {
@@ -109,17 +137,33 @@ const TodaySchedule = () => {
                     selectedAppointment.status
                   )}`}
                 >
-                  {selectedAppointment.status}
+                  {selectedAppointment.rawStatus || selectedAppointment.status}
                 </span>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-gray-600">Duration</span>
-                <span className="font-medium">30 minutes</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-gray-600">Doctor</span>
-                <span className="font-medium">Dr. Smith</span>
-              </div>
+              {selectedAppointment.patientPhone && (
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-600">Phone</span>
+                  <span className="font-medium">
+                    {selectedAppointment.patientPhone}
+                  </span>
+                </div>
+              )}
+              {selectedAppointment.patientEmail && (
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-600">Email</span>
+                  <span className="font-medium">
+                    {selectedAppointment.patientEmail}
+                  </span>
+                </div>
+              )}
+              {selectedAppointment.notes && (
+                <div className="flex items-start justify-between">
+                  <span className="text-gray-600">Notes</span>
+                  <span className="max-w-xs text-right font-medium">
+                    {selectedAppointment.notes}
+                  </span>
+                </div>
+              )}
             </div>
 
             <div className="rounded-lg bg-blue-50 p-4 dark:bg-blue-900/20">
@@ -194,59 +238,73 @@ const TodaySchedule = () => {
           Today's Schedule
         </h5>
         <div className="text-sm text-gray-600 dark:text-gray-300">
-          <span className="font-bold text-brand-500">12</span> appointments
+          <span className="font-bold text-brand-500">{schedule.length}</span>{" "}
+          appointments
         </div>
       </div>
 
       <div className="space-y-3">
-        {schedule.map((appointment, index) => (
-          <div
-            key={index}
-            className="flex items-center rounded-xl border border-gray-200 p-4 dark:border-navy-700"
-          >
-            <div className="flex w-24 items-center text-sm font-medium text-navy-700 dark:text-white">
-              <MdAccessTime className="mr-2 h-4 w-4" />
-              {appointment.time}
-            </div>
+        {loading ? (
+          <div className="py-8 text-center text-gray-600 dark:text-gray-300">
+            Loading today's appointments...
+          </div>
+        ) : schedule.length === 0 ? (
+          <div className="rounded-xl border border-gray-200 p-8 text-center dark:border-navy-700">
+            <MdInfo className="mx-auto mb-3 h-12 w-12 text-gray-400" />
+            <p className="text-gray-600 dark:text-gray-300">
+              No appointments scheduled for today
+            </p>
+          </div>
+        ) : (
+          schedule.map((appointment, index) => (
+            <div
+              key={appointment.id || index}
+              className="flex items-center rounded-xl border border-gray-200 p-4 dark:border-navy-700"
+            >
+              <div className="flex w-24 items-center text-sm font-medium text-navy-700 dark:text-white">
+                <MdAccessTime className="mr-2 h-4 w-4" />
+                {appointment.time}
+              </div>
 
-            <div className="ml-4 flex-1">
-              <div className="flex items-center">
-                <MdPerson className="mr-2 h-4 w-4 text-gray-600 dark:text-gray-300" />
-                <span className="font-medium text-navy-700 dark:text-white">
-                  {appointment.patient}
+              <div className="ml-4 flex-1">
+                <div className="flex items-center">
+                  <MdPerson className="mr-2 h-4 w-4 text-gray-600 dark:text-gray-300" />
+                  <span className="font-medium text-navy-700 dark:text-white">
+                    {appointment.patient}
+                  </span>
+                </div>
+                <div className="ml-6 text-sm text-gray-600 dark:text-gray-300">
+                  {appointment.reason}
+                </div>
+              </div>
+
+              <div className="ml-4">
+                <span
+                  className={`rounded-full px-3 py-1 text-xs font-medium ${getStatusColor(
+                    appointment.status
+                  )}`}
+                >
+                  {appointment.status}
                 </span>
               </div>
-              <div className="ml-6 text-sm text-gray-600 dark:text-gray-300">
-                {appointment.reason}
-              </div>
-            </div>
 
-            <div className="ml-4">
-              <span
-                className={`rounded-full px-3 py-1 text-xs font-medium ${getStatusColor(
-                  appointment.status
-                )}`}
-              >
-                {appointment.status}
-              </span>
-            </div>
-
-            <button
-              onClick={() => handleViewDetails(appointment)}
-              className="ml-4 text-sm font-medium text-brand-500 hover:text-brand-600"
-            >
-              View
-            </button>
-            {appointment.status === "in-progress" && (
               <button
-                onClick={() => handleMarkComplete(appointment)}
-                className="ml-2 text-sm font-medium text-green-500 hover:text-green-600"
+                onClick={() => handleViewDetails(appointment)}
+                className="ml-4 text-sm font-medium text-brand-500 hover:text-brand-600"
               >
-                Complete
+                View
               </button>
-            )}
-          </div>
-        ))}
+              {appointment.status === "in-progress" && (
+                <button
+                  onClick={() => handleMarkComplete(appointment)}
+                  className="ml-2 text-sm font-medium text-green-500 hover:text-green-600"
+                >
+                  Complete
+                </button>
+              )}
+            </div>
+          ))
+        )}
       </div>
     </div>
   );
