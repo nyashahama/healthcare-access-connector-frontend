@@ -1,11 +1,14 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FaClock, FaCalendarAlt, FaSave } from "react-icons/fa";
 import { MdEdit, MdWarning, MdCheckCircle } from "react-icons/md";
+import { useProvider } from "hooks/useProvider";
 import Card from "components/card";
 import Modal from "components/modal/Modal";
 import { useToast } from "hooks/useToast";
 
-const OperatingHours = () => {
+const OperatingHours = ({ clinicId }) => {
+  const { getClinic, updateClinic, clinic, loading } = useProvider();
+  const [clinicData, setClinicData] = useState(null);
   const [hours, setHours] = useState({
     monday: { open: "08:00", close: "17:00", closed: false },
     tuesday: { open: "08:00", close: "17:00", closed: false },
@@ -20,6 +23,75 @@ const OperatingHours = () => {
   const [saveConfirmModalOpen, setSaveConfirmModalOpen] = useState(false);
   const [editForm, setEditForm] = useState({ ...hours });
   const { showToast } = useToast();
+
+  useEffect(() => {
+    const fetchClinicData = async () => {
+      if (clinicId) {
+        const result = await getClinic(clinicId);
+        if (result.success && result.data?.operating_hours) {
+          setClinicData(result.data);
+          const apiHours = parseOperatingHours(result.data.operating_hours);
+          setHours(apiHours);
+          setEditForm(apiHours);
+        }
+      }
+    };
+
+    fetchClinicData();
+  }, [clinicId, getClinic]);
+
+  // Parse API operating hours format to component format
+  const parseOperatingHours = (apiHours) => {
+    const parsedHours = {};
+    const daysOfWeek = [
+      "monday",
+      "tuesday",
+      "wednesday",
+      "thursday",
+      "friday",
+      "saturday",
+      "sunday",
+    ];
+
+    daysOfWeek.forEach((day) => {
+      if (apiHours[day]) {
+        const hoursStr = apiHours[day];
+
+        if (
+          hoursStr.toLowerCase().includes("emergency") ||
+          hoursStr.toLowerCase().includes("closed")
+        ) {
+          parsedHours[day] = { open: "", close: "", closed: true };
+        } else {
+          const [open, close] = hoursStr.split("-").map((time) => time.trim());
+          parsedHours[day] = {
+            open: open || "08:00",
+            close: close || "17:00",
+            closed: false,
+          };
+        }
+      } else {
+        parsedHours[day] = { open: "", close: "", closed: true };
+      }
+    });
+
+    return parsedHours;
+  };
+
+  // Convert component format back to API format
+  const formatOperatingHoursForAPI = (hoursObj) => {
+    const apiFormat = {};
+
+    Object.entries(hoursObj).forEach(([day, data]) => {
+      if (data.closed) {
+        apiFormat[day] = "Closed";
+      } else {
+        apiFormat[day] = `${data.open}-${data.close}`;
+      }
+    });
+
+    return apiFormat;
+  };
 
   const holidays = [
     { date: "27 April 2024", name: "Freedom Day", closed: true },
@@ -58,11 +130,43 @@ const OperatingHours = () => {
     }));
   };
 
-  const handleSaveConfirm = () => {
-    setHours({ ...editForm });
-    setSaveConfirmModalOpen(false);
-    showToast("Operating hours saved successfully!", "success");
+  const handleSaveConfirm = async () => {
+    if (!clinicId) {
+      showToast("No clinic ID provided", "error");
+      return;
+    }
+
+    const apiHours = formatOperatingHoursForAPI(editForm);
+
+    const result = await updateClinic(clinicId, {
+      operating_hours: apiHours,
+    });
+
+    if (result.success) {
+      setHours({ ...editForm });
+      setClinicData(result.data);
+      setSaveConfirmModalOpen(false);
+      showToast("Operating hours saved successfully!", "success");
+    } else {
+      showToast("Failed to save operating hours", "error");
+    }
   };
+
+  if (loading && !clinicData) {
+    return (
+      <Card extra={"w-full h-full p-6"}>
+        <div className="animate-pulse space-y-3">
+          <div className="h-6 w-1/3 rounded bg-gray-200 dark:bg-navy-700"></div>
+          {[1, 2, 3, 4, 5, 6, 7].map((i) => (
+            <div
+              key={i}
+              className="h-12 rounded bg-gray-200 dark:bg-navy-700"
+            ></div>
+          ))}
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <Card extra={"w-full h-full p-6"}>
@@ -195,9 +299,10 @@ const OperatingHours = () => {
             </button>
             <button
               onClick={handleSaveConfirm}
-              className="rounded-lg bg-green-500 px-6 py-3 font-medium text-white hover:bg-green-600"
+              disabled={loading}
+              className="rounded-lg bg-green-500 px-6 py-3 font-medium text-white hover:bg-green-600 disabled:opacity-50"
             >
-              Update Hours
+              {loading ? "Updating..." : "Update Hours"}
             </button>
           </div>
         </div>
@@ -244,23 +349,25 @@ const OperatingHours = () => {
       </div>
 
       {/* Emergency Hours */}
-      <div className="mt-6 rounded-xl border border-yellow-200 bg-yellow-50 p-4 transition-all duration-300 hover:scale-[1.02] dark:border-yellow-800 dark:bg-yellow-900/20">
-        <div className="flex items-start">
-          <div className="mr-3 mt-1 flex h-6 w-6 items-center justify-center rounded-full bg-yellow-100 dark:bg-yellow-800">
-            <span className="text-sm font-bold text-yellow-600 dark:text-yellow-400">
-              !
-            </span>
-          </div>
-          <div>
-            <p className="font-medium text-yellow-800 dark:text-yellow-300">
-              24/7 Emergency Services
-            </p>
-            <p className="mt-1 text-sm text-yellow-600 dark:text-yellow-400">
-              Emergency department operates 24 hours, 7 days a week
-            </p>
+      {clinicData?.emergency_phone && (
+        <div className="mt-6 rounded-xl border border-yellow-200 bg-yellow-50 p-4 transition-all duration-300 hover:scale-[1.02] dark:border-yellow-800 dark:bg-yellow-900/20">
+          <div className="flex items-start">
+            <div className="mr-3 mt-1 flex h-6 w-6 items-center justify-center rounded-full bg-yellow-100 dark:bg-yellow-800">
+              <span className="text-sm font-bold text-yellow-600 dark:text-yellow-400">
+                !
+              </span>
+            </div>
+            <div>
+              <p className="font-medium text-yellow-800 dark:text-yellow-300">
+                24/7 Emergency Services
+              </p>
+              <p className="mt-1 text-sm text-yellow-600 dark:text-yellow-400">
+                Emergency line: {clinicData.emergency_phone}
+              </p>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Holiday Schedule */}
       <div className="mt-6">
