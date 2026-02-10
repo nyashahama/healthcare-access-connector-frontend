@@ -17,17 +17,12 @@ const PatientNavbar = (props) => {
   const [darkmode, setDarkmode] = React.useState(false);
 
   const { patient } = usePatient();
-  const patientId = patient?.user_id;
 
   const { logout, loading: logoutLoading } = useAuth();
 
   const handleLogout = async () => {
-    const result = await logout();
-    // The logout function already handles navigation to /signin
-    console.log("Logout result:", result);
+    await logout();
   };
-
-  console.log(patientId);
 
   return (
     <nav className="sticky top-4 z-40 flex flex-row flex-wrap items-center justify-between rounded-xl bg-white/10 p-2 backdrop-blur-xl dark:bg-[#0b14374d]">

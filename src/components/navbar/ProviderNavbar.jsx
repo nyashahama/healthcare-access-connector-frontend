@@ -7,10 +7,20 @@ import { FiSearch } from "react-icons/fi";
 import { RiMoonFill, RiSunFill } from "react-icons/ri";
 import { IoMdNotificationsOutline } from "react-icons/io";
 import { FaUserMd } from "react-icons/fa";
+import { useProvider } from "hooks/useProvider";
+import { useAuth } from "hooks/useAuth";
 
 const ProviderNavbar = (props) => {
   const { onOpenSidenav, brandText } = props;
   const [darkmode, setDarkmode] = React.useState(false);
+
+  const { staff } = useProvider();
+
+  const { logout, loading: logoutLoading } = useAuth();
+
+  const handleLogout = async () => {
+    await logout();
+  };
 
   return (
     <nav className="sticky top-4 z-40 flex flex-row flex-wrap items-center justify-between rounded-xl bg-white/10 p-2 backdrop-blur-xl dark:bg-[#0b14374d]">
@@ -129,7 +139,7 @@ const ProviderNavbar = (props) => {
             <div className="flex items-center gap-2">
               <FaUserMd className="h-6 w-6 text-navy-700 dark:text-white" />
               <span className="hidden text-sm font-medium md:block">
-                Dr. Smith
+                {staff?.first_name}
               </span>
             </div>
           }
@@ -138,7 +148,7 @@ const ProviderNavbar = (props) => {
               <div className="p-4">
                 <div className="flex items-center gap-2">
                   <p className="text-sm font-bold text-navy-700 dark:text-white">
-                    👋 Dr. John Smith
+                    👋 Hey {staff?.first_name}
                   </p>
                 </div>
               </div>
@@ -156,12 +166,15 @@ const ProviderNavbar = (props) => {
                 >
                   Manage Clinic
                 </Link>
-                <Link
-                  to="/auth/sign-in"
-                  className="mt-3 text-sm font-medium text-red-500 transition duration-150 ease-out hover:text-red-500 hover:ease-in"
+                <button
+                  onClick={handleLogout}
+                  disabled={logoutLoading}
+                  className={`mt-3 text-sm font-medium text-red-500 transition duration-150 ease-out hover:text-red-500 hover:ease-in ${
+                    logoutLoading ? "cursor-not-allowed opacity-50" : ""
+                  }`}
                 >
-                  Log Out
-                </Link>
+                  {logoutLoading ? "Logging out..." : "Log Out"}
+                </button>
               </div>
             </div>
           }

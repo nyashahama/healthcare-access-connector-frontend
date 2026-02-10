@@ -87,8 +87,13 @@ const getRoleBasedRedirect = (role) => {
     case "clinic_admin":
     case "doctor":
     case "nurse":
+    case "caregiver":
+    case "provider_staff":
+    case "clinic_manager":
       return "/provider/dashboard";
     case "admin":
+    case "system_admin":
+    case "ngo_partner":
       return "/admin/dashboard";
     default:
       return "/auth/sign-in";

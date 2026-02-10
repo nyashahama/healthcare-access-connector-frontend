@@ -104,7 +104,7 @@ export default function SignIn() {
           const role = user.role;
 
           switch (role) {
-            case "provider":
+            case "provider_staff":
             case "doctor":
             case "nurse":
             case "caregiver":
