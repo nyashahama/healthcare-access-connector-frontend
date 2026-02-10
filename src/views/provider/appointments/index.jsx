@@ -13,6 +13,8 @@ import Card from "components/card";
 import TodaySchedule from "../components/TodaySchedule";
 import Modal from "components/modal/Modal";
 import { useToast } from "hooks/useToast";
+import { useAppointment } from "hooks/useAppointment";
+import { useAuth } from "hooks/useAuth";
 
 const Appointments = () => {
   const [view, setView] = useState("day");
@@ -20,6 +22,23 @@ const Appointments = () => {
   const [searchTerm, setSearchTerm] = useState("");
 
   const { showToast } = useToast();
+  const { getCurrentUser } = useAuth();
+  const {
+    loading,
+    error,
+    appointments,
+    todayAppointments,
+    pendingAppointments,
+    bookAppointment,
+    getAppointmentsByClinic,
+    getTodayAppointments,
+    getPendingAppointments,
+    rescheduleAppointment,
+    cancelAppointment,
+    confirmAppointment,
+  } = useAppointment();
+
+  const currentUser = getCurrentUser();
 
   // Modal states
   const [newAppointmentModalOpen, setNewAppointmentModalOpen] = useState(false);
@@ -27,150 +46,189 @@ const Appointments = () => {
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
 
-  const [appointmentStats, setAppointmentStats] = useState({
-    today: 12,
-    thisWeek: 48,
-    cancellations: 3,
-    noShows: 1,
-  });
+  // Calculate stats from real data
+  const appointmentStats = {
+    today: todayAppointments?.length || 0,
+    thisWeek: appointments?.length || 0,
+    cancellations:
+      appointments?.filter((apt) => apt.status === "cancelled")?.length || 0,
+    noShows:
+      appointments?.filter((apt) => apt.status === "no-show")?.length || 0,
+  };
 
-  const appointmentTypes = [
-    { type: "Consultation", count: 24, color: "bg-blue-500" },
-    { type: "Follow-up", count: 18, color: "bg-green-500" },
-    { type: "Vaccination", count: 12, color: "bg-purple-500" },
-    { type: "Check-up", count: 8, color: "bg-yellow-500" },
-  ];
+  // Calculate appointment types from real data
+  const appointmentTypes = React.useMemo(() => {
+    const typeCount = {};
+    appointments?.forEach((apt) => {
+      const type = apt.reason_for_visit || "Other";
+      typeCount[type] = (typeCount[type] || 0) + 1;
+    });
 
-  const [upcomingAppointments, setUpcomingAppointments] = useState([
-    {
-      id: 1,
-      patient: "John Doe",
-      time: "10:00 AM",
-      type: "Consultation",
-      doctor: "Dr. Smith",
-      status: "confirmed",
-      patientId: "P00123",
-    },
-    {
-      id: 2,
-      patient: "Sarah Johnson",
-      time: "11:30 AM",
-      type: "Vaccination",
-      doctor: "Nurse Johnson",
-      status: "confirmed",
-      patientId: "P00124",
-    },
-    {
-      id: 3,
-      patient: "Michael Brown",
-      time: "02:00 PM",
-      type: "Follow-up",
-      doctor: "Dr. Nkosi",
-      status: "pending",
-      patientId: "P00125",
-    },
-    {
-      id: 4,
-      patient: "Lisa Anderson",
-      time: "03:30 PM",
-      type: "Check-up",
-      doctor: "Dr. Smith",
-      status: "confirmed",
-      patientId: "P00126",
-    },
-  ]);
+    const colors = [
+      "bg-blue-500",
+      "bg-green-500",
+      "bg-purple-500",
+      "bg-yellow-500",
+      "bg-red-500",
+    ];
+    return Object.entries(typeCount).map(([type, count], index) => ({
+      type,
+      count,
+      color: colors[index % colors.length],
+    }));
+  }, [appointments]);
+
+  // Get upcoming appointments from real data (next 2 hours)
+  const upcomingAppointments = React.useMemo(() => {
+    const now = new Date();
+    const twoHoursFromNow = new Date(now.getTime() + 2 * 60 * 60 * 1000);
+
+    return (
+      todayAppointments
+        ?.filter((apt) => {
+          const aptTime = new Date(apt.appointment_datetime);
+          return aptTime >= now && aptTime <= twoHoursFromNow;
+        })
+        ?.map((apt) => ({
+          id: apt.id,
+          patient: apt.patient_name,
+          time: apt.appointment_time,
+          type: apt.reason_for_visit,
+          doctor: "Staff Member", // You can enhance this with actual staff data
+          status: apt.status,
+          patientId: apt.patient_id,
+          date: apt.appointment_date,
+        })) || []
+    );
+  }, [todayAppointments]);
 
   const [newAppointment, setNewAppointment] = useState({
-    patientName: "",
-    patientId: "",
-    phone: "",
-    email: "",
-    date: "",
-    time: "",
-    type: "consultation",
-    doctor: "",
-    reason: "",
-    duration: "30",
+    clinic_id: currentUser?.clinic_id || "",
+    patient_id: currentUser?.id || "",
+    patient_name: "",
+    patient_phone: "",
+    patient_email: "",
+    appointment_date: "",
+    appointment_time: "",
+    reason_for_visit: "",
+    notes: "",
   });
 
   const [rescheduleForm, setRescheduleForm] = useState({
-    date: "",
-    time: "",
-    reason: "",
+    appointment_date: "",
+    appointment_time: "",
+    notes: "",
   });
 
-  const refreshAppointments = () => {
-    // Simulate API call
-    setAppointmentStats({
-      today: Math.floor(Math.random() * 20) + 5,
-      thisWeek: Math.floor(Math.random() * 60) + 30,
-      cancellations: Math.floor(Math.random() * 5),
-      noShows: Math.floor(Math.random() * 3),
-    });
-    showToast("Appointments refreshed!", "success");
+  const [cancelForm, setCancelForm] = useState({
+    cancellation_reason: "",
+  });
+
+  // Load appointments on mount
+  useEffect(() => {
+    if (currentUser?.clinic_id) {
+      getTodayAppointments(currentUser.clinic_id);
+      getPendingAppointments(currentUser.clinic_id);
+      getAppointmentsByClinic(currentUser.clinic_id);
+    }
+  }, [currentUser?.clinic_id]);
+
+  // Show error toast if there's an error
+  useEffect(() => {
+    if (error) {
+      showToast(error, "error");
+    }
+  }, [error]);
+
+  const refreshAppointments = async () => {
+    if (currentUser?.clinic_id) {
+      await getTodayAppointments(currentUser.clinic_id);
+      await getPendingAppointments(currentUser.clinic_id);
+      await getAppointmentsByClinic(currentUser.clinic_id);
+      showToast("Appointments refreshed!", "success");
+    }
   };
 
-  const handleAddAppointment = () => {
+  const handleAddAppointment = async () => {
     if (
-      !newAppointment.patientName ||
-      !newAppointment.date ||
-      !newAppointment.time
+      !newAppointment.patient_name ||
+      !newAppointment.appointment_date ||
+      !newAppointment.appointment_time
     ) {
       showToast("Please fill in required fields", "error");
       return;
     }
 
-    console.log("Creating appointment:", newAppointment);
-    setNewAppointmentModalOpen(false);
-    showToast(
-      `Appointment scheduled for ${newAppointment.patientName}!`,
-      "success"
-    );
-
-    // Reset form
-    setNewAppointment({
-      patientName: "",
-      patientId: "",
-      phone: "",
-      email: "",
-      date: "",
-      time: "",
-      type: "consultation",
-      doctor: "",
-      reason: "",
-      duration: "30",
+    const result = await bookAppointment({
+      ...newAppointment,
+      appointment_datetime: `${newAppointment.appointment_date} ${newAppointment.appointment_time}`,
     });
+
+    if (result.success) {
+      setNewAppointmentModalOpen(false);
+      showToast(
+        `Appointment scheduled for ${newAppointment.patient_name}!`,
+        "success"
+      );
+
+      // Reset form
+      setNewAppointment({
+        clinic_id: currentUser?.clinic_id || "",
+        patient_id: currentUser?.id || "",
+        patient_name: "",
+        patient_phone: "",
+        patient_email: "",
+        appointment_date: "",
+        appointment_time: "",
+        reason_for_visit: "",
+        notes: "",
+      });
+
+      // Refresh appointments
+      refreshAppointments();
+    } else {
+      showToast(result.error || "Failed to book appointment", "error");
+    }
   };
 
   const handleReschedule = (appointment) => {
     setSelectedAppointment(appointment);
     setRescheduleForm({
-      date: appointment.date || "",
-      time: appointment.time || "",
-      reason: "",
+      appointment_date: appointment.date || "",
+      appointment_time: appointment.time || "",
+      notes: "",
     });
     setRescheduleModalOpen(true);
   };
 
-  const confirmReschedule = () => {
-    console.log(
-      `Rescheduling appointment:`,
-      selectedAppointment,
-      rescheduleForm
-    );
-    setRescheduleModalOpen(false);
-    showToast(
-      `Appointment rescheduled for ${rescheduleForm.date} at ${rescheduleForm.time}!`,
-      "success"
-    );
+  const confirmReschedule = async () => {
+    if (!selectedAppointment?.id) return;
 
-    // Reset form
-    setRescheduleForm({
-      date: "",
-      time: "",
-      reason: "",
+    const result = await rescheduleAppointment(selectedAppointment.id, {
+      ...rescheduleForm,
+      appointment_datetime: `${rescheduleForm.appointment_date} ${rescheduleForm.appointment_time}`,
     });
-    setSelectedAppointment(null);
+
+    if (result.success) {
+      setRescheduleModalOpen(false);
+      showToast(
+        `Appointment rescheduled for ${rescheduleForm.appointment_date} at ${rescheduleForm.appointment_time}!`,
+        "success"
+      );
+
+      // Reset form
+      setRescheduleForm({
+        appointment_date: "",
+        appointment_time: "",
+        notes: "",
+      });
+      setSelectedAppointment(null);
+
+      // Refresh appointments
+      refreshAppointments();
+    } else {
+      showToast(result.error || "Failed to reschedule appointment", "error");
+    }
   };
 
   const handleCancelAppointment = (appointment) => {
@@ -178,14 +236,28 @@ const Appointments = () => {
     setCancelModalOpen(true);
   };
 
-  const confirmCancel = () => {
-    console.log(`Cancelling appointment:`, selectedAppointment);
-    setCancelModalOpen(false);
-    showToast(
-      `Appointment for ${selectedAppointment.patient} has been cancelled.`,
-      "warning"
-    );
-    setSelectedAppointment(null);
+  const confirmCancel = async () => {
+    if (!selectedAppointment?.id) return;
+
+    const result = await cancelAppointment(selectedAppointment.id, {
+      cancellation_reason: cancelForm.cancellation_reason,
+      cancelled_by: currentUser?.id,
+    });
+
+    if (result.success) {
+      setCancelModalOpen(false);
+      showToast(
+        `Appointment for ${selectedAppointment.patient} has been cancelled.`,
+        "warning"
+      );
+      setSelectedAppointment(null);
+      setCancelForm({ cancellation_reason: "" });
+
+      // Refresh appointments
+      refreshAppointments();
+    } else {
+      showToast(result.error || "Failed to cancel appointment", "error");
+    }
   };
 
   const exportAppointments = () => {
@@ -215,11 +287,11 @@ const Appointments = () => {
               </label>
               <input
                 type="text"
-                value={newAppointment.patientName}
+                value={newAppointment.patient_name}
                 onChange={(e) =>
                   setNewAppointment((prev) => ({
                     ...prev,
-                    patientName: e.target.value,
+                    patient_name: e.target.value,
                   }))
                 }
                 className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
