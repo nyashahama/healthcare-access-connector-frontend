@@ -11,6 +11,8 @@ export const useAppointment = () => {
   const [appointment, setAppointment] = useState(null);
   const [appointments, setAppointments] = useState([]);
   const [appointmentCount, setAppointmentCount] = useState(0);
+  const [todayAppointments, setTodayAppointments] = useState([]);
+  const [pendingAppointments, setPendingAppointments] = useState([]);
 
   // Appointment Operations
 
@@ -127,7 +129,7 @@ export const useAppointment = () => {
 
     try {
       const response = await appointmentService.getTodayAppointments(clinicId);
-      setAppointments(response.appointments || []);
+      setTodayAppointments(response.appointments || []);
       setLoading(false);
       return { success: true, data: response };
     } catch (err) {
@@ -149,7 +151,7 @@ export const useAppointment = () => {
       const response = await appointmentService.getPendingAppointments(
         clinicId
       );
-      setAppointments(response.appointments || []);
+      setPendingAppointments(response.appointments || []);
       setLoading(false);
       return { success: true, data: response };
     } catch (err) {
@@ -337,6 +339,8 @@ export const useAppointment = () => {
     setAppointment(null);
     setAppointments([]);
     setAppointmentCount(0);
+    setTodayAppointments([]);
+    setPendingAppointments([]);
     setError(null);
   }, []);
 
@@ -377,9 +381,13 @@ export const useAppointment = () => {
     appointment,
     appointments,
     appointmentCount,
+    todayAppointments,
+    pendingAppointments,
 
     // Derived State
     hasAppointment: !!appointment,
     hasAppointments: appointments.length > 0,
+    hasTodayAppointments: todayAppointments.length > 0,
+    hasPendingAppointments: pendingAppointments.length > 0,
   };
 };
