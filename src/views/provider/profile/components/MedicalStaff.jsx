@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   FaUserMd,
   FaUserNurse,
@@ -8,103 +8,106 @@ import {
   FaTrash,
 } from "react-icons/fa";
 import { MdEdit, MdVerified, MdWarning, MdCheckCircle } from "react-icons/md";
+import { useProvider } from "hooks/useProvider";
 import Card from "components/card";
 import Modal from "components/modal/Modal";
 import { useToast } from "hooks/useToast";
 
-const MedicalStaff = () => {
-  const [staffMembers, setStaffMembers] = useState([
-    {
-      id: 1,
-      name: "Dr. Michael Smith",
-      role: "General Practitioner",
-      specialization: "Family Medicine, Pediatrics",
-      status: "available",
-      avatar: "MS",
-      color: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
-      email: "m.smith@clinic.co.za",
-      phone: "+27 11 234 5678",
-      experience: "15 years",
-      qualifications: "MBChB, DipFamMed",
-    },
-    {
-      id: 2,
-      name: "Nurse Sarah Johnson",
-      role: "Registered Nurse",
-      specialization: "Immunizations, Wound Care",
-      status: "busy",
-      avatar: "SJ",
-      color:
-        "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
-      email: "s.johnson@clinic.co.za",
-      phone: "+27 11 234 5679",
-      experience: "8 years",
-      qualifications: "BSc Nursing, Advanced Practice",
-    },
-    {
-      id: 3,
-      name: "Dr. Thandi Nkosi",
-      role: "Pediatrician",
-      specialization: "Child Health, Vaccinations",
-      status: "available",
-      avatar: "TN",
-      color:
-        "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300",
-      email: "t.nkosi@clinic.co.za",
-      phone: "+27 11 234 5680",
-      experience: "12 years",
-      qualifications: "MBChB, FC Paed",
-    },
-    {
-      id: 4,
-      name: "Nurse David Brown",
-      role: "Clinic Manager",
-      specialization: "Chronic Disease Management",
-      status: "offline",
-      avatar: "DB",
-      color:
-        "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300",
-      email: "d.brown@clinic.co.za",
-      phone: "+27 11 234 5681",
-      experience: "10 years",
-      qualifications: "BAdmin, Nursing Diploma",
-    },
-  ]);
-
-  // Modal states
+const MedicalStaff = ({ clinicId }) => {
+  const {
+    listClinicStaff,
+    registerStaff,
+    updateStaff,
+    deleteStaff,
+    staffList,
+    loading,
+  } = useProvider();
+  const [staffMembers, setStaffMembers] = useState([]);
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState(null);
   const [staffForm, setStaffForm] = useState({
-    name: "",
-    role: "General Practitioner",
-    specialization: "",
+    first_name: "",
+    last_name: "",
     email: "",
-    phone: "",
-    experience: "",
-    qualifications: "",
+    phone_number: "",
+    role: "doctor",
+    specialization: "",
   });
 
   const { showToast } = useToast();
 
-  // Modal handlers
+  useEffect(() => {
+    const fetchStaff = async () => {
+      if (clinicId) {
+        const result = await listClinicStaff(clinicId);
+        if (result.success) {
+          setStaffMembers(result.data);
+        }
+      }
+    };
+
+    fetchStaff();
+  }, [clinicId, listClinicStaff]);
+
+  const getStatusColor = (status) => {
+    const colors = {
+      active:
+        "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
+      inactive: "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300",
+      on_leave:
+        "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300",
+    };
+    return colors[status] || colors.inactive;
+  };
+
+  const getRoleColor = (role) => {
+    const colors = {
+      doctor: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
+      nurse:
+        "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
+      specialist:
+        "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300",
+      admin:
+        "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300",
+    };
+    return colors[role] || colors.doctor;
+  };
+
+  const getInitials = (firstName, lastName) => {
+    return `${firstName?.charAt(0) || ""}${
+      lastName?.charAt(0) || ""
+    }`.toUpperCase();
+  };
+
   const handleViewStaff = (staff) => {
     setSelectedStaff(staff);
     setViewModalOpen(true);
   };
 
+  const handleAddStaff = () => {
+    setStaffForm({
+      first_name: "",
+      last_name: "",
+      email: "",
+      phone_number: "",
+      role: "doctor",
+      specialization: "",
+    });
+    setAddModalOpen(true);
+  };
+
   const handleEditStaff = (staff) => {
     setSelectedStaff(staff);
     setStaffForm({
-      name: staff.name,
-      role: staff.role,
-      specialization: staff.specialization,
-      email: staff.email,
-      phone: staff.phone,
-      experience: staff.experience,
-      qualifications: staff.qualifications,
+      first_name: staff.first_name || "",
+      last_name: staff.last_name || "",
+      email: staff.email || "",
+      phone_number: staff.phone_number || "",
+      role: staff.role || "doctor",
+      specialization: staff.specialization || "",
     });
     setEditModalOpen(true);
   };
@@ -114,63 +117,77 @@ const MedicalStaff = () => {
     setDeleteModalOpen(true);
   };
 
-  const handleAddClick = () => {
-    setStaffForm({
-      name: "",
-      role: "General Practitioner",
-      specialization: "",
-      email: "",
-      phone: "",
-      experience: "",
-      qualifications: "",
+  const handleSaveNewStaff = async () => {
+    if (!clinicId) return;
+
+    const result = await registerStaff({
+      clinic_id: clinicId,
+      ...staffForm,
     });
-    setAddModalOpen(true);
-  };
 
-  // Action confirmations
-  const confirmAdd = () => {
-    console.log("Adding staff member:", staffForm);
-    setAddModalOpen(false);
-    showToast("Staff member added successfully!", "success");
-  };
-
-  const confirmEdit = () => {
-    console.log(`Editing staff ${selectedStaff.id}`, staffForm);
-    setEditModalOpen(false);
-    showToast("Staff details updated successfully!", "success");
-  };
-
-  const confirmDelete = () => {
-    console.log(`Deleting staff ${selectedStaff.id}`);
-    setDeleteModalOpen(false);
-    showToast("Staff member removed successfully!", "error");
-  };
-
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case "available":
-        return <div className="h-2 w-2 rounded-full bg-green-500"></div>;
-      case "busy":
-        return <div className="h-2 w-2 rounded-full bg-yellow-500"></div>;
-      case "offline":
-        return <div className="h-2 w-2 rounded-full bg-gray-400"></div>;
-      default:
-        return <div className="h-2 w-2 rounded-full bg-gray-400"></div>;
+    if (result.success) {
+      setStaffMembers([...staffMembers, result.data]);
+      setAddModalOpen(false);
+      showToast("Staff member added successfully!", "success");
+    } else {
+      showToast("Failed to add staff member", "error");
     }
   };
 
-  const getStatusText = (status) => {
-    switch (status) {
-      case "available":
-        return "Available";
-      case "busy":
-        return "With Patient";
-      case "offline":
-        return "Offline";
-      default:
-        return "Unknown";
+  const handleUpdateStaff = async () => {
+    if (!selectedStaff?.staff_id) return;
+
+    const result = await updateStaff(selectedStaff.staff_id, staffForm);
+
+    if (result.success) {
+      setStaffMembers(
+        staffMembers.map((s) =>
+          s.staff_id === selectedStaff.staff_id ? result.data : s
+        )
+      );
+      setEditModalOpen(false);
+      showToast("Staff member updated successfully!", "success");
+    } else {
+      showToast("Failed to update staff member", "error");
     }
   };
+
+  const handleConfirmDelete = async () => {
+    if (!selectedStaff?.staff_id) return;
+
+    const result = await deleteStaff(selectedStaff.staff_id);
+
+    if (result.success) {
+      setStaffMembers(
+        staffMembers.filter((s) => s.staff_id !== selectedStaff.staff_id)
+      );
+      setDeleteModalOpen(false);
+      showToast("Staff member deleted successfully!", "success");
+    } else {
+      showToast("Failed to delete staff member", "error");
+    }
+  };
+
+  const displayStaff = staffMembers.length > 0 ? staffMembers : staffList;
+
+  if (loading && !displayStaff.length) {
+    return (
+      <Card extra={"w-full h-full p-6"}>
+        <div className="animate-pulse space-y-4">
+          <div className="h-6 w-1/3 rounded bg-gray-200 dark:bg-navy-700"></div>
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="flex items-center space-x-4">
+              <div className="h-16 w-16 rounded-full bg-gray-200 dark:bg-navy-700"></div>
+              <div className="flex-1 space-y-2">
+                <div className="h-4 w-3/4 rounded bg-gray-200 dark:bg-navy-700"></div>
+                <div className="h-3 w-1/2 rounded bg-gray-200 dark:bg-navy-700"></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <Card extra={"w-full h-full p-6"}>
@@ -179,351 +196,208 @@ const MedicalStaff = () => {
         isOpen={viewModalOpen}
         onClose={() => setViewModalOpen(false)}
         title="Staff Details"
-        size="lg"
+        size="md"
       >
         {selectedStaff && (
-          <div className="space-y-6">
-            <div className="flex items-start justify-between">
-              <div className="flex items-center">
-                <div
-                  className={`mr-4 flex h-16 w-16 items-center justify-center rounded-full ${selectedStaff.color}`}
-                >
-                  <span className="text-xl font-bold">
-                    {selectedStaff.avatar}
-                  </span>
-                </div>
-                <div>
-                  <h4 className="text-2xl font-bold text-navy-700 dark:text-white">
-                    {selectedStaff.name}
-                  </h4>
-                  <div className="flex items-center">
-                    <span className="font-medium text-brand-600 dark:text-brand-300">
-                      {selectedStaff.role}
-                    </span>
-                    <MdVerified className="ml-2 text-blue-500" />
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center">
-                {getStatusIcon(selectedStaff.status)}
-                <span className="ml-2 font-medium">
-                  {getStatusText(selectedStaff.status)}
+          <div className="space-y-4">
+            <div className="text-center">
+              <div
+                className={`mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full ${getRoleColor(
+                  selectedStaff.role
+                )}`}
+              >
+                <span className="text-2xl font-bold">
+                  {getInitials(
+                    selectedStaff.first_name,
+                    selectedStaff.last_name
+                  )}
                 </span>
               </div>
+              <h3 className="text-xl font-bold">
+                {selectedStaff.first_name} {selectedStaff.last_name}
+              </h3>
+              <p className="text-gray-600">{selectedStaff.role}</p>
             </div>
 
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="space-y-3">
               <div>
-                <h5 className="mb-2 text-sm font-medium text-gray-500">
-                  Contact Information
-                </h5>
-                <div className="space-y-2">
-                  <p className="text-gray-700 dark:text-gray-300">
-                    <strong>Email:</strong> {selectedStaff.email}
-                  </p>
-                  <p className="text-gray-700 dark:text-gray-300">
-                    <strong>Phone:</strong> {selectedStaff.phone}
-                  </p>
-                </div>
+                <p className="text-sm text-gray-600">Email</p>
+                <p className="font-medium">{selectedStaff.email || "N/A"}</p>
               </div>
               <div>
-                <h5 className="mb-2 text-sm font-medium text-gray-500">
-                  Professional Details
-                </h5>
-                <div className="space-y-2">
-                  <p className="text-gray-700 dark:text-gray-300">
-                    <strong>Experience:</strong> {selectedStaff.experience}
-                  </p>
-                  <p className="text-gray-700 dark:text-gray-300">
-                    <strong>Specialization:</strong>{" "}
-                    {selectedStaff.specialization}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <h5 className="mb-2 text-sm font-medium text-gray-500">
-                Qualifications
-              </h5>
-              <div className="rounded-lg bg-gray-50 p-3 dark:bg-navy-700">
-                <p className="text-gray-700 dark:text-gray-300">
-                  {selectedStaff.qualifications}
+                <p className="text-sm text-gray-600">Phone</p>
+                <p className="font-medium">
+                  {selectedStaff.phone_number || "N/A"}
                 </p>
               </div>
-            </div>
-
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setViewModalOpen(false)}
-                className="rounded-lg bg-brand-500 px-6 py-3 font-medium text-white hover:bg-brand-600"
-              >
-                Close
-              </button>
+              <div>
+                <p className="text-sm text-gray-600">Specialization</p>
+                <p className="font-medium">
+                  {selectedStaff.specialization || "N/A"}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Status</p>
+                <span
+                  className={`inline-block rounded-full px-3 py-1 text-xs font-medium ${getStatusColor(
+                    selectedStaff.status
+                  )}`}
+                >
+                  {selectedStaff.status || "active"}
+                </span>
+              </div>
             </div>
           </div>
         )}
       </Modal>
 
-      {/* Add Staff Modal */}
+      {/* Add/Edit Staff Modal */}
       <Modal
-        isOpen={addModalOpen}
-        onClose={() => setAddModalOpen(false)}
-        title="Add Staff Member"
+        isOpen={addModalOpen || editModalOpen}
+        onClose={() => {
+          setAddModalOpen(false);
+          setEditModalOpen(false);
+        }}
+        title={addModalOpen ? "Add New Staff Member" : "Edit Staff Member"}
         size="lg"
       >
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Full Name *
+              <label className="mb-2 block text-sm font-medium">
+                First Name *
               </label>
               <input
                 type="text"
-                value={staffForm.name}
+                value={staffForm.first_name}
                 onChange={(e) =>
-                  setStaffForm({ ...staffForm, name: e.target.value })
+                  setStaffForm({ ...staffForm, first_name: e.target.value })
                 }
-                className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
-                placeholder="Enter full name"
+                className="w-full rounded-lg border p-3 dark:border-gray-600 dark:bg-navy-700"
               />
             </div>
             <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Role *
-              </label>
-              <select
-                value={staffForm.role}
-                onChange={(e) =>
-                  setStaffForm({ ...staffForm, role: e.target.value })
-                }
-                className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
-              >
-                <option value="General Practitioner">
-                  General Practitioner
-                </option>
-                <option value="Registered Nurse">Registered Nurse</option>
-                <option value="Specialist">Specialist</option>
-                <option value="Clinic Manager">Clinic Manager</option>
-                <option value="Receptionist">Receptionist</option>
-              </select>
-            </div>
-            <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Specialization
+              <label className="mb-2 block text-sm font-medium">
+                Last Name *
               </label>
               <input
                 type="text"
-                value={staffForm.specialization}
+                value={staffForm.last_name}
                 onChange={(e) =>
-                  setStaffForm({ ...staffForm, specialization: e.target.value })
+                  setStaffForm({ ...staffForm, last_name: e.target.value })
                 }
-                className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
-                placeholder="E.g., Pediatrics, Surgery, etc."
-              />
-            </div>
-            <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Email *
-              </label>
-              <input
-                type="email"
-                value={staffForm.email}
-                onChange={(e) =>
-                  setStaffForm({ ...staffForm, email: e.target.value })
-                }
-                className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
-                placeholder="Enter email address"
-              />
-            </div>
-            <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Phone Number *
-              </label>
-              <input
-                type="tel"
-                value={staffForm.phone}
-                onChange={(e) =>
-                  setStaffForm({ ...staffForm, phone: e.target.value })
-                }
-                className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
-                placeholder="Enter phone number"
-              />
-            </div>
-            <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Years of Experience
-              </label>
-              <input
-                type="text"
-                value={staffForm.experience}
-                onChange={(e) =>
-                  setStaffForm({ ...staffForm, experience: e.target.value })
-                }
-                className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
-                placeholder="E.g., 5 years"
+                className="w-full rounded-lg border p-3 dark:border-gray-600 dark:bg-navy-700"
               />
             </div>
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-              Qualifications
-            </label>
-            <textarea
-              value={staffForm.qualifications}
+            <label className="mb-2 block text-sm font-medium">Email *</label>
+            <input
+              type="email"
+              value={staffForm.email}
               onChange={(e) =>
-                setStaffForm({ ...staffForm, qualifications: e.target.value })
+                setStaffForm({ ...staffForm, email: e.target.value })
               }
-              className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
-              rows="3"
-              placeholder="Enter degrees, certifications, etc."
+              className="w-full rounded-lg border p-3 dark:border-gray-600 dark:bg-navy-700"
+            />
+          </div>
+
+          <div>
+            <label className="mb-2 block text-sm font-medium">
+              Phone Number
+            </label>
+            <input
+              type="tel"
+              value={staffForm.phone_number}
+              onChange={(e) =>
+                setStaffForm({ ...staffForm, phone_number: e.target.value })
+              }
+              className="w-full rounded-lg border p-3 dark:border-gray-600 dark:bg-navy-700"
+            />
+          </div>
+
+          <div>
+            <label className="mb-2 block text-sm font-medium">Role *</label>
+            <select
+              value={staffForm.role}
+              onChange={(e) =>
+                setStaffForm({ ...staffForm, role: e.target.value })
+              }
+              className="w-full rounded-lg border p-3 dark:border-gray-600 dark:bg-navy-700"
+            >
+              <option value="doctor">Doctor</option>
+              <option value="nurse">Nurse</option>
+              <option value="specialist">Specialist</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="mb-2 block text-sm font-medium">
+              Specialization
+            </label>
+            <input
+              type="text"
+              value={staffForm.specialization}
+              onChange={(e) =>
+                setStaffForm({ ...staffForm, specialization: e.target.value })
+              }
+              className="w-full rounded-lg border p-3 dark:border-gray-600 dark:bg-navy-700"
+              placeholder="e.g., Family Medicine, Pediatrics"
             />
           </div>
 
           <div className="flex justify-end gap-3">
             <button
-              onClick={() => setAddModalOpen(false)}
-              className="rounded-lg border border-gray-300 px-6 py-3 font-medium hover:bg-gray-50 dark:border-gray-600"
+              onClick={() => {
+                setAddModalOpen(false);
+                setEditModalOpen(false);
+              }}
+              className="rounded-lg border px-6 py-3 font-medium"
             >
               Cancel
             </button>
             <button
-              onClick={confirmAdd}
-              className="flex items-center gap-2 rounded-lg bg-brand-500 px-6 py-3 font-medium text-white hover:bg-brand-600"
+              onClick={addModalOpen ? handleSaveNewStaff : handleUpdateStaff}
+              disabled={loading}
+              className="rounded-lg bg-green-500 px-6 py-3 font-medium text-white hover:bg-green-600"
             >
-              <FaUserPlus className="h-5 w-5" />
-              Add Staff
+              {loading
+                ? "Saving..."
+                : addModalOpen
+                ? "Add Staff"
+                : "Update Staff"}
             </button>
           </div>
         </div>
-      </Modal>
-
-      {/* Edit Staff Modal */}
-      <Modal
-        isOpen={editModalOpen}
-        onClose={() => setEditModalOpen(false)}
-        title="Edit Staff Member"
-        size="lg"
-      >
-        {selectedStaff && (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Full Name *
-                </label>
-                <input
-                  type="text"
-                  value={staffForm.name}
-                  onChange={(e) =>
-                    setStaffForm({ ...staffForm, name: e.target.value })
-                  }
-                  className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
-                />
-              </div>
-              <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Role *
-                </label>
-                <select
-                  value={staffForm.role}
-                  onChange={(e) =>
-                    setStaffForm({ ...staffForm, role: e.target.value })
-                  }
-                  className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
-                >
-                  <option value="General Practitioner">
-                    General Practitioner
-                  </option>
-                  <option value="Registered Nurse">Registered Nurse</option>
-                  <option value="Specialist">Specialist</option>
-                  <option value="Clinic Manager">Clinic Manager</option>
-                </select>
-              </div>
-              <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Specialization
-                </label>
-                <input
-                  type="text"
-                  value={staffForm.specialization}
-                  onChange={(e) =>
-                    setStaffForm({
-                      ...staffForm,
-                      specialization: e.target.value,
-                    })
-                  }
-                  className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
-                />
-              </div>
-              <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Email *
-                </label>
-                <input
-                  type="email"
-                  value={staffForm.email}
-                  onChange={(e) =>
-                    setStaffForm({ ...staffForm, email: e.target.value })
-                  }
-                  className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setEditModalOpen(false)}
-                className="rounded-lg border border-gray-300 px-6 py-3 font-medium hover:bg-gray-50 dark:border-gray-600"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={confirmEdit}
-                className="rounded-lg bg-green-500 px-6 py-3 font-medium text-white hover:bg-green-600"
-              >
-                Save Changes
-              </button>
-            </div>
-          </div>
-        )}
       </Modal>
 
       {/* Delete Confirmation Modal */}
       <Modal
         isOpen={deleteModalOpen}
         onClose={() => setDeleteModalOpen(false)}
-        title="Remove Staff Member"
-        size="md"
+        title="Delete Staff Member"
+        size="sm"
       >
-        <div className="space-y-6">
-          <div className="flex items-start">
-            <div className="mr-3 rounded-full bg-red-100 p-2 dark:bg-red-900">
-              <MdWarning className="h-6 w-6 text-red-600 dark:text-red-300" />
-            </div>
-            <div>
-              <h4 className="font-bold text-navy-700 dark:text-white">
-                Remove "{selectedStaff?.name}"?
-              </h4>
-              <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
-                This staff member will be removed from the clinic roster.
-              </p>
-            </div>
-          </div>
-
+        <div className="space-y-4">
+          <p className="text-gray-600">
+            Are you sure you want to delete {selectedStaff?.first_name}{" "}
+            {selectedStaff?.last_name}?
+          </p>
           <div className="flex justify-end gap-3">
             <button
               onClick={() => setDeleteModalOpen(false)}
-              className="rounded-lg border border-gray-300 px-6 py-3 font-medium hover:bg-gray-50 dark:border-gray-600"
+              className="rounded-lg border px-6 py-3 font-medium"
             >
               Cancel
             </button>
             <button
-              onClick={confirmDelete}
+              onClick={handleConfirmDelete}
+              disabled={loading}
               className="rounded-lg bg-red-500 px-6 py-3 font-medium text-white hover:bg-red-600"
             >
-              Remove Staff
+              {loading ? "Deleting..." : "Delete"}
             </button>
           </div>
         </div>
@@ -531,137 +405,89 @@ const MedicalStaff = () => {
 
       {/* Header */}
       <div className="mb-6 flex items-center justify-between">
-        <div className="flex items-center">
-          <FaUserMd className="mr-3 text-brand-500" />
-          <div>
-            <h4 className="text-xl font-bold text-navy-700 dark:text-white">
-              Medical Staff
-            </h4>
-            <p className="text-sm text-gray-600">
-              4 staff members • 2 available now
-            </p>
-          </div>
-        </div>
+        <h4 className="text-xl font-bold text-navy-700 dark:text-white">
+          Medical Staff
+        </h4>
         <button
-          onClick={handleAddClick}
-          className="flex items-center rounded-lg bg-brand-50 px-3 py-2 text-sm font-medium text-brand-600 hover:scale-105 hover:bg-brand-100 dark:bg-brand-900/30 dark:text-brand-300"
+          onClick={handleAddStaff}
+          className="flex items-center rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600"
         >
-          <FaUserPlus className="mr-2" />
+          <FaUserPlus className="mr-1" />
           Add Staff
         </button>
       </div>
 
       {/* Staff List */}
-      <div className="space-y-4">
-        {staffMembers.map((staff) => (
-          <div
-            key={staff.id}
-            className="flex items-center justify-between rounded-xl border border-gray-200 p-4 transition-all duration-300 hover:scale-[1.02] hover:bg-gray-50 dark:border-navy-600 dark:hover:bg-navy-700"
-          >
-            <div className="flex items-center">
-              <div
-                className={`mr-4 flex h-12 w-12 items-center justify-center rounded-full ${staff.color}`}
-              >
-                <span className="font-bold">{staff.avatar}</span>
-              </div>
-              <div>
-                <div className="flex items-center">
-                  <h5 className="font-bold text-navy-700 dark:text-white">
-                    {staff.name}
-                  </h5>
-                  <MdVerified className="ml-2 text-blue-500" />
+      <div className="space-y-3">
+        {displayStaff.length > 0 ? (
+          displayStaff.map((staff) => (
+            <div
+              key={staff.staff_id}
+              className="flex items-center justify-between rounded-lg border border-gray-200 p-4 transition-all hover:shadow-md dark:border-navy-600"
+            >
+              <div className="flex items-center space-x-4">
+                <div
+                  className={`flex h-14 w-14 items-center justify-center rounded-full ${getRoleColor(
+                    staff.role
+                  )}`}
+                >
+                  <span className="text-lg font-bold">
+                    {getInitials(staff.first_name, staff.last_name)}
+                  </span>
                 </div>
-                <p className="text-sm text-gray-600">{staff.role}</p>
-                <div className="mt-1 flex items-center">
-                  {staff.role.includes("Dr.") ? (
-                    <FaStethoscope className="mr-1 text-gray-400" />
-                  ) : (
-                    <FaUserNurse className="mr-1 text-gray-400" />
-                  )}
-                  <p className="text-xs text-gray-500">
-                    {staff.specialization}
+                <div>
+                  <h5 className="font-medium text-navy-700 dark:text-white">
+                    {staff.first_name} {staff.last_name}
+                  </h5>
+                  <p className="text-sm text-gray-600">
+                    {staff.role}{" "}
+                    {staff.specialization && `• ${staff.specialization}`}
                   </p>
                 </div>
               </div>
-            </div>
 
-            <div className="text-right">
-              <div className="flex items-center justify-end">
-                {getStatusIcon(staff.status)}
-                <span className="ml-2 text-sm font-medium">
-                  {getStatusText(staff.status)}
+              <div className="flex items-center space-x-2">
+                <span
+                  className={`rounded-full px-3 py-1 text-xs font-medium ${getStatusColor(
+                    staff.status
+                  )}`}
+                >
+                  {staff.status || "active"}
                 </span>
-              </div>
-              <div className="mt-2 flex items-center justify-end space-x-2">
+
                 <button
                   onClick={() => handleViewStaff(staff)}
-                  className="rounded-lg p-1 text-gray-600 hover:bg-gray-100 hover:text-gray-800 dark:text-gray-300"
-                  title="View Details"
+                  className="rounded-lg p-2 hover:bg-gray-100 dark:hover:bg-navy-700"
                 >
-                  <FaEye className="h-4 w-4" />
+                  <FaEye className="text-gray-600" />
                 </button>
                 <button
                   onClick={() => handleEditStaff(staff)}
-                  className="rounded-lg p-1 text-blue-600 hover:bg-blue-50 hover:text-blue-800 dark:text-blue-400"
-                  title="Edit"
+                  className="rounded-lg p-2 hover:bg-gray-100 dark:hover:bg-navy-700"
                 >
-                  <MdEdit className="h-4 w-4" />
+                  <MdEdit className="text-blue-600" />
                 </button>
                 <button
                   onClick={() => handleDeleteClick(staff)}
-                  className="rounded-lg p-1 text-red-600 hover:bg-red-50 hover:text-red-800 dark:text-red-400"
-                  title="Remove"
+                  className="rounded-lg p-2 hover:bg-gray-100 dark:hover:bg-navy-700"
                 >
-                  <FaTrash className="h-4 w-4" />
+                  <FaTrash className="text-red-600" />
                 </button>
               </div>
             </div>
+          ))
+        ) : (
+          <div className="py-12 text-center text-gray-500">
+            <FaUserMd className="mx-auto mb-4 text-5xl opacity-50" />
+            <p>No staff members added yet</p>
+            <button
+              onClick={handleAddStaff}
+              className="mt-4 text-brand-500 hover:text-brand-600"
+            >
+              Add your first staff member
+            </button>
           </div>
-        ))}
-      </div>
-
-      {/* Staff Schedule */}
-      <div className="mt-6 rounded-lg bg-blue-50 p-4 transition-all duration-300 hover:scale-[1.02] dark:bg-blue-900/20">
-        <div className="flex items-start">
-          <div className="mr-3 mt-1 flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-800">
-            <span className="text-sm font-bold text-blue-600 dark:text-blue-400">
-              !
-            </span>
-          </div>
-          <div>
-            <h5 className="font-bold text-blue-800 dark:text-blue-300">
-              Staff Schedule This Week
-            </h5>
-            <div className="mt-2 grid grid-cols-2 gap-2">
-              <div className="text-sm">
-                <p className="text-blue-700 dark:text-blue-400">Dr. Smith</p>
-                <p className="text-xs text-blue-600 dark:text-blue-500/80">
-                  Mon-Fri: 8AM-5PM
-                </p>
-              </div>
-              <div className="text-sm">
-                <p className="text-blue-700 dark:text-blue-400">
-                  Nurse Johnson
-                </p>
-                <p className="text-xs text-blue-600 dark:text-blue-500/80">
-                  Mon-Wed: 9AM-4PM
-                </p>
-              </div>
-              <div className="text-sm">
-                <p className="text-blue-700 dark:text-blue-400">Dr. Nkosi</p>
-                <p className="text-xs text-blue-600 dark:text-blue-500/80">
-                  Thu-Fri: 10AM-3PM
-                </p>
-              </div>
-              <div className="text-sm">
-                <p className="text-blue-700 dark:text-blue-400">Nurse Brown</p>
-                <p className="text-xs text-blue-600 dark:text-blue-500/80">
-                  Mon-Fri: 8AM-4PM
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
+        )}
       </div>
     </Card>
   );
