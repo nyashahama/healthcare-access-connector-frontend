@@ -19,6 +19,15 @@ const providerService = {
     return response.data;
   },
 
+  /**
+   * Get the current user's clinic
+   * @returns {Promise<Object>} Current user's clinic data
+   */
+  getMyClinic: async () => {
+    const response = await apiClient.get("/api/v1/providers/clinics/my-clinic");
+    return response.data;
+  },
+
   updateClinic: async (clinicId, data) => {
     const response = await apiClient.put(
       `/api/v1/providers/clinics/${clinicId}`,

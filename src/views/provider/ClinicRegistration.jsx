@@ -5,30 +5,33 @@ import { useToast } from "hooks/useToast";
 import { useProvider } from "hooks/useProvider";
 import { useAuth } from "hooks/useAuth";
 
+// ==================== UPDATED CONSTANTS TO MATCH BACKEND ====================
 const CLINIC_TYPES = [
   { value: "private_clinic", label: "Private Clinic" },
-  { value: "public_clinic", label: "Public Clinic" },
+  { value: "public_health_clinic", label: "Public Health Clinic" },
   { value: "community_health_center", label: "Community Health Center" },
-  { value: "hospital", label: "Hospital" },
-  { value: "specialized_clinic", label: "Specialized Clinic" },
+  { value: "mobile_clinic", label: "Mobile Clinic" },
 ];
 
 const OWNERSHIP_TYPES = [
-  { value: "private_partnership", label: "Private Partnership" },
-  { value: "sole_proprietor", label: "Sole Proprietor" },
+  { value: "private_practice", label: "Private Practice" },
   { value: "government", label: "Government" },
   { value: "ngo", label: "NGO" },
+  { value: "religious", label: "Religious Organization" },
   { value: "corporate", label: "Corporate" },
 ];
 
 const SERVICES = [
   { value: "general_practice", label: "General Practice" },
+  { value: "maternal_care", label: "Maternal Care" },
+  { value: "child_health", label: "Child Health" },
+  { value: "immunizations", label: "Immunizations" },
+  { value: "health_screenings", label: "Health Screenings" },
   { value: "pediatrics", label: "Pediatrics" },
   { value: "women_health", label: "Women's Health" },
   { value: "chronic_disease_management", label: "Chronic Disease Management" },
   { value: "minor_surgery", label: "Minor Surgery" },
   { value: "vaccinations", label: "Vaccinations" },
-  { value: "health_screenings", label: "Health Screenings" },
   { value: "dental", label: "Dental" },
   { value: "ophthalmology", label: "Ophthalmology" },
   { value: "physiotherapy", label: "Physiotherapy" },
@@ -36,6 +39,7 @@ const SERVICES = [
 
 const SPECIALTIES = [
   { value: "family_medicine", label: "Family Medicine" },
+  { value: "preventive_care", label: "Preventive Care" },
   { value: "internal_medicine", label: "Internal Medicine" },
   { value: "pediatrics", label: "Pediatrics" },
   { value: "obstetrics_gynecology", label: "Obstetrics & Gynecology" },
@@ -49,6 +53,7 @@ const FACILITIES = [
   { value: "parking", label: "Parking Available" },
   { value: "waiting_area", label: "Waiting Area" },
   { value: "consultation_rooms", label: "Consultation Rooms" },
+  { value: "vaccination_room", label: "Vaccination Room" },
   { value: "procedure_room", label: "Procedure Room" },
   { value: "pharmacy", label: "On-site Pharmacy" },
   { value: "laboratory", label: "Laboratory" },
@@ -152,7 +157,7 @@ const ClinicRegistration = () => {
     accepts_medical_aid: false,
     medical_aid_providers: "",
     payment_methods: [],
-    fee_structure: "medical_aid_rates",
+    fee_structure: "medical_aid_rates", // Kept as working example uses it
 
     // Accreditation
     accreditation_number: "",
@@ -438,7 +443,7 @@ const ClinicRegistration = () => {
                 <InputField
                   variant="auth"
                   label="Clinic Name *"
-                  placeholder="e.g., Johannesburg Medical Centre"
+                  placeholder="e.g., Cape Town Family Health Clinic"
                   name="clinic_name"
                   value={formData.clinic_name}
                   onChange={handleInputChange}
@@ -507,7 +512,7 @@ const ClinicRegistration = () => {
                 <InputField
                   variant="auth"
                   label="Year Established"
-                  placeholder="e.g., 2015"
+                  placeholder="e.g., 2012"
                   name="year_established"
                   type="number"
                   value={formData.year_established}
@@ -549,7 +554,7 @@ const ClinicRegistration = () => {
                     variant="auth"
                     label="Primary Phone *"
                     type="tel"
-                    placeholder="+27 11 789 4561"
+                    placeholder="+27 21 689 4521"
                     name="primary_phone"
                     value={formData.primary_phone}
                     onChange={handleInputChange}
@@ -561,7 +566,7 @@ const ClinicRegistration = () => {
                     variant="auth"
                     label="Secondary Phone"
                     type="tel"
-                    placeholder="+27 11 789 4562"
+                    placeholder="+27 21 689 4522"
                     name="secondary_phone"
                     value={formData.secondary_phone}
                     onChange={handleInputChange}
@@ -572,7 +577,7 @@ const ClinicRegistration = () => {
                     variant="auth"
                     label="Emergency Phone"
                     type="tel"
-                    placeholder="+27 11 789 4563"
+                    placeholder="+27 21 689 4523"
                     name="emergency_phone"
                     value={formData.emergency_phone}
                     onChange={handleInputChange}
@@ -592,7 +597,7 @@ const ClinicRegistration = () => {
                 <InputField
                   variant="auth"
                   label="Physical Address *"
-                  placeholder="123 Medical Street, Sandton"
+                  placeholder="45 Main Road, Claremont"
                   name="physical_address"
                   value={formData.physical_address}
                   onChange={handleInputChange}
@@ -604,7 +609,7 @@ const ClinicRegistration = () => {
                   <InputField
                     variant="auth"
                     label="City *"
-                    placeholder="Johannesburg"
+                    placeholder="Cape Town"
                     name="city"
                     value={formData.city}
                     onChange={handleInputChange}
@@ -636,7 +641,7 @@ const ClinicRegistration = () => {
                   <InputField
                     variant="auth"
                     label="Postal Code"
-                    placeholder="2196"
+                    placeholder="7708"
                     name="postal_code"
                     value={formData.postal_code}
                     onChange={handleInputChange}
@@ -661,7 +666,7 @@ const ClinicRegistration = () => {
                           handleOperatingHoursChange(day, e.target.value)
                         }
                         disabled={isLoading}
-                        placeholder="e.g., 08:00-18:00 or Closed"
+                        placeholder="e.g., 08:00-17:00 or Closed"
                         className="flex-1 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm text-navy-700 outline-none focus:border-brand-500 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
                       />
                     </div>
@@ -794,7 +799,7 @@ const ClinicRegistration = () => {
                     variant="auth"
                     label="Bed Count"
                     type="number"
-                    placeholder="e.g., 25"
+                    placeholder="e.g., 15"
                     name="bed_count"
                     value={formData.bed_count}
                     onChange={handleInputChange}
@@ -805,7 +810,7 @@ const ClinicRegistration = () => {
                     variant="auth"
                     label="Patient Capacity"
                     type="number"
-                    placeholder="e.g., 1500"
+                    placeholder="e.g., 1000"
                     name="patient_capacity"
                     value={formData.patient_capacity}
                     onChange={handleInputChange}
@@ -816,7 +821,7 @@ const ClinicRegistration = () => {
                     variant="auth"
                     label="Avg Wait Time (min)"
                     type="number"
-                    placeholder="e.g., 30"
+                    placeholder="e.g., 25"
                     name="average_wait_time_minutes"
                     value={formData.average_wait_time_minutes}
                     onChange={handleInputChange}
@@ -884,7 +889,7 @@ const ClinicRegistration = () => {
                   <InputField
                     variant="auth"
                     label="Medical Aid Providers (comma-separated)"
-                    placeholder="e.g., Discovery, Bonitas, Momentum"
+                    placeholder="e.g., Discovery, Bonitas, Fedhealth"
                     name="medical_aid_providers"
                     value={formData.medical_aid_providers}
                     onChange={handleInputChange}
@@ -900,7 +905,7 @@ const ClinicRegistration = () => {
                   <InputField
                     variant="auth"
                     label="Accreditation Number"
-                    placeholder="e.g., HPCSA-12345-2023"
+                    placeholder="e.g., HPCSA-22346-2024"
                     name="accreditation_number"
                     value={formData.accreditation_number}
                     onChange={handleInputChange}
@@ -936,7 +941,7 @@ const ClinicRegistration = () => {
                   <InputField
                     variant="auth"
                     label="Contact Person Name"
-                    placeholder="Dr. John Smith"
+                    placeholder="Dr. Nomsa Dlamini"
                     name="contact_person_name"
                     value={formData.contact_person_name}
                     onChange={handleInputChange}
@@ -946,7 +951,7 @@ const ClinicRegistration = () => {
                   <InputField
                     variant="auth"
                     label="Role/Title"
-                    placeholder="Practice Manager"
+                    placeholder="Clinic Director"
                     name="contact_person_role"
                     value={formData.contact_person_role}
                     onChange={handleInputChange}
@@ -959,7 +964,7 @@ const ClinicRegistration = () => {
                     variant="auth"
                     label="Contact Phone"
                     type="tel"
-                    placeholder="+27 82 123 4567"
+                    placeholder="+27 83 123 4567"
                     name="contact_person_phone"
                     value={formData.contact_person_phone}
                     onChange={handleInputChange}
@@ -970,7 +975,7 @@ const ClinicRegistration = () => {
                     variant="auth"
                     label="Contact Email"
                     type="email"
-                    placeholder="contact@clinic.co.za"
+                    placeholder="nomsa.dlamini@clinic.co.za"
                     name="contact_person_email"
                     value={formData.contact_person_email}
                     onChange={handleInputChange}

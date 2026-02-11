@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "hooks/useAuth";
+import providerService from "api/services/providerService";
 
 /**
  * ClinicRegistrationGuard
@@ -25,8 +26,17 @@ const ClinicRegistrationGuard = ({ children }) => {
     isPending: false,
   });
 
+  // Use ref to prevent multiple simultaneous checks
+  const isCheckingRef = useRef(false);
+  const hasCheckedRef = useRef(false);
+
   useEffect(() => {
     const checkClinicStatus = async () => {
+      // Prevent multiple simultaneous checks
+      if (isCheckingRef.current || hasCheckedRef.current) {
+        return;
+      }
+
       // Only clinic admins need to have a clinic registered
       if (user?.role !== "clinic_admin") {
         setClinicStatus({
@@ -35,42 +45,23 @@ const ClinicRegistrationGuard = ({ children }) => {
           isPending: false,
         });
         setIsLoading(false);
+        hasCheckedRef.current = true;
         return;
       }
 
+      isCheckingRef.current = true;
+
       try {
-        // Check if user has a clinic registered
-        const response = await fetch("/api/clinics/my-clinic", {
-          headers: {
-            Authorization: `Bearer ${user?.token}`,
-          },
-        });
+        const response = await providerService.getMyClinic();
 
-        if (response.ok) {
-          const data = await response.json();
-
-          if (data.clinic) {
-            setClinicStatus({
-              hasClinic: true,
-              isApproved: data.clinic.verification_status === "approved",
-              isPending: data.clinic.verification_status === "pending",
-            });
-          } else {
-            setClinicStatus({
-              hasClinic: false,
-              isApproved: false,
-              isPending: false,
-            });
-          }
-        } else if (response.status === 404) {
-          // No clinic found
+        if (response && response.clinic) {
           setClinicStatus({
-            hasClinic: false,
-            isApproved: false,
-            isPending: false,
+            hasClinic: true,
+            isApproved: response.clinic.verification_status === "approved",
+            isPending: response.clinic.verification_status === "pending",
           });
         } else {
-          console.error("Error checking clinic status");
+          // No clinic found
           setClinicStatus({
             hasClinic: false,
             isApproved: false,
@@ -78,23 +69,39 @@ const ClinicRegistrationGuard = ({ children }) => {
           });
         }
       } catch (error) {
-        console.error("Error checking clinic status:", error);
-        setClinicStatus({
-          hasClinic: false,
-          isApproved: false,
-          isPending: false,
-        });
+        // Check if it's a 404 error (no clinic found)
+        if (error.response?.status === 404) {
+          setClinicStatus({
+            hasClinic: false,
+            isApproved: false,
+            isPending: false,
+          });
+        } else {
+          // For other errors, fail open (allow access)
+          // This prevents blocking users due to temporary network issues
+          console.warn(
+            "Failing open due to error checking clinic status:",
+            error.message
+          );
+          setClinicStatus({
+            hasClinic: true,
+            isApproved: true,
+            isPending: false,
+          });
+        }
       } finally {
         setIsLoading(false);
+        isCheckingRef.current = false;
+        hasCheckedRef.current = true;
       }
     };
 
-    if (user) {
+    if (user && !hasCheckedRef.current) {
       checkClinicStatus();
-    } else {
+    } else if (!user) {
       setIsLoading(false);
     }
-  }, [user]);
+  }, [user?.id]); // Only depend on user ID, not entire user object
 
   // Show loading state
   if (isLoading) {
