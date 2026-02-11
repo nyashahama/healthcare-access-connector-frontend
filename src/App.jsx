@@ -10,6 +10,7 @@ import AdminLayout from "layouts/admin";
 import AuthLayout from "layouts/auth";
 import ToastContainer from "components/toast/ToastContainer";
 import ProfileCompletionGuard from "components/guards/ProfileCompletionGuard";
+import ClinicRegistrationGuard from "components/guards/ClinicRegistrationGuard";
 import ProtectedRoute from "components/guards/ProtectedRoute";
 import PublicRoute from "components/guards/PublicRoute";
 
@@ -51,9 +52,11 @@ const App = () => {
             path="provider/*"
             element={
               <ProtectedRoute
-                allowedRoles={["clinic_admin", "doctor", "nurse"]}
+                allowedRoles={["clinic_admin", "provider_staff", "caregiver"]}
               >
-                <ProviderLayout />
+                <ClinicRegistrationGuard>
+                  <ProviderLayout />
+                </ClinicRegistrationGuard>
               </ProtectedRoute>
             }
           />

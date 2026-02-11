@@ -28,6 +28,7 @@ import ProviderTelemedicine from "views/provider/telemedicine";
 import ProviderCommunityForum from "views/provider/community";
 import CreateProviderCommunityPost from "views/provider/community/CreateCommunityPost";
 import ProviderCommunityPost from "views/provider/community/CommunityPost";
+import ClinicRegistration from "views/provider/ClinicRegistration";
 
 // Admin Views
 import SystemDashboard from "views/admin/dashboard";
@@ -73,7 +74,7 @@ import {
   MdNotifications,
   MdForum,
 } from "react-icons/md";
-import { FaStethoscope } from "react-icons/fa";
+import { FaStethoscope, FaHospital } from "react-icons/fa";
 import CompletePatientProfile from "./views/auth/CompletePatientProfile";
 
 export const landingRoutes = [
@@ -221,7 +222,7 @@ export const providerRoutes = [
     path: "dashboard",
     icon: <MdHome className="h-6 w-6" />,
     component: <ProviderDashboard />,
-    roles: ["clinic_admin", "doctor"],
+    roles: ["clinic_admin", "provider_staff", "caregiver"],
   },
   {
     name: "Appointments",
@@ -229,7 +230,7 @@ export const providerRoutes = [
     path: "appointments",
     icon: <MdCalendarToday className="h-6 w-6" />,
     component: <AppointmentCalendar />,
-    roles: ["clinic_admin", "doctor"],
+    roles: ["clinic_admin", "provider_staff"],
   },
   {
     name: "Patient Queue",
@@ -238,7 +239,7 @@ export const providerRoutes = [
     icon: <MdGroups className="h-6 w-6" />,
     component: <PatientQueue />,
     secondary: true,
-    roles: ["clinic_admin", "doctor"],
+    roles: ["clinic_admin", "provider_staff"],
   },
   {
     name: "Clinic Management",
@@ -254,7 +255,7 @@ export const providerRoutes = [
     path: "telemedicine",
     icon: <MdChat className="h-6 w-6" />,
     component: <ProviderTelemedicine />,
-    roles: ["clinic_admin", "doctor", "nurse"],
+    roles: ["clinic_admin", "provider_staff", "caregiver"],
   },
   {
     name: "Staff Management",
@@ -270,7 +271,7 @@ export const providerRoutes = [
     path: "community",
     icon: <MdForum className="h-6 w-6" />,
     component: <ProviderCommunityForum />,
-    roles: ["clinic_admin", "doctor", "nurse"],
+    roles: ["clinic_admin", "provider_staff", "caregiver"],
   },
   {
     name: "View Post",
@@ -294,9 +295,18 @@ export const providerRoutes = [
     path: "profile",
     icon: <MdPerson className="h-6 w-6" />,
     component: <ProviderProfile />,
-    roles: ["clinic_admin", "doctor"],
+    roles: ["clinic_admin", "provider_staff", "caregiver"],
   },
   // Hidden routes
+  {
+    name: "Clinic Registration",
+    layout: "/provider",
+    path: "clinic-registration",
+    icon: <FaHospital className="h-6 w-6" />,
+    component: <ClinicRegistration />,
+    sidebar: false,
+    roles: ["clinic_admin"],
+  },
   {
     name: "Change Password",
     layout: "/provider",
@@ -356,14 +366,14 @@ export const authRoutes = [
     component: <SignIn />,
   },
   {
-    name: "Sign Up",
+    name: "Sign Up - Patient",
     layout: "/auth",
     path: "sign-up/patient",
     icon: <MdLock className="h-6 w-6" />,
     component: <PatientSignUp />,
   },
   {
-    name: "Sign Up",
+    name: "Sign Up - Provider",
     layout: "/auth",
     path: "sign-up/provider",
     icon: <MdLock className="h-6 w-6" />,
