@@ -1,7 +1,6 @@
 import React from "react";
 import { Navigate, useLocation } from "react-router-dom";
-import { useAuth } from "hooks/useAuth";
-
+import { useAuth } from "context/AuthContext";
 /**
  * ProtectedRoute component to guard routes that require authentication
  * @param {Object} props - Component props

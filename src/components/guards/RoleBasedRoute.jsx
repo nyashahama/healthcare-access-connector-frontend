@@ -1,7 +1,6 @@
 import React from "react";
 import { Navigate } from "react-router-dom";
-import { useAuth } from "hooks/useAuth";
-
+import { useAuth } from "context/AuthContext";
 /**
  * RoleBasedRoute component to guard routes based on user roles
  * @param {Object} props - Component props
