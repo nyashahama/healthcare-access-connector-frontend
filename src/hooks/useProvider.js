@@ -75,6 +75,26 @@ export const useProvider = () => {
     }
   }, []);
 
+  const getMyClinic = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await providerService.getMyClinic();
+      // Handle nested clinic data (response may be {clinic: {...}} or just {...})
+      const clinicData = response.clinic || response;
+      setClinic(clinicData);
+      setLoading(false);
+      return { success: true, data: clinicData };
+    } catch (err) {
+      const errorMessage =
+        err.response?.data?.error || "Failed to load your clinic";
+      setError(errorMessage);
+      setLoading(false);
+      return { success: false, error: errorMessage };
+    }
+  }, []);
+
   const updateClinic = useCallback(async (clinicId, data) => {
     setLoading(true);
     setError(null);
@@ -470,6 +490,7 @@ export const useProvider = () => {
     registerClinic,
     getClinic,
     getClinics,
+    getMyClinic,
     updateClinic,
     deleteClinic,
     verifyClinic,

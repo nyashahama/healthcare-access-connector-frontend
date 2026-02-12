@@ -117,6 +117,7 @@ const ProviderDashboard = () => {
         return <ClinicAdminDashboard clinicId={clinicId} />;
 
       case "manager":
+      case "clinic_admin":
         return <ManagerDashboard clinicId={clinicId} />;
 
       case "doctor":
