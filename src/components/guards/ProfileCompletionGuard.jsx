@@ -4,102 +4,116 @@ import patientService from "api/services/patientService";
 import { useAuth } from "context/AuthContext";
 
 /**
- * ProfileCompletionGuard
- * Checks if patient has completed their profile and redirects if not
- * This should wrap patient dashboard and other protected patient routes
+ * ProfileCompletionGuard - Shows modal instead of redirecting
+ * This prevents navigation loops
  */
 const ProfileCompletionGuard = ({ children, minCompletion = 50 }) => {
-  const [isChecking, setIsChecking] = useState(true);
-  const [isAllowed, setIsAllowed] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, loading: authLoading } = useAuth();
 
-  // Use refs to prevent multiple simultaneous checks
-  const isCheckingRef = useRef(false);
-  const lastCheckedUserIdRef = useRef(null);
-  const checkCountRef = useRef(0);
+  const [state, setState] = useState({
+    isChecking: true,
+    showModal: false,
+    completion: 0,
+  });
+
+  const hasCheckedRef = useRef(false);
 
   useEffect(() => {
-    const checkProfileCompletion = async () => {
-      // Skip if we're on the profile completion page
-      if (location.pathname === "/auth/complete-patient-profile") {
-        setIsAllowed(true);
-        setIsChecking(false);
-        return;
-      }
+    // Only check once
+    if (hasCheckedRef.current) return;
 
-      // Prevent multiple simultaneous checks
-      if (isCheckingRef.current) {
-        return;
-      }
-
-      // Only check for authenticated patient users
-      if (!isAuthenticated || !user || user.role !== "patient") {
-        setIsAllowed(true);
-        setIsChecking(false);
-        return;
-      }
-
-      // If we've already checked this user, skip
-      if (
-        lastCheckedUserIdRef.current === user.id &&
-        checkCountRef.current > 0
-      ) {
-        setIsChecking(false);
-        return;
-      }
-
-      isCheckingRef.current = true;
-      lastCheckedUserIdRef.current = user.id;
-      checkCountRef.current++;
-
-      try {
-        // Get patient profile
-        const profile = await patientService.getPatientProfileByUserId(user.id);
-        const completion = patientService.calculateProfileCompletion(profile);
-
-        if (completion < minCompletion) {
-          // Profile incomplete, redirect to complete profile
-          navigate("/auth/complete-patient-profile", { replace: true });
-          setIsAllowed(false);
-        } else {
-          // Profile complete enough
-          setIsAllowed(true);
-        }
-      } catch (error) {
-        // If 404, user has no profile - redirect to complete profile
-        if (error.response?.status === 404) {
-          navigate("/auth/complete-patient-profile", { replace: true });
-          setIsAllowed(false);
-        } else {
-          // For other errors, allow access (fail open)
-          console.error("Error checking profile completion:", error);
-          setIsAllowed(true);
-        }
-      } finally {
-        setIsChecking(false);
-        isCheckingRef.current = false;
-      }
-    };
-
-    // Reset check count when user changes
-    if (user?.id !== lastCheckedUserIdRef.current) {
-      checkCountRef.current = 0;
+    // Skip if on completion page
+    if (location.pathname === "/auth/complete-patient-profile") {
+      setState({ isChecking: false, showModal: false, completion: 100 });
+      hasCheckedRef.current = true;
+      return;
     }
 
-    checkProfileCompletion();
+    // Wait for auth
+    if (authLoading) return;
+
+    // Only for patients
+    if (!isAuthenticated || !user || user.role !== "patient") {
+      setState({ isChecking: false, showModal: false, completion: 100 });
+      hasCheckedRef.current = true;
+      return;
+    }
+
+    hasCheckedRef.current = true;
+
+    // Check cache
+    const cacheKey = `profile_check_${user.id}`;
+    const cached = localStorage.getItem(cacheKey);
+
+    if (cached) {
+      try {
+        const { completion, timestamp } = JSON.parse(cached);
+        if (Date.now() - timestamp < 60000) {
+          setState({
+            isChecking: false,
+            showModal: completion < minCompletion,
+            completion,
+          });
+          return;
+        }
+      } catch (e) {
+        // Invalid cache
+      }
+    }
+
+    // Fetch profile
+    patientService
+      .getPatientProfileByUserId(user.id)
+      .then((profile) => {
+        const completion = patientService.calculateProfileCompletion(profile);
+
+        localStorage.setItem(
+          cacheKey,
+          JSON.stringify({
+            completion,
+            timestamp: Date.now(),
+          })
+        );
+
+        setState({
+          isChecking: false,
+          showModal: completion < minCompletion,
+          completion,
+        });
+      })
+      .catch((error) => {
+        if (error.response?.status === 404) {
+          localStorage.setItem(
+            cacheKey,
+            JSON.stringify({
+              completion: 0,
+              timestamp: Date.now(),
+            })
+          );
+
+          setState({
+            isChecking: false,
+            showModal: true,
+            completion: 0,
+          });
+        } else {
+          console.error("Profile check error:", error);
+          setState({ isChecking: false, showModal: false, completion: 100 });
+        }
+      });
   }, [
-    navigate,
+    authLoading,
+    isAuthenticated,
     user?.id,
     user?.role,
-    isAuthenticated,
-    minCompletion,
     location.pathname,
+    minCompletion,
   ]);
 
-  // Show loading state while checking
-  if (isChecking) {
+  // Show loading
+  if (authLoading || state.isChecking) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-lightPrimary dark:bg-navy-900">
         <div className="text-center">
@@ -127,16 +141,71 @@ const ProfileCompletionGuard = ({ children, minCompletion = 50 }) => {
           <h3 className="text-lg font-semibold text-navy-700 dark:text-white">
             Loading Your Profile
           </h3>
-          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-            Please wait while we verify your information...
-          </p>
         </div>
       </div>
     );
   }
 
-  // Render children if allowed
-  return isAllowed ? children : null;
+  return (
+    <>
+      {children}
+
+      {/* Modal for incomplete profile */}
+      {state.showModal && (
+        <div className="bg-black fixed inset-0 z-50 flex items-center justify-center bg-opacity-50 p-4">
+          <div className="max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-navy-800">
+            <div className="mb-4 text-center">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-yellow-100">
+                <svg
+                  className="h-8 w-8 text-yellow-600"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                  />
+                </svg>
+              </div>
+              <h3 className="mb-2 text-xl font-bold text-navy-700 dark:text-white">
+                Complete Your Profile
+              </h3>
+              <p className="mb-1 text-sm text-gray-600 dark:text-gray-300">
+                Your profile is {state.completion}% complete
+              </p>
+              <p className="text-sm text-gray-600 dark:text-gray-300">
+                Please complete your profile to access all features
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <button
+                onClick={() => navigate("/auth/complete-patient-profile")}
+                className="w-full rounded-lg bg-brand-500 px-4 py-3 font-medium text-white hover:bg-brand-600"
+              >
+                Complete Profile Now
+              </button>
+              <button
+                onClick={() =>
+                  setState((prev) => ({ ...prev, showModal: false }))
+                }
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-navy-700"
+              >
+                Remind Me Later
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+};
+
+export const clearProfileCompletionCache = (userId) => {
+  localStorage.removeItem(`profile_check_${userId}`);
 };
 
 export default ProfileCompletionGuard;

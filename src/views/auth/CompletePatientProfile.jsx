@@ -164,6 +164,11 @@ const CompletePatientProfile = () => {
 
       if (result.success) {
         showToast("Profile completed successfully!", "success");
+
+        // Clear the profile completion cache so guard will re-check
+        const cacheKey = `profile_check_${user.id}`;
+        localStorage.removeItem(cacheKey);
+
         setTimeout(() => {
           navigate("/patient/dashboard");
         }, 1500);

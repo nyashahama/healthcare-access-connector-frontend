@@ -1,5 +1,5 @@
 import patientService from "api/services/patientService";
-import { useCallback, useState, useEffect } from "react";
+import { useCallback, useState } from "react";
 
 /**
  * Custom hook for patient operations
@@ -243,17 +243,8 @@ export const usePatient = () => {
     setError(null);
   }, []);
 
-  // Load current patient profile on hook initialization if user is authenticated
-  useEffect(() => {
-    const userStr = localStorage.getItem("user");
-    if (userStr) {
-      const user = JSON.parse(userStr);
-      // Load patient profile for current user
-      getPatientProfileByUserId(user.id).catch(() => {
-        // Silently fail - user might not have a patient profile yet
-      });
-    }
-  }, [getPatientProfileByUserId]);
+  // REMOVED: Auto-load useEffect that was causing infinite loops
+  // Components should manually call getCurrentPatientProfile when needed
 
   return {
     // Methods

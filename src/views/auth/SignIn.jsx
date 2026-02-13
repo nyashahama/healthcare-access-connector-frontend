@@ -5,7 +5,6 @@ import { FcGoogle } from "react-icons/fc";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { useToast } from "hooks/useToast";
 import { useAuth } from "context/AuthContext";
-import patientService from "api/services/patientService";
 import { getDashboardPath } from "utils/roleUtils";
 
 export default function SignIn() {
@@ -61,51 +60,12 @@ export default function SignIn() {
             localStorage.removeItem("rememberMe");
           }
 
-          // Check patient profile ONLY for patient role
-          if (user.role === "patient") {
-            try {
-              const patientRes = await patientService.getPatientProfileByUserId(
-                user.id
-              );
-              const completion =
-                patientService.calculateProfileCompletion(patientRes);
+          // IMPORTANT: Don't check patient profile here!
+          // Let ProfileCompletionGuard handle it to avoid duplicate checks
 
-              // If profile is less than 50% complete, redirect to complete profile
-              if (completion < 50) {
-                // Store where the user was trying to go (usually dashboard)
-                localStorage.setItem(
-                  "returnAfterProfile",
-                  "/patient/dashboard"
-                );
-                navigate("/auth/complete-patient-profile");
-                return;
-              }
-
-              // Profile is complete enough, go to dashboard
-              navigate("/patient/dashboard");
-              return;
-            } catch (err) {
-              // If 404 (no profile found), redirect to complete profile
-              if (err.response?.status === 404) {
-                localStorage.setItem(
-                  "returnAfterProfile",
-                  "/patient/dashboard"
-                );
-                navigate("/auth/complete-patient-profile");
-                return;
-              }
-              // For other errors, still allow access to dashboard
-              console.error("Error checking patient profile:", err);
-              navigate("/patient/dashboard");
-              return;
-            }
-          }
-
-          // Redirect based on user role from backend for non-patient users
-          const role = user.role;
-
-          // Use utility function to get the appropriate dashboard path
-          const dashboardPath = getDashboardPath(role);
+          // Simply navigate to the appropriate dashboard
+          // The guards will redirect if needed
+          const dashboardPath = getDashboardPath(user.role);
           navigate(dashboardPath);
         }
       } else {

@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import InputField from "components/fields/InputField";
 import { MdHealthAndSafety, MdLock, MdCheckCircle } from "react-icons/md";
 import { useToast } from "hooks/useToast";
-import { useAuth } from "hooks/useAuth";
+import { useAuth } from "context/AuthContext";
 
 const ResetPassword = () => {
   const [isLoading, setIsLoading] = useState(false);

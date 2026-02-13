@@ -11,7 +11,7 @@ import Modal from "components/modal/Modal";
 import { useToast } from "hooks/useToast";
 import { usePatient } from "hooks/usePatient";
 import { useAppointment } from "hooks/useAppointment";
-import { useAuth } from "hooks/useAuth";
+import { useAuth } from "context/AuthContext";
 
 const PatientDashboard = () => {
   const [modalState, setModalState] = useState({

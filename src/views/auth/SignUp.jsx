@@ -11,7 +11,7 @@ import {
 import { MdHealthAndSafety, MdArrowBack } from "react-icons/md";
 import Checkbox from "components/checkbox";
 import { useToast } from "hooks/useToast";
-import { useAuth } from "hooks/useAuth";
+import { useAuth } from "context/AuthContext";
 
 const SignUp = () => {
   const [step, setStep] = useState(1);

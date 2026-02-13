@@ -1,186 +1,184 @@
 import React, { useEffect, useState, useRef } from "react";
-import { Navigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "context/AuthContext";
 import providerService from "api/services/providerService";
 
 /**
- * ClinicRegistrationGuard
- *
- * This guard checks if a clinic_admin user has a registered clinic.
- * If they don't, they are redirected to the clinic registration page.
- * Other roles (provider_staff, caregiver) can access without a clinic.
- *
- * States:
- * - No clinic: Redirect to registration
- * - Clinic pending: Allow access with limited features
- * - Clinic approved: Full access
+ * ClinicRegistrationGuard - Shows modal instead of redirecting
  */
 const ClinicRegistrationGuard = ({ children }) => {
-  const { user, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+  const { user, isAuthenticated, loading: authLoading } = useAuth();
   const location = useLocation();
-  const [isLoading, setIsLoading] = useState(true);
-  const [clinicStatus, setClinicStatus] = useState({
-    hasClinic: false,
-    isApproved: false,
-    isPending: false,
+
+  const [state, setState] = useState({
+    isChecking: true,
+    showModal: false,
   });
 
-  // Use refs to prevent multiple simultaneous checks
-  const isCheckingRef = useRef(false);
-  const lastCheckedUserIdRef = useRef(null);
-  const checkCountRef = useRef(0);
+  const hasCheckedRef = useRef(false);
 
   useEffect(() => {
-    const checkClinicStatus = async () => {
-      // Skip if on clinic registration page
-      if (location.pathname === "/provider/clinic-registration") {
-        setClinicStatus({
-          hasClinic: true, // Allow access to registration page
-          isApproved: false,
-          isPending: false,
-        });
-        setIsLoading(false);
-        return;
-      }
+    if (hasCheckedRef.current) return;
 
-      // Prevent multiple simultaneous checks
-      if (isCheckingRef.current) {
-        return;
-      }
+    // Skip if on registration page
+    if (location.pathname === "/provider/clinic-registration") {
+      setState({ isChecking: false, showModal: false });
+      hasCheckedRef.current = true;
+      return;
+    }
 
-      // Only clinic admins need to have a clinic registered
-      if (!user || user.role !== "clinic_admin") {
-        setClinicStatus({
-          hasClinic: true,
-          isApproved: true,
-          isPending: false,
-        });
-        setIsLoading(false);
-        return;
-      }
+    if (authLoading) return;
 
-      // If we've already checked this user, skip
-      if (
-        lastCheckedUserIdRef.current === user.id &&
-        checkCountRef.current > 0
-      ) {
-        setIsLoading(false);
-        return;
-      }
+    // Only for clinic_admin
+    if (!user || user.role !== "clinic_admin") {
+      setState({ isChecking: false, showModal: false });
+      hasCheckedRef.current = true;
+      return;
+    }
 
-      isCheckingRef.current = true;
-      lastCheckedUserIdRef.current = user.id;
-      checkCountRef.current++;
+    hasCheckedRef.current = true;
 
+    // Check cache
+    const cacheKey = `clinic_check_${user.id}`;
+    const cached = localStorage.getItem(cacheKey);
+
+    if (cached) {
       try {
-        const response = await providerService.getMyClinic();
-
-        if (response && response.clinic) {
-          setClinicStatus({
-            hasClinic: true,
-            isApproved: response.clinic.verification_status === "approved",
-            isPending: response.clinic.verification_status === "pending",
+        const { hasClinic, timestamp } = JSON.parse(cached);
+        if (Date.now() - timestamp < 60000) {
+          setState({
+            isChecking: false,
+            showModal: !hasClinic,
           });
-        } else {
-          // No clinic found
-          setClinicStatus({
-            hasClinic: false,
-            isApproved: false,
-            isPending: false,
-          });
+          return;
         }
-      } catch (error) {
-        // Check if it's a 404 error (no clinic found)
-        if (error.response?.status === 404) {
-          setClinicStatus({
-            hasClinic: false,
-            isApproved: false,
-            isPending: false,
-          });
-        } else {
-          // For other errors, fail open (allow access)
-          // This prevents blocking users due to temporary network issues
-          console.warn(
-            "Failing open due to error checking clinic status:",
-            error.message
-          );
-          setClinicStatus({
-            hasClinic: true,
-            isApproved: true,
-            isPending: false,
-          });
-        }
-      } finally {
-        setIsLoading(false);
-        isCheckingRef.current = false;
+      } catch (e) {
+        // Invalid cache
       }
-    };
-
-    // Reset check count when user changes
-    if (user?.id !== lastCheckedUserIdRef.current) {
-      checkCountRef.current = 0;
     }
 
-    if (isAuthenticated && user) {
-      checkClinicStatus();
-    } else {
-      setIsLoading(false);
-    }
-  }, [user?.id, user?.role, isAuthenticated, location.pathname]);
+    // Fetch clinic
+    providerService
+      .getMyClinic()
+      .then((response) => {
+        const hasClinic = !!(response && (response.clinic || response.id));
 
-  // Show loading state
-  if (isLoading) {
+        localStorage.setItem(
+          cacheKey,
+          JSON.stringify({
+            hasClinic,
+            timestamp: Date.now(),
+          })
+        );
+
+        setState({
+          isChecking: false,
+          showModal: !hasClinic,
+        });
+      })
+      .catch((error) => {
+        if (error.response?.status === 404) {
+          localStorage.setItem(
+            cacheKey,
+            JSON.stringify({
+              hasClinic: false,
+              timestamp: Date.now(),
+            })
+          );
+
+          setState({
+            isChecking: false,
+            showModal: true,
+          });
+        } else {
+          console.warn("Clinic check error:", error.message);
+          setState({ isChecking: false, showModal: false });
+        }
+      });
+  }, [authLoading, isAuthenticated, user?.id, user?.role, location.pathname]);
+
+  // Show loading
+  if (authLoading || state.isChecking) {
     return (
-      <div className="flex h-screen items-center justify-center">
+      <div className="flex h-screen items-center justify-center bg-lightPrimary dark:bg-navy-900">
         <div className="text-center">
-          <svg
-            className="mx-auto h-12 w-12 animate-spin text-brand-500"
-            viewBox="0 0 24 24"
-          >
-            <circle
-              className="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              strokeWidth="4"
-              fill="none"
-            />
-            <path
-              className="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-            />
-          </svg>
-          <p className="mt-4 text-navy-700 dark:text-white">
-            Checking clinic status...
-          </p>
+          <div className="relative mx-auto mb-6 h-16 w-16">
+            <svg
+              className="h-full w-full animate-spin text-brand-500"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+                fill="none"
+              />
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              />
+            </svg>
+          </div>
+          <h3 className="text-lg font-semibold text-navy-700 dark:text-white">
+            Checking Clinic Status
+          </h3>
         </div>
       </div>
     );
   }
 
-  // If clinic admin without clinic, redirect to registration (unless already on that page)
-  if (
-    user?.role === "clinic_admin" &&
-    !clinicStatus.hasClinic &&
-    location.pathname !== "/provider/clinic-registration"
-  ) {
-    return <Navigate to="/provider/clinic-registration" replace />;
-  }
+  return (
+    <>
+      {children}
 
-  // If clinic is pending approval, show limited access notice on dashboard
-  if (
-    user?.role === "clinic_admin" &&
-    clinicStatus.isPending &&
-    location.pathname === "/provider/dashboard"
-  ) {
-    // Allow access but the dashboard will show the pending approval banner
-    return children;
-  }
+      {/* Modal for clinic registration */}
+      {state.showModal && (
+        <div className="bg-black fixed inset-0 z-50 flex items-center justify-center bg-opacity-50 p-4">
+          <div className="max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-navy-800">
+            <div className="mb-4 text-center">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-100">
+                <svg
+                  className="h-8 w-8 text-blue-600"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                  />
+                </svg>
+              </div>
+              <h3 className="mb-2 text-xl font-bold text-navy-700 dark:text-white">
+                Register Your Clinic
+              </h3>
+              <p className="text-sm text-gray-600 dark:text-gray-300">
+                Please register your clinic to access provider features
+              </p>
+            </div>
 
-  // Allow access
-  return children;
+            <button
+              onClick={() => navigate("/provider/clinic-registration")}
+              className="w-full rounded-lg bg-brand-500 px-4 py-3 font-medium text-white hover:bg-brand-600"
+            >
+              Register Clinic Now
+            </button>
+          </div>
+        </div>
+      )}
+    </>
+  );
+};
+
+export const clearClinicRegistrationCache = (userId) => {
+  localStorage.removeItem(`clinic_check_${userId}`);
 };
 
 export default ClinicRegistrationGuard;

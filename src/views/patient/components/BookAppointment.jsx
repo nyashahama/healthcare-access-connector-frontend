@@ -20,7 +20,7 @@ import Card from "components/card";
 import Modal from "components/modal/Modal";
 import { useToast } from "hooks/useToast";
 import { useAppointment } from "hooks/useAppointment";
-import { useAuth } from "hooks/useAuth";
+import { useAuth } from "context/AuthContext";
 import { usePatient } from "hooks/usePatient";
 
 const BookAppointment = () => {

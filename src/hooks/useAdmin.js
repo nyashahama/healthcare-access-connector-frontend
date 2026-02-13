@@ -1,5 +1,5 @@
 import adminService from "api/services/adminService";
-import { useCallback, useState, useEffect } from "react";
+import { useCallback, useState } from "react";
 
 /**
  * Custom hook for admin operations
@@ -294,25 +294,8 @@ export const useAdmin = () => {
     setError(null);
   }, []);
 
-  // Load current admin profile and permissions on hook initialization
-  useEffect(() => {
-    const loadAdminData = async () => {
-      const userStr = localStorage.getItem("user");
-      if (userStr) {
-        const user = JSON.parse(userStr);
-        if (user.role === "system_admin") {
-          // Load admin profile and permissions
-          try {
-            await getCurrentSystemAdminProfile();
-          } catch {
-            // Silently fail - user might not have admin profile yet
-          }
-        }
-      }
-    };
-
-    loadAdminData();
-  }, [getCurrentSystemAdminProfile]);
+  // REMOVED: Auto-load useEffect that was causing infinite loops
+  // Components should manually call getCurrentSystemAdminProfile when needed
 
   return {
     // Methods
