@@ -14,14 +14,11 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
     isAuthorized: false,
   });
 
-  const hasCheckedRef = useRef(false);
-
   useEffect(() => {
-    if (hasCheckedRef.current) return;
-
-    if (loading) return;
-
-    hasCheckedRef.current = true;
+    if (loading) {
+      setState({ isChecking: true, isAuthorized: false });
+      return;
+    }
 
     // Not authenticated - show login message
     if (!isAuthenticated || !user) {

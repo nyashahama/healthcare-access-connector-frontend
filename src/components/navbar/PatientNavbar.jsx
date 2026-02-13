@@ -10,19 +10,14 @@ import avatar from "assets/img/avatars/avatar4.png";
 import { FaUserInjured } from "react-icons/fa";
 
 import { usePatient } from "hooks/usePatient";
-import { useAuth } from "hooks/useAuth";
+import { useLogoutHandler } from "hooks/useLogoutHandler";
 
 const PatientNavbar = (props) => {
   const { onOpenSidenav, brandText } = props;
   const [darkmode, setDarkmode] = React.useState(false);
 
   const { patient } = usePatient();
-
-  const { logout, loading: logoutLoading } = useAuth();
-
-  const handleLogout = async () => {
-    await logout();
-  };
+  const { handleLogout } = useLogoutHandler();
 
   return (
     <nav className="sticky top-4 z-40 flex flex-row flex-wrap items-center justify-between rounded-xl bg-white/10 p-2 backdrop-blur-xl dark:bg-[#0b14374d]">
@@ -171,12 +166,9 @@ const PatientNavbar = (props) => {
                 {/* Updated Logout button */}
                 <button
                   onClick={handleLogout}
-                  disabled={logoutLoading}
-                  className={`mt-3 text-sm font-medium text-red-500 transition duration-150 ease-out hover:text-red-500 hover:ease-in ${
-                    logoutLoading ? "cursor-not-allowed opacity-50" : ""
-                  }`}
+                  className="mt-3 text-sm font-medium text-red-500 transition duration-150 ease-out hover:text-red-500 hover:ease-in"
                 >
-                  {logoutLoading ? "Logging out..." : "Log Out"}
+                  Log Out
                 </button>
               </div>
             </div>

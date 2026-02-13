@@ -19,9 +19,16 @@ const ProfileCompletionGuard = ({ children, minCompletion = 50 }) => {
   });
 
   const hasCheckedRef = useRef(false);
+  const checkedUserIdRef = useRef(null);
 
   useEffect(() => {
-    // Only check once
+    // Reset check if user changed (e.g., after logout/login)
+    if (user?.id !== checkedUserIdRef.current) {
+      hasCheckedRef.current = false;
+      checkedUserIdRef.current = user?.id;
+    }
+
+    // Only check once per user
     if (hasCheckedRef.current) return;
 
     // Skip if on completion page

@@ -7,17 +7,13 @@ import { FiSearch } from "react-icons/fi";
 import { RiMoonFill, RiSunFill } from "react-icons/ri";
 import { IoMdNotificationsOutline } from "react-icons/io";
 import { FaUserShield } from "react-icons/fa";
-import { useAuth } from "hooks/useAuth";
+import { useLogoutHandler } from "hooks/useLogoutHandler";
 
 const AdminNavbar = (props) => {
   const { onOpenSidenav, brandText } = props;
   const [darkmode, setDarkmode] = React.useState(false);
 
-  const { logout, loading: logoutLoading } = useAuth();
-
-  const handleLogout = async () => {
-    await logout();
-  };
+  const { handleLogout } = useLogoutHandler();
 
   return (
     <nav className="sticky top-4 z-40 flex flex-row flex-wrap items-center justify-between rounded-xl bg-white/10 p-2 backdrop-blur-xl dark:bg-[#0b14374d]">
@@ -163,12 +159,9 @@ const AdminNavbar = (props) => {
                 </Link>
                 <button
                   onClick={handleLogout}
-                  disabled={logoutLoading}
-                  className={`mt-3 text-sm font-medium text-red-500 transition duration-150 ease-out hover:text-red-500 hover:ease-in ${
-                    logoutLoading ? "cursor-not-allowed opacity-50" : ""
-                  }`}
+                  className="mt-3 text-sm font-medium text-red-500 transition duration-150 ease-out hover:text-red-500 hover:ease-in"
                 >
-                  {logoutLoading ? "Logging out..." : "Log Out"}
+                  Log Out
                 </button>
               </div>
             </div>

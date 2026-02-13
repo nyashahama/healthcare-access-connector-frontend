@@ -15,14 +15,11 @@ const PublicRoute = ({ children }) => {
     shouldBlock: false,
   });
 
-  const hasCheckedRef = useRef(false);
-
   useEffect(() => {
-    if (hasCheckedRef.current) return;
-
-    if (loading) return;
-
-    hasCheckedRef.current = true;
+    if (loading) {
+      setState({ isChecking: true, shouldBlock: false });
+      return;
+    }
 
     // Allow authenticated users to access profile completion page
     if (location.pathname === "/auth/complete-patient-profile") {
