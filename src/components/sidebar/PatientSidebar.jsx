@@ -2,11 +2,18 @@ import { HiX } from "react-icons/hi";
 import Links from "./components/Links";
 import SidebarCard from "components/sidebar/components/SidebarCard";
 import { patientRoutes } from "routes.js";
+import { useAuth } from "hooks/useAuth";
 
 const PatientSidebar = ({ open, onClose }) => {
+  const { getCurrentUser } = useAuth();
+  const user = getCurrentUser();
+  const userRole = user?.role;
+
+  // Only render for patient role
+  if (userRole !== "patient") return null;
+
   // Filter out routes that should not appear in sidebar
   const filteredRoutes = patientRoutes.filter((route) => {
-    // Show route if sidebar is not explicitly set to false
     return route.sidebar !== false;
   });
 

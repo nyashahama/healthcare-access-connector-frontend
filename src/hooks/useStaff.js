@@ -38,13 +38,11 @@ export const useStaff = () => {
   }, []);
 
   const getStaff = useCallback(async (staffId) => {
-    console.log("problems", staffId);
-
     setLoading(true);
     setError(null);
     try {
       const response = await staffService.getStaff(staffId);
-      console.log("problems", response);
+
       setStaff(response);
       setLoading(false);
       return { success: true, data: response };

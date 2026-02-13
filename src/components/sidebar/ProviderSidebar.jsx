@@ -2,12 +2,34 @@ import { HiX } from "react-icons/hi";
 import Links from "./components/Links";
 import SidebarCard from "components/sidebar/components/SidebarCard";
 import { providerRoutes } from "routes.js";
-
+import { useAuth } from "hooks/useAuth";
 const ProviderSidebar = ({ open, onClose }) => {
+  const { getCurrentUser } = useAuth();
+
+  const currentUser = getCurrentUser();
+
   const filteredRoutes = providerRoutes.filter((route) => {
-    // Show route if sidebar is not explicitly set to false
-    return route.sidebar !== false;
+    // 1. Skip routes marked as not in sidebar
+    if (route.sidebar === false) return false;
+
+    // 2. Check if route has role restrictions
+    if (route.roles) {
+      // Check if user has any of the required roles
+      const hasRequiredRole = route.roles.some(
+        (role) =>
+          currentUser?.role === role || currentUser?.roles?.includes(role)
+      );
+      if (!hasRequiredRole) return false;
+    }
+
+    // 3. Check specific email restrictions if they exist
+    if (route.allowedEmails) {
+      return route.allowedEmails.includes(currentUser?.email);
+    }
+
+    return true;
   });
+
   return (
     <div
       className={`sm:none duration-175 linear fixed !z-50 flex min-h-full w-[313px] flex-col bg-white pb-10 shadow-2xl shadow-white/5 transition-all dark:!bg-navy-800 dark:text-white md:!z-50 lg:!z-50 xl:!z-0 ${

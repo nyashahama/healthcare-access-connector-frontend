@@ -2,8 +2,19 @@ import { HiX } from "react-icons/hi";
 import Links from "./components/Links";
 import SidebarCard from "components/sidebar/components/SidebarCard";
 import { adminRoutes } from "routes.js";
+import { useAuth } from "hooks/useAuth";
 
 const AdminSidebar = ({ open, onClose }) => {
+  const { getCurrentUser } = useAuth();
+  const user = getCurrentUser();
+  const userRole = user?.role;
+
+  // Only render for system_admin
+  if (userRole !== "system_admin" || "ngo_partner") return null;
+
+  // Admin routes have no role restrictions; just hide those with sidebar: false
+  const filteredRoutes = adminRoutes.filter((route) => route.sidebar !== false);
+
   return (
     <div
       className={`sm:none duration-175 linear fixed !z-50 flex min-h-full w-[313px] flex-col bg-white pb-10 shadow-2xl shadow-white/5 transition-all dark:!bg-navy-800 dark:text-white md:!z-50 lg:!z-50 xl:!z-0 ${
@@ -26,7 +37,7 @@ const AdminSidebar = ({ open, onClose }) => {
 
       {/* Navigation Links */}
       <ul className="mb-auto pt-1">
-        <Links routes={adminRoutes} />
+        <Links routes={filteredRoutes} />
       </ul>
 
       {/* System Status Card */}

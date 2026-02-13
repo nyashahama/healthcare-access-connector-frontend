@@ -72,11 +72,9 @@ const StaffManagement = () => {
     const fetchClinic = async () => {
       setClinicLoading(true);
       const result = await getMyClinic();
-      console.log("Clinic fetch result:", result);
 
       if (result.success && result.data) {
         setClinicId(result.data.id);
-        console.log("Clinic ID set to:", result.data.id);
       }
       setClinicLoading(false);
     };
@@ -103,17 +101,15 @@ const StaffManagement = () => {
   // Load staff list when clinicId is available
   useEffect(() => {
     if (clinicId) {
-      console.log("Loading staff data for clinic:", clinicId);
       loadStaffData();
     }
   }, [clinicId]);
 
   const loadStaffData = async () => {
     if (!clinicId) {
-      console.log("No clinic ID available for loading staff");
       return;
     }
-    console.log("Loading staff for clinic:", clinicId);
+
     await listClinicStaff(clinicId);
     await getPendingInvitations(clinicId);
   };
@@ -153,7 +149,6 @@ const StaffManagement = () => {
       can_edit_clinic_info: inviteCanEditClinicInfo,
     };
 
-    console.log("Inviting staff to clinic:", clinicId, inviteData);
     const result = await inviteStaff(clinicId, inviteData);
 
     if (result.success) {
