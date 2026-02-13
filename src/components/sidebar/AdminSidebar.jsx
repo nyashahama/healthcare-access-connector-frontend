@@ -10,7 +10,7 @@ const AdminSidebar = ({ open, onClose }) => {
   const userRole = user?.role;
 
   // Only render for system_admin
-  if (userRole !== "system_admin" || "ngo_partner") return null;
+  if (userRole !== "system_admin") return null;
 
   // Admin routes have no role restrictions; just hide those with sidebar: false
   const filteredRoutes = adminRoutes.filter((route) => route.sidebar !== false);

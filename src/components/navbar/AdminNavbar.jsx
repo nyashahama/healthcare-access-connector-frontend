@@ -8,10 +8,15 @@ import { RiMoonFill, RiSunFill } from "react-icons/ri";
 import { IoMdNotificationsOutline } from "react-icons/io";
 import { FaUserShield } from "react-icons/fa";
 import { useLogoutHandler } from "hooks/useLogoutHandler";
+import { useStaff } from "hooks/useStaff";
 
 const AdminNavbar = (props) => {
   const { onOpenSidenav, brandText } = props;
   const [darkmode, setDarkmode] = React.useState(false);
+
+  const { staff } = useStaff();
+
+  console.log(staff);
 
   const { handleLogout } = useLogoutHandler();
 
