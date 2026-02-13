@@ -4,8 +4,9 @@ import InputField from "components/fields/InputField";
 import { FcGoogle } from "react-icons/fc";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { useToast } from "hooks/useToast";
-import { useAuth } from "hooks/useAuth";
+import { useAuth } from "context/AuthContext";
 import patientService from "api/services/patientService";
+import { getDashboardPath } from "utils/roleUtils";
 
 export default function SignIn() {
   const [credentials, setCredentials] = useState({
@@ -103,20 +104,9 @@ export default function SignIn() {
           // Redirect based on user role from backend for non-patient users
           const role = user.role;
 
-          switch (role) {
-            case "provider_staff":
-            case "doctor":
-            case "nurse":
-            case "caregiver":
-            case "clinic_admin":
-              navigate("/provider/dashboard");
-              break;
-            case "system_admin":
-              navigate("/admin/dashboard");
-              break;
-            default:
-              navigate("/patient/dashboard");
-          }
+          // Use utility function to get the appropriate dashboard path
+          const dashboardPath = getDashboardPath(role);
+          navigate(dashboardPath);
         }
       } else {
         showToast(result.error || "Login failed", "error");

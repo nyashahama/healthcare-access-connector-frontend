@@ -9,7 +9,7 @@ import {
   MdVerifiedUser,
 } from "react-icons/md";
 import { useToast } from "hooks/useToast";
-import { useAuth } from "hooks/useAuth";
+import { useAuth } from "context/AuthContext";
 
 const ForgotPassword = () => {
   const [step, setStep] = useState(1);

@@ -1,9 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import InputField from "components/fields/InputField";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { useToast } from "hooks/useToast";
-import { useAuth } from "hooks/useAuth";
+import { useAuth } from "context/AuthContext";
 
 const PROVIDER_ROLES = [
   {
@@ -29,11 +29,14 @@ const PROVIDER_ROLES = [
 const ProviderSignUp = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [registrationComplete, setRegistrationComplete] = useState(false);
+  const [registrationComplete, setRegistrationComplete] = useState(() => {
+    // Check sessionStorage on initial mount
+    return sessionStorage.getItem("providerRegistrationPending") === "true";
+  });
   const [formData, setFormData] = useState({
-    role: "",
+    role: sessionStorage.getItem("providerRole") || "",
     phone: "",
-    email: "",
+    email: sessionStorage.getItem("registeredEmail") || "",
     password: "",
     confirmPassword: "",
     popiaConsent: false,
@@ -42,6 +45,12 @@ const ProviderSignUp = () => {
   const navigate = useNavigate();
   const { showToast } = useToast();
   const { register, resendVerification } = useAuth();
+
+  // Debug mount/unmount
+  useEffect(() => {
+    console.log("ProviderSignUp mounted");
+    return () => console.log("ProviderSignUp unmounted");
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -128,11 +137,16 @@ const ProviderSignUp = () => {
       const result = await register(registrationData);
 
       if (result.success) {
+        // Store in sessionStorage to survive unmounts
+        sessionStorage.setItem("providerRegistrationPending", "true");
+        sessionStorage.setItem("registeredEmail", formData.email);
+        sessionStorage.setItem("providerRole", formData.role);
+
+        setRegistrationComplete(true);
         showToast(
           "Registration successful! Please check your email to verify your account.",
           "success"
         );
-        setRegistrationComplete(true);
       } else {
         showToast(result.error || "Registration failed", "error");
       }
@@ -144,8 +158,20 @@ const ProviderSignUp = () => {
     }
   };
 
+  // Clear sessionStorage when navigating away from success screen
+  const handleGoToSignIn = () => {
+    sessionStorage.removeItem("providerRegistrationPending");
+    sessionStorage.removeItem("registeredEmail");
+    sessionStorage.removeItem("providerRole");
+    navigate("/auth/sign-in");
+  };
+
   // Show success message after registration
   if (registrationComplete) {
+    const registeredEmail =
+      sessionStorage.getItem("registeredEmail") || formData.email;
+    const role = sessionStorage.getItem("providerRole") || formData.role;
+
     return (
       <div className="mb-16 mt-16 flex h-full w-full items-center justify-center px-2 md:mx-0 md:px-0 lg:mb-10 lg:items-center lg:justify-start">
         <div className="w-full max-w-2xl">
@@ -174,7 +200,7 @@ const ProviderSignUp = () => {
               <p className="mb-6 text-gray-600 dark:text-gray-300">
                 We've sent a verification email to{" "}
                 <span className="font-semibold text-brand-500">
-                  {formData.email}
+                  {registeredEmail}
                 </span>
               </p>
 
@@ -199,7 +225,7 @@ const ProviderSignUp = () => {
                     <span className="mr-2 font-bold">3.</span>
                     <span>Sign in with your credentials</span>
                   </li>
-                  {formData.role === "clinic_admin" && (
+                  {role === "clinic_admin" && (
                     <li className="flex items-start">
                       <span className="mr-2 font-bold">4.</span>
                       <span>
@@ -213,7 +239,7 @@ const ProviderSignUp = () => {
 
               <div className="space-y-3">
                 <button
-                  onClick={() => navigate("/auth/sign-in")}
+                  onClick={handleGoToSignIn}
                   className="w-full rounded-xl bg-brand-500 py-3 text-white hover:bg-brand-600"
                 >
                   Go to Sign In
@@ -223,7 +249,7 @@ const ProviderSignUp = () => {
                   Didn't receive the email?{" "}
                   <button
                     onClick={async () => {
-                      const result = await resendVerification(formData.email);
+                      const result = await resendVerification(registeredEmail);
                       if (result.success) {
                         showToast("Verification email resent!", "success");
                       } else {

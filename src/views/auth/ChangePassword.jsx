@@ -4,7 +4,7 @@ import InputField from "components/fields/InputField";
 import { FaLock, FaEye, FaEyeSlash } from "react-icons/fa";
 import { MdHealthAndSafety } from "react-icons/md";
 import { useToast } from "hooks/useToast";
-import { useAuth } from "hooks/useAuth";
+import { useAuth } from "context/AuthContext";
 
 const ChangePassword = () => {
   const [isLoading, setIsLoading] = useState(false);

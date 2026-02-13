@@ -18,7 +18,7 @@ import Card from "components/card";
 import Modal from "components/modal/Modal";
 import { useToast } from "hooks/useToast";
 import { useStaff } from "hooks/useStaff";
-import { useAuth } from "hooks/useAuth";
+import { useAuth } from "context/AuthContext";
 import { useProvider } from "hooks/useProvider";
 
 const StaffManagement = () => {

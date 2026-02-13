@@ -1,16 +1,20 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import InputField from "components/fields/InputField";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { useToast } from "hooks/useToast";
-import { useAuth } from "hooks/useAuth";
+import { useAuth } from "context/AuthContext";
 
 const PatientSignUp = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [registrationComplete, setRegistrationComplete] = useState(() => {
+    // Check sessionStorage on initial mount
+    return sessionStorage.getItem("patientRegistrationPending") === "true";
+  });
   const [formData, setFormData] = useState({
     phone: "",
-    email: "",
+    email: sessionStorage.getItem("registeredEmail") || "",
     password: "",
     confirmPassword: "",
     popiaConsent: false,
@@ -18,7 +22,13 @@ const PatientSignUp = () => {
 
   const navigate = useNavigate();
   const { showToast } = useToast();
-  const { register, login } = useAuth();
+  const { register, resendVerification } = useAuth();
+
+  // Debug mount/unmount
+  useEffect(() => {
+    console.log("PatientSignUp mounted");
+    return () => console.log("PatientSignUp unmounted");
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -41,8 +51,8 @@ const PatientSignUp = () => {
       return false;
     }
 
-    // Email validation (optional)
-    if (formData.email && !/\S+@\S+\.\S+/.test(formData.email)) {
+    // Email validation (required)
+    if (!formData.email || !/\S+@\S+\.\S+/.test(formData.email)) {
       showToast("Please enter a valid email address", "warning");
       return false;
     }
@@ -90,7 +100,7 @@ const PatientSignUp = () => {
     try {
       const registrationData = {
         phone: formData.phone,
-        email: formData.email || undefined,
+        email: formData.email,
         password: formData.password,
         role: "patient",
         popiaConsent: formData.popiaConsent,
@@ -99,17 +109,15 @@ const PatientSignUp = () => {
       const result = await register(registrationData);
 
       if (result.success) {
-        showToast("Account created successfully! Logging you in...", "success");
+        // Store in sessionStorage to survive unmounts
+        sessionStorage.setItem("patientRegistrationPending", "true");
+        sessionStorage.setItem("registeredEmail", formData.email);
 
-        // Auto-login after registration
-        const loginResult = await login({
-          identifier: formData.phone,
-          password: formData.password,
-        });
-
-        if (loginResult.success) {
-          navigate("/auth/complete-patient-profile");
-        }
+        setRegistrationComplete(true);
+        showToast(
+          "Registration successful! Please check your email to verify your account.",
+          "success"
+        );
       } else {
         showToast(result.error || "Registration failed", "error");
       }
@@ -120,6 +128,106 @@ const PatientSignUp = () => {
       setIsLoading(false);
     }
   };
+
+  // Clear sessionStorage when navigating away from success screen
+  const handleGoToSignIn = () => {
+    sessionStorage.removeItem("patientRegistrationPending");
+    sessionStorage.removeItem("registeredEmail");
+    navigate("/auth/sign-in");
+  };
+
+  // Show success message after registration
+  if (registrationComplete) {
+    const registeredEmail =
+      sessionStorage.getItem("registeredEmail") || formData.email;
+
+    return (
+      <div className="mb-16 mt-16 flex h-full w-full items-center justify-center px-2 md:mx-0 md:px-0 lg:mb-10 lg:items-center lg:justify-start">
+        <div className="w-full max-w-2xl">
+          <div className="rounded-2xl bg-white p-8 shadow-xl dark:bg-navy-800">
+            <div className="text-center">
+              <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/20">
+                <svg
+                  className="h-10 w-10 text-green-600 dark:text-green-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+              </div>
+
+              <h2 className="mb-3 text-2xl font-bold text-navy-700 dark:text-white">
+                Registration Successful!
+              </h2>
+
+              <p className="mb-6 text-gray-600 dark:text-gray-300">
+                We've sent a verification email to{" "}
+                <span className="font-semibold text-brand-500">
+                  {registeredEmail}
+                </span>
+              </p>
+
+              <div className="mb-8 rounded-lg bg-blue-50 p-4 dark:bg-blue-900/20">
+                <h3 className="mb-2 font-semibold text-blue-900 dark:text-blue-100">
+                  Next Steps:
+                </h3>
+                <ol className="space-y-2 text-left text-sm text-blue-800 dark:text-blue-200">
+                  <li className="flex items-start">
+                    <span className="mr-2 font-bold">1.</span>
+                    <span>
+                      Check your email inbox for the verification link
+                    </span>
+                  </li>
+                  <li className="flex items-start">
+                    <span className="mr-2 font-bold">2.</span>
+                    <span>
+                      Click the verification link to activate your account
+                    </span>
+                  </li>
+                  <li className="flex items-start">
+                    <span className="mr-2 font-bold">3.</span>
+                    <span>Sign in with your credentials</span>
+                  </li>
+                </ol>
+              </div>
+
+              <div className="space-y-3">
+                <button
+                  onClick={handleGoToSignIn}
+                  className="w-full rounded-xl bg-brand-500 py-3 text-white hover:bg-brand-600"
+                >
+                  Go to Sign In
+                </button>
+
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Didn't receive the email?{" "}
+                  <button
+                    onClick={async () => {
+                      const result = await resendVerification(registeredEmail);
+                      if (result.success) {
+                        showToast("Verification email resent!", "success");
+                      } else {
+                        showToast("Failed to resend email", "error");
+                      }
+                    }}
+                    className="font-medium text-brand-500 hover:text-brand-600"
+                  >
+                    Resend verification email
+                  </button>
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mb-16 mt-16 flex h-full w-full items-center justify-center px-2 md:mx-0 md:px-0 lg:mb-10 lg:items-center lg:justify-start">
@@ -137,7 +245,7 @@ const PatientSignUp = () => {
         {/* Main Card */}
         <div className="rounded-2xl bg-white p-6 shadow-xl dark:bg-navy-800">
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Email  */}
+            {/* Email - Required */}
             <InputField
               variant="auth"
               label="Email Address *"
@@ -147,6 +255,7 @@ const PatientSignUp = () => {
               value={formData.email}
               onChange={handleInputChange}
               type="email"
+              required
               disabled={isLoading}
             />
 

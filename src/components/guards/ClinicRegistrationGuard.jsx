@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { Navigate, useLocation } from "react-router-dom";
-import { useAuth } from "hooks/useAuth";
+import { useAuth } from "context/AuthContext";
 import providerService from "api/services/providerService";
 
 /**
@@ -16,8 +16,7 @@ import providerService from "api/services/providerService";
  * - Clinic approved: Full access
  */
 const ClinicRegistrationGuard = ({ children }) => {
-  const { getCurrentUser } = useAuth();
-  const user = getCurrentUser();
+  const { user, isAuthenticated } = useAuth();
   const location = useLocation();
   const [isLoading, setIsLoading] = useState(true);
   const [clinicStatus, setClinicStatus] = useState({
@@ -26,30 +25,52 @@ const ClinicRegistrationGuard = ({ children }) => {
     isPending: false,
   });
 
-  // Use ref to prevent multiple simultaneous checks
+  // Use refs to prevent multiple simultaneous checks
   const isCheckingRef = useRef(false);
-  const hasCheckedRef = useRef(false);
+  const lastCheckedUserIdRef = useRef(null);
+  const checkCountRef = useRef(0);
 
   useEffect(() => {
     const checkClinicStatus = async () => {
+      // Skip if on clinic registration page
+      if (location.pathname === "/provider/clinic-registration") {
+        setClinicStatus({
+          hasClinic: true, // Allow access to registration page
+          isApproved: false,
+          isPending: false,
+        });
+        setIsLoading(false);
+        return;
+      }
+
       // Prevent multiple simultaneous checks
-      if (isCheckingRef.current || hasCheckedRef.current) {
+      if (isCheckingRef.current) {
         return;
       }
 
       // Only clinic admins need to have a clinic registered
-      if (user?.role !== "clinic_admin") {
+      if (!user || user.role !== "clinic_admin") {
         setClinicStatus({
           hasClinic: true,
           isApproved: true,
           isPending: false,
         });
         setIsLoading(false);
-        hasCheckedRef.current = true;
+        return;
+      }
+
+      // If we've already checked this user, skip
+      if (
+        lastCheckedUserIdRef.current === user.id &&
+        checkCountRef.current > 0
+      ) {
+        setIsLoading(false);
         return;
       }
 
       isCheckingRef.current = true;
+      lastCheckedUserIdRef.current = user.id;
+      checkCountRef.current++;
 
       try {
         const response = await providerService.getMyClinic();
@@ -92,16 +113,20 @@ const ClinicRegistrationGuard = ({ children }) => {
       } finally {
         setIsLoading(false);
         isCheckingRef.current = false;
-        hasCheckedRef.current = true;
       }
     };
 
-    if (user && !hasCheckedRef.current) {
+    // Reset check count when user changes
+    if (user?.id !== lastCheckedUserIdRef.current) {
+      checkCountRef.current = 0;
+    }
+
+    if (isAuthenticated && user) {
       checkClinicStatus();
-    } else if (!user) {
+    } else {
       setIsLoading(false);
     }
-  }, [user?.id]); // Only depend on user ID, not entire user object
+  }, [user?.id, user?.role, isAuthenticated, location.pathname]);
 
   // Show loading state
   if (isLoading) {

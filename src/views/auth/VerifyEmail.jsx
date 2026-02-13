@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { MdHealthAndSafety, MdCheckCircle, MdError } from "react-icons/md";
 import { useToast } from "hooks/useToast";
-import { useAuth } from "hooks/useAuth";
+import { useAuth } from "context/AuthContext";
 
 const VerifyEmail = () => {
   const [status, setStatus] = useState("verifying"); // verifying, success, error

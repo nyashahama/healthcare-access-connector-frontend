@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "context/AuthContext";
+
 /**
  * PublicRoute component for routes that should only be accessible when NOT authenticated
  * (e.g., sign-in, sign-up pages)
@@ -9,9 +10,17 @@ import { useAuth } from "context/AuthContext";
  */
 const PublicRoute = ({ children }) => {
   const { isAuthenticated, user, loading } = useAuth();
+  const [shouldRender, setShouldRender] = useState(false);
+
+  // Re-evaluate authentication whenever auth state changes
+  useEffect(() => {
+    if (!loading) {
+      setShouldRender(true);
+    }
+  }, [loading, isAuthenticated, user?.id]);
 
   // Show loading spinner while checking authentication
-  if (loading) {
+  if (loading || !shouldRender) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-lightPrimary dark:bg-navy-900">
         <div className="text-center">

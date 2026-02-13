@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "context/AuthContext";
+
 /**
  * ProtectedRoute component to guard routes that require authentication
  * @param {Object} props - Component props
@@ -15,9 +16,17 @@ const ProtectedRoute = ({
 }) => {
   const { isAuthenticated, user, loading } = useAuth();
   const location = useLocation();
+  const [shouldRender, setShouldRender] = useState(false);
+
+  // Re-evaluate authentication whenever auth state changes
+  useEffect(() => {
+    if (!loading) {
+      setShouldRender(true);
+    }
+  }, [loading, isAuthenticated, user?.id, user?.role]);
 
   // Show loading spinner while checking authentication
-  if (loading) {
+  if (loading || !shouldRender) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-lightPrimary dark:bg-navy-900">
         <div className="text-center">
@@ -54,13 +63,13 @@ const ProtectedRoute = ({
   }
 
   // Check if user is authenticated
-  if (!isAuthenticated) {
+  if (!isAuthenticated || !user) {
     // Redirect to sign-in page and preserve the intended destination
     return <Navigate to={redirectTo} state={{ from: location }} replace />;
   }
 
   // If roles are specified, check if user has the required role
-  if (allowedRoles.length > 0 && user) {
+  if (allowedRoles.length > 0) {
     const userRole = user.role;
 
     if (!allowedRoles.includes(userRole)) {
