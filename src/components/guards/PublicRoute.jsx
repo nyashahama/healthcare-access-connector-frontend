@@ -1,11 +1,14 @@
 import React, { useEffect, useState, useRef } from "react";
+import { useLocation } from "react-router-dom";
 import { useAuth } from "context/AuthContext";
 
 /**
  * PublicRoute - Shows message for authenticated users
+ * Exception: Allows authenticated patients to access profile completion
  */
 const PublicRoute = ({ children }) => {
   const { isAuthenticated, user, loading } = useAuth();
+  const location = useLocation();
 
   const [state, setState] = useState({
     isChecking: true,
@@ -21,6 +24,12 @@ const PublicRoute = ({ children }) => {
 
     hasCheckedRef.current = true;
 
+    // Allow authenticated users to access profile completion page
+    if (location.pathname === "/auth/complete-patient-profile") {
+      setState({ isChecking: false, shouldBlock: false });
+      return;
+    }
+
     // Block if authenticated
     if (isAuthenticated && user) {
       setState({ isChecking: false, shouldBlock: true });
@@ -29,7 +38,7 @@ const PublicRoute = ({ children }) => {
 
     // Allow access
     setState({ isChecking: false, shouldBlock: false });
-  }, [loading, isAuthenticated, user?.id]);
+  }, [loading, isAuthenticated, user?.id, location.pathname]);
 
   // Show loading
   if (loading || state.isChecking) {
