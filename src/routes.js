@@ -263,7 +263,7 @@ export const providerRoutes = [
     path: "staff",
     icon: <MdPeople className="h-6 w-6" />,
     component: <StaffManagement />,
-    roles: ["clinic_admin"],
+    roles: ["clinic_admin", "provider_staff", "caregiver"],
   },
   {
     name: "Professional Forum",
