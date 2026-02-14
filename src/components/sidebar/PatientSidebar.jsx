@@ -2,7 +2,7 @@ import { HiX } from "react-icons/hi";
 import Links from "./components/Links";
 import SidebarCard from "components/sidebar/components/SidebarCard";
 import { patientRoutes } from "routes.js";
-import { useAuth } from "hooks/useAuth";
+import { useAuth } from "context/AuthContext";
 
 const PatientSidebar = ({ open, onClose }) => {
   const { getCurrentUser } = useAuth();

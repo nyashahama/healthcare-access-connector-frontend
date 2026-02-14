@@ -19,13 +19,12 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
       setState({ isChecking: true, isAuthorized: false });
       return;
     }
-    console.log("user woah", user);
+
     // Not authenticated - show login message
     if (!isAuthenticated || !user) {
       setState({ isChecking: false, isAuthorized: false });
       return;
     }
-    console.log("state in here", state);
 
     // Check roles
     if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
@@ -72,8 +71,6 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
   }
 
   // Not authorized - show message with link
-  console.log(state);
-
   if (!state.isAuthorized) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-lightPrimary p-4 dark:bg-navy-900">

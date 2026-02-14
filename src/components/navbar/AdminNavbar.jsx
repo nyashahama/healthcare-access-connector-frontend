@@ -16,8 +16,6 @@ const AdminNavbar = (props) => {
 
   const { staff } = useStaff();
 
-  console.log(staff);
-
   const { handleLogout } = useLogoutHandler();
 
   return (
