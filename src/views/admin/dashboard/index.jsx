@@ -4,20 +4,6 @@ import {
   MdPeople,
   MdAnalytics,
   MdWarning,
-  MdAdd,
-  MdEdit,
-  MdDelete,
-  MdVisibility,
-  MdInfo,
-  MdRefresh,
-  MdNotifications,
-  MdSecurity,
-  MdBackup,
-  MdSettings,
-  MdCheckCircle,
-  MdCancel,
-  MdEmail,
-  MdSchedule,
 } from "react-icons/md";
 import {
   FaClinicMedical,
@@ -26,11 +12,29 @@ import {
   FaDatabase,
   FaUserMd,
 } from "react-icons/fa";
-import Widget from "components/widget/Widget";
 import SystemHealth from "../components/SystemHealth";
 import RegistrationQueue from "../components/RegistrationQueue";
 import AnalyticsChart from "../components/AnalyticsChart";
-import Modal from "components/modal/Modal";
+
+// Component imports
+import StatsWidgets from "./components/StatsWidgets";
+import QuickActionsPanel from "./components/QuickActionsPanel";
+import SystemAlertsPanel from "./components/SystemAlertsPanel";
+import PendingActionsCard from "./components/PendingActionsCard";
+import SMSCreditsCard from "./components/SMSCreditsCard";
+import QuickActionsButtons from "./components/QuickActionsButtons";
+import SystemStatusFooter from "./components/SystemStatusFooter";
+import ToastNotification from "./components/ToastNotification";
+import {
+  RestartModal,
+  BackupModal,
+  SettingsModal,
+} from "./components/SystemActionModals";
+import {
+  ApproveClinicModal,
+  RejectClinicModal,
+} from "./components/ClinicActionModals";
+import NotificationModal from "./components/NotificationModal";
 
 const SystemDashboard = () => {
   const [selectedSystem, setSelectedSystem] = useState(null);
@@ -44,6 +48,8 @@ const SystemDashboard = () => {
   const [notificationModalOpen, setNotificationModalOpen] = useState(false);
   const [approveClinicModalOpen, setApproveClinicModalOpen] = useState(false);
   const [rejectClinicModalOpen, setRejectClinicModalOpen] = useState(false);
+
+  // Form states
   const [notificationTitle, setNotificationTitle] = useState("");
   const [notificationMessage, setNotificationMessage] = useState("");
   const [notificationAudience, setNotificationAudience] = useState("All Users");
@@ -77,6 +83,34 @@ const SystemDashboard = () => {
     },
   ];
 
+  // Stats widget data
+  const statsData = {
+    totalClinics: {
+      icon: <FaClinicMedical className="h-7 w-7" />,
+      title: "Total Clinics",
+      value: "1,247",
+      trend: "+12% from last month",
+    },
+    activeUsers: {
+      icon: <MdPeople className="h-7 w-7" />,
+      title: "Active Users",
+      value: "45,823",
+      trend: "+8.2% this week",
+    },
+    systemHealth: {
+      icon: <FaServer className="h-7 w-7" />,
+      title: "System Health",
+      value: "98.5%",
+      trend: "All services operational",
+    },
+    smsBalance: {
+      icon: <FaDatabase className="h-7 w-7" />,
+      title: "SMS Balance",
+      value: "12,458",
+      trend: "Credits remaining",
+    },
+  };
+
   // Toast notification system
   const showToast = (message, type = "info") => {
     const id = Date.now();
@@ -87,6 +121,10 @@ const SystemDashboard = () => {
     setTimeout(() => {
       setToasts((prev) => prev.filter((toast) => toast.id !== id));
     }, 5000);
+  };
+
+  const removeToast = (id) => {
+    setToasts((prev) => prev.filter((toast) => toast.id !== id));
   };
 
   // Handlers for system actions
@@ -117,7 +155,6 @@ const SystemDashboard = () => {
 
   const handleViewAllRegistrations = () => {
     showToast("Opening full registration queue...", "info");
-    // In real app, navigate to registration page
   };
 
   const handleAddCredits = () => {
@@ -180,604 +217,51 @@ const SystemDashboard = () => {
     showToast(`Notification sent to ${notificationAudience}`, "success");
   };
 
-  const getStatusBadge = (status) => {
-    const statusConfig = {
-      success: {
-        color:
-          "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
-        text: "Operational",
-      },
-      warning: {
-        color:
-          "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300",
-        text: "Warning",
-      },
-      error: {
-        color: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
-        text: "Error",
-      },
-    };
-
-    const config = statusConfig[status] || statusConfig.success;
-    return (
-      <span
-        className={`rounded-full px-3 py-1 text-xs font-bold ${config.color}`}
-      >
-        {config.text}
-      </span>
-    );
-  };
-
   return (
     <div className="h-full">
-      {/* Toast Notifications Container */}
-      <div className="fixed right-4 top-4 z-50 space-y-2">
-        {toasts.map((toast) => (
-          <div
-            key={toast.id}
-            className={`flex items-center rounded-lg p-4 shadow-lg transition-all duration-300 ${
-              toast.type === "success"
-                ? "bg-green-500 text-white"
-                : toast.type === "error"
-                ? "bg-red-500 text-white"
-                : toast.type === "warning"
-                ? "bg-yellow-500 text-white"
-                : "bg-blue-500 text-white"
-            }`}
-          >
-            <div className="mr-3">
-              {toast.type === "success" && (
-                <MdCheckCircle className="h-5 w-5" />
-              )}
-              {toast.type === "error" && <MdCancel className="h-5 w-5" />}
-              {toast.type === "warning" && <MdWarning className="h-5 w-5" />}
-              {toast.type === "info" && <MdInfo className="h-5 w-5" />}
-            </div>
-            <div className="flex-1">
-              <p className="text-sm font-medium">{toast.message}</p>
-            </div>
-            <button
-              onClick={() =>
-                setToasts((prev) => prev.filter((t) => t.id !== toast.id))
-              }
-              className="ml-4 text-white opacity-70 hover:opacity-100"
-            >
-              ×
-            </button>
-          </div>
-        ))}
-      </div>
-
-      {/* Modals */}
-
-      {/* Restart System Modal */}
-      <Modal
-        isOpen={restartModalOpen}
-        onClose={() => setRestartModalOpen(false)}
-        title="Restart System Service"
-        size="md"
-      >
-        <div className="space-y-6">
-          <div className="text-center">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-yellow-100">
-              <MdRefresh className="h-8 w-8 text-yellow-600" />
-            </div>
-            <h4 className="mb-2 text-xl font-bold text-navy-700 dark:text-white">
-              Restart {selectedSystem}?
-            </h4>
-            <p className="text-gray-600 dark:text-gray-300">
-              This will temporarily interrupt service. Users may experience
-              brief downtime.
-            </p>
-          </div>
-
-          <div className="rounded-lg bg-yellow-50 p-4 dark:bg-yellow-900/20">
-            <div className="flex items-start">
-              <MdWarning className="mr-2 mt-0.5 h-5 w-5 text-yellow-600" />
-              <p className="text-sm text-yellow-700 dark:text-yellow-300">
-                <strong>Warning:</strong> Restarting during peak hours may
-                affect user experience.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-3">
-            <button
-              onClick={() => setRestartModalOpen(false)}
-              className="rounded-lg border border-gray-300 px-6 py-3 font-medium transition-all duration-200 hover:scale-105 hover:bg-gray-50 dark:border-gray-600"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={confirmRestart}
-              className="rounded-lg bg-yellow-500 px-6 py-3 font-medium text-white transition-all duration-200 hover:scale-105 hover:bg-yellow-600"
-            >
-              Restart System
-            </button>
-          </div>
-        </div>
-      </Modal>
-
-      {/* Backup System Modal */}
-      <Modal
-        isOpen={backupModalOpen}
-        onClose={() => setBackupModalOpen(false)}
-        title="Create System Backup"
-        size="md"
-      >
-        <div className="space-y-6">
-          <div className="text-center">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-100">
-              <MdBackup className="h-8 w-8 text-blue-600" />
-            </div>
-            <h4 className="mb-2 text-xl font-bold text-navy-700 dark:text-white">
-              Backup {selectedSystem}?
-            </h4>
-            <p className="text-gray-600 dark:text-gray-300">
-              This will create a complete backup of all data and configurations.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 gap-4">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Backup Type</span>
-              <select className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-navy-700">
-                <option>Full Backup</option>
-                <option>Incremental Backup</option>
-                <option>Configuration Only</option>
-              </select>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Storage Location</span>
-              <select className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-navy-700">
-                <option>Primary Server</option>
-                <option>Secondary Server</option>
-                <option>Cloud Storage</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-3">
-            <button
-              onClick={() => setBackupModalOpen(false)}
-              className="rounded-lg border border-gray-300 px-6 py-3 font-medium transition-all duration-200 hover:scale-105 hover:bg-gray-50 dark:border-gray-600"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={confirmBackup}
-              className="rounded-lg bg-blue-500 px-6 py-3 font-medium text-white transition-all duration-200 hover:scale-105 hover:bg-blue-600"
-            >
-              Create Backup
-            </button>
-          </div>
-        </div>
-      </Modal>
-
-      {/* Settings Modal */}
-      <Modal
-        isOpen={settingsModalOpen}
-        onClose={() => setSettingsModalOpen(false)}
-        title="System Settings"
-        size="lg"
-      >
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 gap-4">
-            <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                System Maintenance Window
-              </label>
-              <input
-                type="text"
-                defaultValue="02:00 - 04:00 AM"
-                className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
-              />
-            </div>
-            <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Auto Backup Schedule
-              </label>
-              <select className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700">
-                <option>Daily at 01:00 AM</option>
-                <option>Weekly on Sundays</option>
-                <option>Manual Only</option>
-              </select>
-            </div>
-            <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Alert Thresholds
-              </label>
-              <div className="grid grid-cols-2 gap-4">
-                <input
-                  type="number"
-                  placeholder="CPU %"
-                  defaultValue="80"
-                  className="rounded-lg border border-gray-300 p-2 dark:border-gray-600 dark:bg-navy-700"
-                />
-                <input
-                  type="number"
-                  placeholder="Memory %"
-                  defaultValue="85"
-                  className="rounded-lg border border-gray-300 p-2 dark:border-gray-600 dark:bg-navy-700"
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-3">
-            <button
-              onClick={() => setSettingsModalOpen(false)}
-              className="rounded-lg border border-gray-300 px-6 py-3 font-medium transition-all duration-200 hover:scale-105 hover:bg-gray-50 dark:border-gray-600"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={() => {
-                setSettingsModalOpen(false);
-                showToast("System settings updated", "success");
-              }}
-              className="rounded-lg bg-green-500 px-6 py-3 font-medium text-white transition-all duration-200 hover:scale-105 hover:bg-green-600"
-            >
-              Save Settings
-            </button>
-          </div>
-        </div>
-      </Modal>
-
-      {/* Notification Modal */}
-      <Modal
-        isOpen={notificationModalOpen}
-        onClose={() => {
-          setNotificationModalOpen(false);
-          setNotificationTitle("");
-          setNotificationMessage("");
-        }}
-        title="Send System Notification"
-        size="md"
-      >
-        <div className="space-y-6">
-          <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-              Notification Title
-            </label>
-            <input
-              type="text"
-              placeholder="Enter notification title..."
-              value={notificationTitle}
-              onChange={(e) => setNotificationTitle(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
-            />
-          </div>
-
-          <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-              Notification Message
-            </label>
-            <textarea
-              placeholder="Enter notification message..."
-              rows="4"
-              value={notificationMessage}
-              onChange={(e) => setNotificationMessage(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
-            />
-          </div>
-
-          <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-              Target Audience
-            </label>
-            <select
-              value={notificationAudience}
-              onChange={(e) => setNotificationAudience(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
-            >
-              <option>All Users</option>
-              <option>Patients Only</option>
-              <option>Healthcare Providers Only</option>
-              <option>Clinic Administrators</option>
-              <option>Specific Region</option>
-            </select>
-          </div>
-
-          <div className="flex justify-end gap-3">
-            <button
-              onClick={() => {
-                setNotificationModalOpen(false);
-                setNotificationTitle("");
-                setNotificationMessage("");
-              }}
-              className="rounded-lg border border-gray-300 px-6 py-3 font-medium transition-all duration-200 hover:scale-105 hover:bg-gray-50 dark:border-gray-600"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={sendNotification}
-              className="rounded-lg bg-brand-500 px-6 py-3 font-medium text-white transition-all duration-200 hover:scale-105 hover:bg-brand-600"
-            >
-              Send Notification
-            </button>
-          </div>
-        </div>
-      </Modal>
-
-      {/* Approve Clinic Modal */}
-      <Modal
-        isOpen={approveClinicModalOpen}
-        onClose={() => setApproveClinicModalOpen(false)}
-        title="Approve Clinic Registration"
-        size="md"
-      >
-        <div className="space-y-6">
-          <div className="text-center">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
-              <MdCheckCircle className="h-8 w-8 text-green-600" />
-            </div>
-            <h4 className="mb-2 text-xl font-bold text-navy-700 dark:text-white">
-              Approve {selectedClinic?.name}?
-            </h4>
-            <p className="text-gray-600 dark:text-gray-300">
-              This clinic will be activated and visible to patients. A
-              confirmation email will be sent to the clinic administrator.
-            </p>
-          </div>
-
-          <div className="rounded-lg bg-gray-50 p-4 dark:bg-navy-700">
-            <div className="space-y-3">
-              <div className="flex justify-between">
-                <span className="text-sm text-gray-600 dark:text-gray-300">
-                  Location:
-                </span>
-                <span className="font-medium">{selectedClinic?.location}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm text-gray-600 dark:text-gray-300">
-                  Type:
-                </span>
-                <span className="font-medium">{selectedClinic?.type}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm text-gray-600 dark:text-gray-300">
-                  Submitted:
-                </span>
-                <span className="font-medium">{selectedClinic?.submitted}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm text-gray-600 dark:text-gray-300">
-                  Documents:
-                </span>
-                <span
-                  className={`font-medium ${
-                    selectedClinic?.documents === "3/3"
-                      ? "text-green-600 dark:text-green-400"
-                      : "text-yellow-600 dark:text-yellow-400"
-                  }`}
-                >
-                  {selectedClinic?.documents}{" "}
-                  {selectedClinic?.documents === "3/3"
-                    ? "(Complete)"
-                    : "(Incomplete)"}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-3">
-            <button
-              onClick={() => setApproveClinicModalOpen(false)}
-              className="rounded-lg border border-gray-300 px-6 py-3 font-medium transition-all duration-200 hover:scale-105 hover:bg-gray-50 dark:border-gray-600"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={confirmApproveClinic}
-              className="rounded-lg bg-green-500 px-6 py-3 font-medium text-white transition-all duration-200 hover:scale-105 hover:bg-green-600"
-            >
-              Approve Clinic
-            </button>
-          </div>
-        </div>
-      </Modal>
-
-      {/* Reject Clinic Modal */}
-      <Modal
-        isOpen={rejectClinicModalOpen}
-        onClose={() => {
-          setRejectClinicModalOpen(false);
-          setRejectReason("");
-        }}
-        title="Reject Clinic Registration"
-        size="md"
-      >
-        <div className="space-y-6">
-          <div className="text-center">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-100">
-              <MdCancel className="h-8 w-8 text-red-600" />
-            </div>
-            <h4 className="mb-2 text-xl font-bold text-navy-700 dark:text-white">
-              Reject {selectedClinic?.name}?
-            </h4>
-            <p className="text-gray-600 dark:text-gray-300">
-              This clinic will not be activated. You can provide feedback on why
-              the registration was rejected.
-            </p>
-          </div>
-
-          <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-              Rejection Reason (Optional)
-            </label>
-            <textarea
-              placeholder="Provide details for rejection..."
-              rows="3"
-              value={rejectReason}
-              onChange={(e) => setRejectReason(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
-            />
-          </div>
-
-          <div className="rounded-lg bg-yellow-50 p-4 dark:bg-yellow-900/20">
-            <div className="flex items-start">
-              <MdWarning className="mr-2 mt-0.5 h-5 w-5 text-yellow-600" />
-              <p className="text-sm text-yellow-700 dark:text-yellow-300">
-                <strong>Note:</strong> The clinic administrator will be notified
-                of this rejection.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-3">
-            <button
-              onClick={() => {
-                setRejectClinicModalOpen(false);
-                setRejectReason("");
-              }}
-              className="rounded-lg border border-gray-300 px-6 py-3 font-medium transition-all duration-200 hover:scale-105 hover:bg-gray-50 dark:border-gray-600"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={confirmRejectClinic}
-              className="rounded-lg bg-red-500 px-6 py-3 font-medium text-white transition-all duration-200 hover:scale-105 hover:bg-red-600"
-            >
-              Reject Clinic
-            </button>
-          </div>
-        </div>
-      </Modal>
+      {/* Toast Notifications */}
+      <ToastNotification toasts={toasts} onRemove={removeToast} />
 
       {/* Header */}
-      <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-        <div>
-          <h3 className="text-2xl font-bold text-navy-700 dark:text-white">
-            System Administrator Dashboard 🛡️
-          </h3>
-          <p className="text-gray-600 dark:text-gray-300">
-            Monitoring healthcare access across South Africa
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setSettingsModalOpen(true)}
-            className="linear flex items-center justify-center rounded-lg bg-lightPrimary px-4 py-2 text-sm font-medium text-brand-500 transition-all duration-200 hover:scale-105 hover:bg-gray-100 active:bg-gray-200 dark:bg-navy-700 dark:text-white dark:hover:bg-white/20"
-          >
-            <MdSettings className="mr-2 h-4 w-4" />
-            Settings
-          </button>
-          <button
-            onClick={() => setNotificationModalOpen(true)}
-            className="linear flex items-center justify-center rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white transition-all duration-200 hover:scale-105 hover:bg-brand-600 active:scale-95 active:bg-brand-700"
-          >
-            <MdNotifications className="mr-2 h-4 w-4" />
-            Send Notification
-          </button>
-        </div>
+      <div className="mb-5">
+        <h2 className="text-3xl font-bold text-navy-700 dark:text-white">
+          System Administration Dashboard
+        </h2>
+        <p className="mt-2 text-gray-600 dark:text-gray-300">
+          Monitor and manage all platform operations
+        </p>
       </div>
 
-      {/* System Stats */}
-      <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-4">
-        <Widget
-          icon={<FaClinicMedical className="h-7 w-7" />}
-          title={"Active Clinics"}
-          subtitle={"247"}
-          trend="+12%"
-          link="/admin/clinic-verification"
-        />
-        <Widget
-          icon={<MdPeople className="h-7 w-7" />}
-          title={"Total Patients"}
-          subtitle={"12,458"}
-          trend="+23%"
-          link="/admin/user-management"
-        />
-        <Widget
-          icon={<FaUserCheck className="h-7 w-7" />}
-          title={"Active Providers"}
-          subtitle={"589"}
-          trend="+8%"
-          link="/admin/user-management"
-        />
-        <Widget
-          icon={<MdAnalytics className="h-7 w-7" />}
-          title={"Appointments Today"}
-          subtitle={"1,234"}
-          trend="+15%"
-          link="/admin/analytics"
-        />
-      </div>
+      {/* Stats Widgets */}
+      <StatsWidgets
+        totalClinics={statsData.totalClinics}
+        activeUsers={statsData.activeUsers}
+        systemHealth={statsData.systemHealth}
+        smsBalance={statsData.smsBalance}
+      />
 
-      {/* System Health & Alerts */}
-      <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-3">
+      {/* Quick Actions and System Health */}
+      <div className="mb-5 grid grid-cols-1 gap-5 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <SystemHealth />
         </div>
-
-        <div className="rounded-[20px] bg-white p-6 dark:bg-navy-800">
-          <div className="mb-4 flex items-center justify-between">
-            <h5 className="text-lg font-bold text-navy-700 dark:text-white">
-              🔔 System Alerts
-            </h5>
-            <button
-              onClick={handleClearAlerts}
-              className="rounded-lg bg-gray-100 px-3 py-1 text-xs font-medium transition-all duration-200 hover:scale-105 hover:bg-gray-200 dark:bg-navy-700"
-            >
-              Clear All
-            </button>
-          </div>
-          <div className="space-y-3">
-            {systemAlerts.map((alert) => (
-              <div
-                key={alert.id}
-                className="rounded-lg border border-gray-200 p-4 transition-all duration-300 hover:scale-[1.02] dark:border-gray-700"
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center">
-                    {alert.status === "error" ? (
-                      <FaServer className="mr-3 h-5 w-5 text-red-500" />
-                    ) : alert.status === "warning" ? (
-                      <FaDatabase className="mr-3 h-5 w-5 text-yellow-500" />
-                    ) : (
-                      <MdSecurity className="mr-3 h-5 w-5 text-green-500" />
-                    )}
-                    <div>
-                      <div className="font-medium text-navy-700 dark:text-white">
-                        {alert.system}
-                      </div>
-                      <div className="text-sm text-gray-600 dark:text-gray-300">
-                        {alert.message}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    {getStatusBadge(alert.status)}
-                    <div className="mt-1 text-xs text-gray-500">
-                      {alert.timestamp}
-                    </div>
-                  </div>
-                </div>
-                <div className="mt-3 flex justify-end space-x-2">
-                  <button
-                    onClick={() => handleViewDetails(alert.system)}
-                    className="rounded-lg border border-gray-300 px-3 py-1 text-xs font-medium transition-all duration-200 hover:scale-105 hover:bg-gray-50 dark:border-gray-600"
-                  >
-                    <MdVisibility className="h-3 w-3" />
-                  </button>
-                  <button
-                    onClick={() => handleRestartSystem(alert.system)}
-                    className="rounded-lg border border-yellow-300 px-3 py-1 text-xs font-medium text-yellow-700 transition-all duration-200 hover:scale-105 hover:bg-yellow-50 dark:border-yellow-700 dark:text-yellow-400"
-                  >
-                    <MdRefresh className="h-3 w-3" />
-                  </button>
-                  <button
-                    onClick={() => handleBackupSystem(alert.system)}
-                    className="rounded-lg border border-blue-300 px-3 py-1 text-xs font-medium text-blue-700 transition-all duration-200 hover:scale-105 hover:bg-blue-50 dark:border-blue-700 dark:text-blue-400"
-                  >
-                    <MdBackup className="h-3 w-3" />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
+        <div>
+          <QuickActionsPanel
+            onSendNotification={() => setNotificationModalOpen(true)}
+            onOpenSettings={() => setSettingsModalOpen(true)}
+            onClearAlerts={handleClearAlerts}
+          />
         </div>
+      </div>
+
+      {/* System Alerts */}
+      <div className="mb-5">
+        <SystemAlertsPanel
+          alerts={systemAlerts}
+          onViewDetails={handleViewDetails}
+          onRestartSystem={handleRestartSystem}
+          onBackupSystem={handleBackupSystem}
+        />
       </div>
 
       {/* Main Content Grid */}
@@ -793,113 +277,14 @@ const SystemDashboard = () => {
 
         {/* Quick Metrics */}
         <div className="space-y-5">
-          <div className="rounded-[20px] bg-white p-6 dark:bg-navy-800">
-            <h5 className="mb-4 text-lg font-bold text-navy-700 dark:text-white">
-              🚨 Pending Actions
-            </h5>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between transition-all duration-300 hover:scale-[1.02]">
-                <div className="flex items-center">
-                  <MdVerifiedUser className="mr-3 h-5 w-5 text-yellow-500" />
-                  <span className="text-gray-600 dark:text-gray-300">
-                    Clinics to Verify
-                  </span>
-                </div>
-                <span className="rounded-full bg-yellow-100 px-3 py-1 text-sm font-bold text-yellow-700 transition-all duration-200 hover:scale-105 dark:bg-yellow-900 dark:text-yellow-300">
-                  8
-                </span>
-              </div>
-              <div className="flex items-center justify-between transition-all duration-300 hover:scale-[1.02]">
-                <div className="flex items-center">
-                  <MdWarning className="mr-3 h-5 w-5 text-red-500" />
-                  <span className="text-gray-600 dark:text-gray-300">
-                    Flagged Content
-                  </span>
-                </div>
-                <span className="rounded-full bg-red-100 px-3 py-1 text-sm font-bold text-red-700 transition-all duration-200 hover:scale-105 dark:bg-red-900 dark:text-red-300">
-                  3
-                </span>
-              </div>
-              <div className="flex items-center justify-between transition-all duration-300 hover:scale-[1.02]">
-                <div className="flex items-center">
-                  <MdEmail className="mr-3 h-5 w-5 text-blue-500" />
-                  <span className="text-gray-600 dark:text-gray-300">
-                    Pending Emails
-                  </span>
-                </div>
-                <span className="rounded-full bg-blue-100 px-3 py-1 text-sm font-bold text-blue-700 transition-all duration-200 hover:scale-105 dark:bg-blue-900 dark:text-blue-300">
-                  47
-                </span>
-              </div>
-              <div className="flex items-center justify-between transition-all duration-300 hover:scale-[1.02]">
-                <div className="flex items-center">
-                  <MdSchedule className="mr-3 h-5 w-5 text-purple-500" />
-                  <span className="text-gray-600 dark:text-gray-300">
-                    Maintenance Tasks
-                  </span>
-                </div>
-                <span className="rounded-full bg-purple-100 px-3 py-1 text-sm font-bold text-purple-700 transition-all duration-200 hover:scale-105 dark:bg-purple-900 dark:text-purple-300">
-                  5
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* SMS Credits */}
-          <div className="to-emerald-400 rounded-[20px] bg-gradient-to-r from-green-500 p-6 text-white transition-all duration-300 hover:scale-[1.02]">
-            <h5 className="mb-2 text-lg font-bold">SMS Credits</h5>
-            <div className="mb-4">
-              <div className="flex justify-between text-sm">
-                <span>Remaining</span>
-                <span className="font-bold">12,458</span>
-              </div>
-              <div className="mt-2 h-2 w-full rounded-full bg-green-200">
-                <div className="h-2 w-3/4 rounded-full bg-white transition-all duration-1000"></div>
-              </div>
-              <div className="mt-1 text-xs opacity-80">
-                Last purchase: 2 days ago
-              </div>
-            </div>
-            <button
-              onClick={handleAddCredits}
-              className="linear w-full rounded-xl bg-white py-2 font-medium text-green-600 transition-all duration-200 hover:scale-105 hover:bg-gray-100"
-            >
-              Add Credits
-            </button>
-          </div>
-
-          {/* Quick Actions */}
-          <div className="rounded-[20px] bg-white p-6 dark:bg-navy-800">
-            <h5 className="mb-4 text-lg font-bold text-navy-700 dark:text-white">
-              ⚡ Quick Actions
-            </h5>
-            <div className="space-y-3">
-              <button
-                onClick={handleDownloadLogs}
-                className="w-full rounded-lg bg-blue-50 py-3 text-sm font-medium text-blue-700 transition-all duration-200 hover:scale-105 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-300"
-              >
-                Download System Logs
-              </button>
-              <button
-                onClick={() => handleBackupSystem("Database")}
-                className="w-full rounded-lg border border-gray-300 py-3 text-sm font-medium text-gray-700 transition-all duration-200 hover:scale-105 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300"
-              >
-                Create Full Backup
-              </button>
-              <button
-                onClick={handleClearCache}
-                className="w-full rounded-lg border border-red-300 py-3 text-sm font-medium text-red-700 transition-all duration-200 hover:scale-105 hover:bg-red-50 dark:border-red-700 dark:text-red-400"
-              >
-                Clear System Cache
-              </button>
-              <button
-                onClick={() => showToast("Audit report generated", "info")}
-                className="w-full rounded-lg border border-purple-300 py-3 text-sm font-medium text-purple-700 transition-all duration-200 hover:scale-105 hover:bg-purple-50 dark:border-purple-700 dark:text-purple-400"
-              >
-                Generate Audit Report
-              </button>
-            </div>
-          </div>
+          <PendingActionsCard />
+          <SMSCreditsCard onAddCredits={handleAddCredits} />
+          <QuickActionsButtons
+            onDownloadLogs={handleDownloadLogs}
+            onBackupSystem={() => handleBackupSystem("Database")}
+            onClearCache={handleClearCache}
+            onGenerateReport={() => showToast("Audit report generated", "info")}
+          />
         </div>
       </div>
 
@@ -909,58 +294,55 @@ const SystemDashboard = () => {
       </div>
 
       {/* System Status Footer */}
-      <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
-        <div className="rounded-lg bg-green-50 p-4 transition-all duration-300 hover:scale-[1.02] dark:bg-green-900/20">
-          <div className="flex items-center">
-            <div className="mr-3 rounded-full bg-green-100 p-2 dark:bg-green-900">
-              <MdSecurity className="h-5 w-5 text-green-600 dark:text-green-300" />
-            </div>
-            <div>
-              <div className="font-medium text-green-800 dark:text-green-300">
-                Security Status
-              </div>
-              <div className="text-sm text-green-600 dark:text-green-400">
-                All systems secure
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="rounded-lg bg-blue-50 p-4 transition-all duration-300 hover:scale-[1.02] dark:bg-blue-900/20">
-          <div className="flex items-center">
-            <div className="mr-3 rounded-full bg-blue-100 p-2 dark:bg-blue-900">
-              <FaServer className="h-5 w-5 text-blue-600 dark:text-blue-300" />
-            </div>
-            <div>
-              <div className="font-medium text-blue-800 dark:text-blue-300">
-                Uptime
-              </div>
-              <div className="text-sm text-blue-600 dark:text-blue-400">
-                99.8% (Last 30 days)
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="rounded-lg bg-purple-50 p-4 transition-all duration-300 hover:scale-[1.02] dark:bg-purple-900/20">
-          <div className="flex items-center">
-            <div className="mr-3 rounded-full bg-purple-100 p-2 dark:bg-purple-900">
-              <MdAnalytics className="h-5 w-5 text-purple-600 dark:text-purple-300" />
-            </div>
-            <div>
-              <div className="font-medium text-purple-800 dark:text-purple-300">
-                Response Time
-              </div>
-              <div className="text-sm text-purple-600 dark:text-purple-400">
-                142ms average
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <SystemStatusFooter />
 
-      {/* Last Updated Footer */}
-      <div className="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
-        Last updated: {new Date().toLocaleString()} • System Version: 2.4.1
-      </div>
+      {/* Modals */}
+      <RestartModal
+        isOpen={restartModalOpen}
+        onClose={() => setRestartModalOpen(false)}
+        system={selectedSystem}
+        onConfirm={confirmRestart}
+      />
+
+      <BackupModal
+        isOpen={backupModalOpen}
+        onClose={() => setBackupModalOpen(false)}
+        system={selectedSystem}
+        onConfirm={confirmBackup}
+      />
+
+      <SettingsModal
+        isOpen={settingsModalOpen}
+        onClose={() => setSettingsModalOpen(false)}
+      />
+
+      <NotificationModal
+        isOpen={notificationModalOpen}
+        onClose={() => setNotificationModalOpen(false)}
+        notificationTitle={notificationTitle}
+        setNotificationTitle={setNotificationTitle}
+        notificationMessage={notificationMessage}
+        setNotificationMessage={setNotificationMessage}
+        notificationAudience={notificationAudience}
+        setNotificationAudience={setNotificationAudience}
+        onSend={sendNotification}
+      />
+
+      <ApproveClinicModal
+        isOpen={approveClinicModalOpen}
+        onClose={() => setApproveClinicModalOpen(false)}
+        clinic={selectedClinic}
+        onConfirm={confirmApproveClinic}
+      />
+
+      <RejectClinicModal
+        isOpen={rejectClinicModalOpen}
+        onClose={() => setRejectClinicModalOpen(false)}
+        clinic={selectedClinic}
+        rejectReason={rejectReason}
+        setRejectReason={setRejectReason}
+        onConfirm={confirmRejectClinic}
+      />
     </div>
   );
 };
