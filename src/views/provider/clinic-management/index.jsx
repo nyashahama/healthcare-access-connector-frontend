@@ -17,14 +17,14 @@ import Credentials from "../profile/components/Credentials";
 import ServicesOffered from "../profile/components/ServicesOffered";
 import AppointmentSettings from "../profile/components/AppointmentSettings";
 import PerformanceMetrics from "../profile/components/PerformanceMetrics";
-import ClinicManagementHeader from "./ClinicManagementHeader";
-import ClinicManagementTabs from "./ClinicManagementTabs";
-import ClinicManagementStats from "./ClinicManagementStats";
-import ClinicQuickActions from "./ClinicQuickActions";
-import AddServiceModal from "./AddServiceModal";
-import GenerateReportModal from "./GenerateReportModal";
-import UpdateHoursModal from "./UpdateHoursModal";
-import AddStaffModal from "./AddStaffModal";
+import ClinicManagementHeader from "./components/ClinicManagementHeader";
+import ClinicManagementTabs from "./components/ClinicManagementTabs";
+import ClinicManagementStats from "./components/ClinicManagementStats";
+import ClinicQuickActions from "./components/ClinicQuickActions";
+import AddServiceModal from "./components/AddServiceModal";
+import GenerateReportModal from "./components/GenerateReportModal";
+import UpdateHoursModal from "./components/UpdateHoursModal";
+import AddStaffModal from "./components/AddStaffModal";
 
 const ClinicManagement = () => {
   const { showToast } = useToast();
