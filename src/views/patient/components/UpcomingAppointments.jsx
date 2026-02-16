@@ -18,6 +18,7 @@ import Modal from "components/modal/Modal";
 import { useToast } from "hooks/useToast";
 import { useAppointment } from "hooks/useAppointment";
 import { usePatient } from "hooks/usePatient";
+import { useAuth } from "context/AuthContext";
 
 const UpcomingAppointments = () => {
   const [selectedAppointment, setSelectedAppointment] = useState(null);
@@ -28,6 +29,8 @@ const UpcomingAppointments = () => {
   });
   const { showToast } = useToast();
   const { patient } = usePatient();
+  const { user } = useAuth();
+
   const {
     getAppointmentsByPatient,
     rescheduleAppointment,
@@ -40,10 +43,10 @@ const UpcomingAppointments = () => {
 
   // Load appointments on component mount
   useEffect(() => {
-    if (patient?.user_id) {
+    if (user?.id) {
       loadPatientAppointments();
     }
-  }, [patient?.user_id]);
+  }, [user?.id]);
 
   // Handle errors
   useEffect(() => {
@@ -54,8 +57,8 @@ const UpcomingAppointments = () => {
   }, [error]);
 
   const loadPatientAppointments = async () => {
-    if (patient?.user_id) {
-      await getAppointmentsByPatient(patient.user_id);
+    if (user?.id) {
+      await getAppointmentsByPatient(user?.id);
     }
   };
 
@@ -101,7 +104,7 @@ const UpcomingAppointments = () => {
 
     const result = await cancelAppointment(selectedAppointment.id, {
       cancellation_reason: "User requested cancellation",
-      cancelled_by: patient?.user_id,
+      cancelled_by: user?.id,
     });
 
     if (result.success) {
