@@ -1,37 +1,28 @@
 import { useToast } from "hooks/useToast";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { MdAccessTime, MdPerson, MdInfo, MdCheckCircle } from "react-icons/md";
 import Modal from "components/modal/Modal";
 import { useAppointment } from "hooks/useAppointment";
-import { useAuth } from "hooks/useAuth";
 
-const TodaySchedule = () => {
+const TodaySchedule = ({
+  clinicId,
+  appointments = [],
+  loading = false,
+  showDoctorView = false,
+}) => {
   const { showToast } = useToast();
-  const { getCurrentUser } = useAuth();
-  const {
-    todayAppointments,
-    loading,
-    getTodayAppointments,
-    completeAppointment,
-  } = useAppointment();
+  const { completeAppointment, getTodayAppointments } = useAppointment();
 
-  const currentUser = getCurrentUser();
   const [viewDetailsModalOpen, setViewDetailsModalOpen] = useState(false);
   const [markCompleteModalOpen, setMarkCompleteModalOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
 
-  // Load today's appointments on mount
-  useEffect(() => {
-    if (currentUser?.clinic_id) {
-      getTodayAppointments(currentUser.clinic_id);
-    }
-  }, [currentUser?.clinic_id, getTodayAppointments]);
-
   // Map database appointments to schedule format
   const schedule = React.useMemo(() => {
-    return (todayAppointments || []).map((apt) => ({
+    console.log("TodaySchedule - appointments prop:", appointments);
+    return (appointments || []).map((apt) => ({
       id: apt.id,
-      time: apt.appointment_time || "N/A",
+      time: formatTime(apt.appointment_time),
       patient: apt.patient_name || "Unknown Patient",
       reason: apt.reason_for_visit || "No reason provided",
       status: mapAppointmentStatus(apt.status),
@@ -42,7 +33,22 @@ const TodaySchedule = () => {
       confirmedBy: apt.confirmed_by,
       confirmedAt: apt.confirmed_at,
     }));
-  }, [todayAppointments]);
+  }, [appointments]);
+
+  // Format time from ISO string
+  function formatTime(isoString) {
+    if (!isoString) return "N/A";
+    try {
+      const date = new Date(isoString);
+      return date.toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+      });
+    } catch (e) {
+      return "N/A";
+    }
+  }
 
   // Map database status to display status
   function mapAppointmentStatus(dbStatus) {
@@ -50,6 +56,7 @@ const TodaySchedule = () => {
       case "completed":
         return "completed";
       case "confirmed":
+      case "checked_in":
       case "in-progress":
         return "in-progress";
       case "pending":
@@ -83,8 +90,8 @@ const TodaySchedule = () => {
       setSelectedAppointment(null);
 
       // Refresh today's appointments
-      if (currentUser?.clinic_id) {
-        getTodayAppointments(currentUser.clinic_id);
+      if (clinicId) {
+        getTodayAppointments(clinicId);
       }
     } else {
       showToast(result.error || "Failed to complete appointment", "error");
@@ -103,6 +110,8 @@ const TodaySchedule = () => {
         return "bg-gray-100 text-gray-800";
     }
   };
+
+  console.log("TodaySchedule - schedule:", schedule);
 
   return (
     <div className="rounded-[20px] bg-white p-6 dark:bg-navy-800">
@@ -233,9 +242,10 @@ const TodaySchedule = () => {
           </div>
         )}
       </Modal>
+
       <div className="mb-4 flex items-center justify-between">
         <h5 className="text-lg font-bold text-navy-700 dark:text-white">
-          Today's Schedule
+          {showDoctorView ? "Today's Schedule" : "Appointments"}
         </h5>
         <div className="text-sm text-gray-600 dark:text-gray-300">
           <span className="font-bold text-brand-500">{schedule.length}</span>{" "}
@@ -246,13 +256,13 @@ const TodaySchedule = () => {
       <div className="space-y-3">
         {loading ? (
           <div className="py-8 text-center text-gray-600 dark:text-gray-300">
-            Loading today's appointments...
+            Loading appointments...
           </div>
         ) : schedule.length === 0 ? (
           <div className="rounded-xl border border-gray-200 p-8 text-center dark:border-navy-700">
             <MdInfo className="mx-auto mb-3 h-12 w-12 text-gray-400" />
             <p className="text-gray-600 dark:text-gray-300">
-              No appointments scheduled for today
+              No appointments found
             </p>
           </div>
         ) : (
