@@ -1,26 +1,27 @@
 import React, { useState, useEffect } from "react";
-import {
-  MdCalendarToday,
-  MdAdd,
-  MdFilterList,
-  MdSearch,
-  MdDownload,
-  MdRefresh,
-  MdWarning,
-  MdInfo,
-} from "react-icons/md";
-import Card from "components/card";
-import TodaySchedule from "../components/TodaySchedule";
-import Modal from "components/modal/Modal";
 import { useToast } from "hooks/useToast";
 import { useAppointment } from "hooks/useAppointment";
-import { useAuth } from "hooks/useAuth";
+import { useAuth } from "context/AuthContext";
+
+// Component imports
+import StatsCards from "./components/StatsCards";
+import ControlsBar from "./components/ControlsBar";
+import CalendarView from "./components/CalendarView";
+import UpcomingList from "./components/UpcomingList";
+import AppointmentTypesCard from "./components/AppointmentTypesCard";
+import QuickActionsCard from "./components/QuickActionsCard";
+import {
+  NewAppointmentModal,
+  RescheduleModal,
+  CancelModal,
+} from "./components/AppointmentModals";
+
+// Existing component
+import TodaySchedule from "../components/TodaySchedule";
 
 const Appointments = () => {
-  const [view, setView] = useState("day");
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [searchTerm, setSearchTerm] = useState("");
-
   const { showToast } = useToast();
   const { getCurrentUser } = useAuth();
   const {
@@ -46,62 +47,7 @@ const Appointments = () => {
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
 
-  // Calculate stats from real data
-  const appointmentStats = {
-    today: todayAppointments?.length || 0,
-    thisWeek: appointments?.length || 0,
-    cancellations:
-      appointments?.filter((apt) => apt.status === "cancelled")?.length || 0,
-    noShows:
-      appointments?.filter((apt) => apt.status === "no-show")?.length || 0,
-  };
-
-  // Calculate appointment types from real data
-  const appointmentTypes = React.useMemo(() => {
-    const typeCount = {};
-    appointments?.forEach((apt) => {
-      const type = apt.reason_for_visit || "Other";
-      typeCount[type] = (typeCount[type] || 0) + 1;
-    });
-
-    const colors = [
-      "bg-blue-500",
-      "bg-green-500",
-      "bg-purple-500",
-      "bg-yellow-500",
-      "bg-red-500",
-    ];
-    return Object.entries(typeCount).map(([type, count], index) => ({
-      type,
-      count,
-      color: colors[index % colors.length],
-    }));
-  }, [appointments]);
-
-  // Get upcoming appointments from real data (next 2 hours)
-  const upcomingAppointments = React.useMemo(() => {
-    const now = new Date();
-    const twoHoursFromNow = new Date(now.getTime() + 2 * 60 * 60 * 1000);
-
-    return (
-      todayAppointments
-        ?.filter((apt) => {
-          const aptTime = new Date(apt.appointment_datetime);
-          return aptTime >= now && aptTime <= twoHoursFromNow;
-        })
-        ?.map((apt) => ({
-          id: apt.id,
-          patient: apt.patient_name,
-          time: apt.appointment_time,
-          type: apt.reason_for_visit,
-          doctor: "Staff Member", // You can enhance this with actual staff data
-          status: apt.status,
-          patientId: apt.patient_id,
-          date: apt.appointment_date,
-        })) || []
-    );
-  }, [todayAppointments]);
-
+  // Form states
   const [newAppointment, setNewAppointment] = useState({
     clinic_id: currentUser?.clinic_id || "",
     patient_id: currentUser?.id || "",
@@ -124,16 +70,72 @@ const Appointments = () => {
     cancellation_reason: "",
   });
 
+  // Calculate stats
+  const appointmentStats = {
+    today: todayAppointments?.length || 0,
+    thisWeek: appointments?.length || 0,
+    cancellations:
+      appointments?.filter((apt) => apt.status === "cancelled")?.length || 0,
+    noShows:
+      appointments?.filter((apt) => apt.status === "no-show")?.length || 0,
+  };
+
+  // Calculate appointment types
+  const appointmentTypes = React.useMemo(() => {
+    const typeCount = {};
+    appointments?.forEach((apt) => {
+      const type = apt.reason_for_visit || "Other";
+      typeCount[type] = (typeCount[type] || 0) + 1;
+    });
+
+    const colors = [
+      "bg-blue-500",
+      "bg-green-500",
+      "bg-purple-500",
+      "bg-yellow-500",
+      "bg-red-500",
+    ];
+    return Object.entries(typeCount).map(([type, count], index) => ({
+      type,
+      count,
+      color: colors[index % colors.length],
+    }));
+  }, [appointments]);
+
+  // Get upcoming appointments
+  const upcomingAppointments = React.useMemo(() => {
+    const now = new Date();
+    const twoHoursFromNow = new Date(now.getTime() + 2 * 60 * 60 * 1000);
+
+    return (
+      todayAppointments
+        ?.filter((apt) => {
+          const aptTime = new Date(apt.appointment_datetime);
+          return aptTime >= now && aptTime <= twoHoursFromNow;
+        })
+        ?.map((apt) => ({
+          id: apt.id,
+          patient: apt.patient_name,
+          time: apt.appointment_time,
+          type: apt.reason_for_visit,
+          doctor: "Staff Member",
+          status: apt.status,
+          patientId: apt.patient_id,
+          date: apt.appointment_date,
+        })) || []
+    );
+  }, [todayAppointments]);
+
   // Load appointments on mount
   useEffect(() => {
-    if (currentUser?.clinic_id) {
-      getTodayAppointments(currentUser.clinic_id);
-      getPendingAppointments(currentUser.clinic_id);
-      getAppointmentsByClinic(currentUser.clinic_id);
+    if (currentUser?.id) {
+      getTodayAppointments(currentUser.id);
+      getPendingAppointments(currentUser.id);
+      getAppointmentsByClinic(currentUser.id);
     }
-  }, [currentUser?.clinic_id]);
+  }, [currentUser?.id]);
 
-  // Show error toast if there's an error
+  // Show error toast
   useEffect(() => {
     if (error) {
       showToast(error, "error");
@@ -170,8 +172,6 @@ const Appointments = () => {
         `Appointment scheduled for ${newAppointment.patient_name}!`,
         "success"
       );
-
-      // Reset form
       setNewAppointment({
         clinic_id: currentUser?.clinic_id || "",
         patient_id: currentUser?.id || "",
@@ -183,11 +183,7 @@ const Appointments = () => {
         reason_for_visit: "",
         notes: "",
       });
-
-      // Refresh appointments
       refreshAppointments();
-    } else {
-      showToast(result.error || "Failed to book appointment", "error");
     }
   };
 
@@ -211,28 +207,14 @@ const Appointments = () => {
 
     if (result.success) {
       setRescheduleModalOpen(false);
-      showToast(
-        `Appointment rescheduled for ${rescheduleForm.appointment_date} at ${rescheduleForm.appointment_time}!`,
-        "success"
-      );
-
-      // Reset form
-      setRescheduleForm({
-        appointment_date: "",
-        appointment_time: "",
-        notes: "",
-      });
-      setSelectedAppointment(null);
-
-      // Refresh appointments
+      showToast("Appointment rescheduled!", "success");
       refreshAppointments();
-    } else {
-      showToast(result.error || "Failed to reschedule appointment", "error");
     }
   };
 
   const handleCancelAppointment = (appointment) => {
     setSelectedAppointment(appointment);
+    setCancelForm({ cancellation_reason: "" });
     setCancelModalOpen(true);
   };
 
@@ -240,740 +222,115 @@ const Appointments = () => {
     if (!selectedAppointment?.id) return;
 
     const result = await cancelAppointment(selectedAppointment.id, {
-      cancellation_reason: cancelForm.cancellation_reason,
+      ...cancelForm,
       cancelled_by: currentUser?.id,
     });
 
     if (result.success) {
       setCancelModalOpen(false);
-      showToast(
-        `Appointment for ${selectedAppointment.patient} has been cancelled.`,
-        "warning"
-      );
-      setSelectedAppointment(null);
-      setCancelForm({ cancellation_reason: "" });
-
-      // Refresh appointments
+      showToast("Appointment cancelled", "success");
       refreshAppointments();
-    } else {
-      showToast(result.error || "Failed to cancel appointment", "error");
     }
   };
 
-  const exportAppointments = () => {
-    showToast("Appointments exported successfully!", "success");
+  const handleStartAppointment = async (id) => {
+    const result = await confirmAppointment(id);
+    if (result.success) {
+      showToast("Appointment started!", "success");
+      refreshAppointments();
+    }
   };
 
-  const handleStartAppointment = (id) => {
-    showToast(`Starting appointment ${id}`);
-    // Navigate to consultation page or open chat
+  const handleNewAppointmentChange = (field, value) => {
+    setNewAppointment((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleRescheduleChange = (field, value) => {
+    setRescheduleForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleCancelChange = (field, value) => {
+    setCancelForm((prev) => ({ ...prev, [field]: value }));
   };
 
   return (
-    <div className="h-full">
+    <div>
       {/* Modals */}
-      {/* New Appointment Modal */}
-      <Modal
+      <NewAppointmentModal
         isOpen={newAppointmentModalOpen}
         onClose={() => setNewAppointmentModalOpen(false)}
-        title="Schedule New Appointment"
-        size="lg"
-      >
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Patient Name *
-              </label>
-              <input
-                type="text"
-                value={newAppointment.patient_name}
-                onChange={(e) =>
-                  setNewAppointment((prev) => ({
-                    ...prev,
-                    patient_name: e.target.value,
-                  }))
-                }
-                className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
-                placeholder="Enter patient name"
-              />
-            </div>
-            <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Patient ID (Optional)
-              </label>
-              <input
-                type="text"
-                value={newAppointment.patientId}
-                onChange={(e) =>
-                  setNewAppointment((prev) => ({
-                    ...prev,
-                    patientId: e.target.value,
-                  }))
-                }
-                className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
-                placeholder="Enter patient ID"
-              />
-            </div>
-            <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Phone Number
-              </label>
-              <input
-                type="tel"
-                value={newAppointment.phone}
-                onChange={(e) =>
-                  setNewAppointment((prev) => ({
-                    ...prev,
-                    phone: e.target.value,
-                  }))
-                }
-                className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
-                placeholder="Enter phone number"
-              />
-            </div>
-            <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Email Address
-              </label>
-              <input
-                type="email"
-                value={newAppointment.email}
-                onChange={(e) =>
-                  setNewAppointment((prev) => ({
-                    ...prev,
-                    email: e.target.value,
-                  }))
-                }
-                className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
-                placeholder="Enter email"
-              />
-            </div>
-            <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Date *
-              </label>
-              <input
-                type="date"
-                value={newAppointment.date}
-                onChange={(e) =>
-                  setNewAppointment((prev) => ({
-                    ...prev,
-                    date: e.target.value,
-                  }))
-                }
-                className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
-                min={new Date().toISOString().split("T")[0]}
-              />
-            </div>
-            <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Time *
-              </label>
-              <select
-                value={newAppointment.time}
-                onChange={(e) =>
-                  setNewAppointment((prev) => ({
-                    ...prev,
-                    time: e.target.value,
-                  }))
-                }
-                className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
-              >
-                <option value="">Select time</option>
-                <option value="09:00 AM">09:00 AM</option>
-                <option value="09:30 AM">09:30 AM</option>
-                <option value="10:00 AM">10:00 AM</option>
-                <option value="10:30 AM">10:30 AM</option>
-                <option value="11:00 AM">11:00 AM</option>
-                <option value="02:00 PM">02:00 PM</option>
-                <option value="02:30 PM">02:30 PM</option>
-                <option value="03:00 PM">03:00 PM</option>
-                <option value="03:30 PM">03:30 PM</option>
-              </select>
-            </div>
-            <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Appointment Type *
-              </label>
-              <select
-                value={newAppointment.type}
-                onChange={(e) =>
-                  setNewAppointment((prev) => ({
-                    ...prev,
-                    type: e.target.value,
-                  }))
-                }
-                className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
-              >
-                <option value="consultation">Consultation</option>
-                <option value="follow-up">Follow-up</option>
-                <option value="vaccination">Vaccination</option>
-                <option value="check-up">Check-up</option>
-                <option value="emergency">Emergency</option>
-              </select>
-            </div>
-            <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Duration (minutes)
-              </label>
-              <select
-                value={newAppointment.duration}
-                onChange={(e) =>
-                  setNewAppointment((prev) => ({
-                    ...prev,
-                    duration: e.target.value,
-                  }))
-                }
-                className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
-              >
-                <option value="15">15 min</option>
-                <option value="30">30 min</option>
-                <option value="45">45 min</option>
-                <option value="60">60 min</option>
-              </select>
-            </div>
-            <div className="md:col-span-2">
-              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Reason for Visit
-              </label>
-              <textarea
-                value={newAppointment.reason}
-                onChange={(e) =>
-                  setNewAppointment((prev) => ({
-                    ...prev,
-                    reason: e.target.value,
-                  }))
-                }
-                className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
-                placeholder="Enter reason for appointment"
-                rows="3"
-              />
-            </div>
-          </div>
+        appointment={newAppointment}
+        onChange={handleNewAppointmentChange}
+        onSubmit={handleAddAppointment}
+      />
 
-          <div className="flex justify-end gap-3">
-            <button
-              onClick={() => setNewAppointmentModalOpen(false)}
-              className="rounded-lg border border-gray-300 px-6 py-3 font-medium hover:bg-gray-50 dark:border-gray-600"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleAddAppointment}
-              className="rounded-lg bg-brand-500 px-6 py-3 font-medium text-white hover:bg-brand-600"
-            >
-              Schedule Appointment
-            </button>
-          </div>
-        </div>
-      </Modal>
-
-      {/* Reschedule Modal */}
-      <Modal
+      <RescheduleModal
         isOpen={rescheduleModalOpen}
         onClose={() => setRescheduleModalOpen(false)}
-        title="Reschedule Appointment"
-        size="md"
-      >
-        <div className="space-y-6">
-          {selectedAppointment && (
-            <>
-              <div className="rounded-lg bg-blue-50 p-4 dark:bg-blue-900/20">
-                <h5 className="mb-2 font-medium text-blue-800 dark:text-blue-300">
-                  Current Appointment
-                </h5>
-                <p className="text-sm text-blue-700 dark:text-blue-300">
-                  {selectedAppointment.patient} • {selectedAppointment.time} •{" "}
-                  {selectedAppointment.type}
-                </p>
-              </div>
+        form={rescheduleForm}
+        onChange={handleRescheduleChange}
+        onSubmit={confirmReschedule}
+      />
 
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    New Date *
-                  </label>
-                  <input
-                    type="date"
-                    value={rescheduleForm.date}
-                    onChange={(e) =>
-                      setRescheduleForm((prev) => ({
-                        ...prev,
-                        date: e.target.value,
-                      }))
-                    }
-                    className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
-                    min={new Date().toISOString().split("T")[0]}
-                  />
-                </div>
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    New Time *
-                  </label>
-                  <select
-                    value={rescheduleForm.time}
-                    onChange={(e) =>
-                      setRescheduleForm((prev) => ({
-                        ...prev,
-                        time: e.target.value,
-                      }))
-                    }
-                    className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
-                  >
-                    <option value="">Select time</option>
-                    <option value="09:00 AM">09:00 AM</option>
-                    <option value="10:00 AM">10:00 AM</option>
-                    <option value="11:00 AM">11:00 AM</option>
-                    <option value="02:00 PM">02:00 PM</option>
-                    <option value="03:00 PM">03:00 PM</option>
-                    <option value="04:00 PM">04:00 PM</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Reason for Rescheduling
-                </label>
-                <textarea
-                  value={rescheduleForm.reason}
-                  onChange={(e) =>
-                    setRescheduleForm((prev) => ({
-                      ...prev,
-                      reason: e.target.value,
-                    }))
-                  }
-                  className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
-                  placeholder="Optional: Add reason for rescheduling"
-                  rows="3"
-                />
-              </div>
-
-              <div className="flex justify-end gap-3">
-                <button
-                  onClick={() => setRescheduleModalOpen(false)}
-                  className="rounded-lg border border-gray-300 px-6 py-3 font-medium hover:bg-gray-50 dark:border-gray-600"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={confirmReschedule}
-                  className="rounded-lg bg-brand-500 px-6 py-3 font-medium text-white hover:bg-brand-600"
-                >
-                  Reschedule Appointment
-                </button>
-              </div>
-            </>
-          )}
-        </div>
-      </Modal>
-
-      {/* Cancel Appointment Modal */}
-      <Modal
+      <CancelModal
         isOpen={cancelModalOpen}
         onClose={() => setCancelModalOpen(false)}
-        title="Cancel Appointment"
-        size="md"
-      >
-        <div className="space-y-6">
-          <div className="flex items-start">
-            <div className="mr-3 rounded-full bg-red-100 p-2 dark:bg-red-900">
-              <MdWarning className="h-6 w-6 text-red-600 dark:text-red-300" />
-            </div>
-            <div>
-              <h4 className="font-bold text-navy-700 dark:text-white">
-                Cancel appointment for {selectedAppointment?.patient}?
-              </h4>
-              <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
-                This appointment will be cancelled and the time slot will become
-                available for other patients.
-              </p>
-            </div>
-          </div>
+        form={cancelForm}
+        onChange={handleCancelChange}
+        onSubmit={confirmCancel}
+      />
 
-          <div className="rounded-lg bg-yellow-50 p-4 dark:bg-yellow-900/20">
-            <div className="flex items-start">
-              <MdInfo className="mr-2 mt-0.5 h-5 w-5 text-yellow-600" />
-              <p className="text-sm text-yellow-700 dark:text-yellow-300">
-                The patient will receive a cancellation notification via SMS and
-                email.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-3">
-            <button
-              onClick={() => setCancelModalOpen(false)}
-              className="rounded-lg border border-gray-300 px-6 py-3 font-medium hover:bg-gray-50 dark:border-gray-600"
-            >
-              Keep Appointment
-            </button>
-            <button
-              onClick={confirmCancel}
-              className="rounded-lg bg-red-500 px-6 py-3 font-medium text-white hover:bg-red-600"
-            >
-              Cancel Appointment
-            </button>
-          </div>
-        </div>
-      </Modal>
-      {/* Header with updated button handlers */}
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h3 className="text-2xl font-bold text-navy-700 dark:text-white">
-            Appointments
-          </h3>
-          <p className="text-gray-600 dark:text-gray-300">
-            Manage and schedule patient appointments
-          </p>
-        </div>
-        <div className="flex space-x-3">
-          <button
-            onClick={refreshAppointments}
-            className="flex items-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium hover:bg-gray-50 dark:border-navy-600 dark:bg-navy-700 dark:hover:bg-navy-600"
-          >
-            <MdRefresh className="mr-2" />
-            Refresh
-          </button>
-          <button className="flex items-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium hover:bg-gray-50 dark:border-navy-600 dark:bg-navy-700 dark:hover:bg-navy-600">
-            <MdFilterList className="mr-2" />
-            Filter
-          </button>
-          <button
-            onClick={() => setNewAppointmentModalOpen(true)}
-            className="linear flex items-center rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white transition duration-200 hover:bg-brand-600"
-          >
-            <MdAdd className="mr-2" />
-            New Appointment
-          </button>
-        </div>
+      {/* Header */}
+      <div className="mb-6">
+        <h3 className="text-2xl font-bold text-navy-700 dark:text-white">
+          Appointment Management
+        </h3>
+        <p className="text-gray-600 dark:text-gray-300">
+          Manage your clinic's appointment schedule
+        </p>
       </div>
 
-      {/* Stats Overview */}
-      <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-4">
-        <Card extra="p-4">
-          <p className="text-sm text-gray-600">Today's Appointments</p>
-          <div className="mt-1 flex items-baseline">
-            <p className="text-2xl font-bold text-navy-700 dark:text-white">
-              {appointmentStats.today}
-            </p>
-            <span className="ml-2 text-sm font-medium text-green-600">+2</span>
-          </div>
-        </Card>
+      {/* Stats */}
+      <StatsCards stats={appointmentStats} />
 
-        <Card extra="p-4">
-          <p className="text-sm text-gray-600">Scheduled This Week</p>
-          <div className="mt-1 flex items-baseline">
-            <p className="text-2xl font-bold text-navy-700 dark:text-white">
-              {appointmentStats.thisWeek}
-            </p>
-            <span className="ml-2 text-sm font-medium text-green-600">+8</span>
-          </div>
-        </Card>
-
-        <Card extra="p-4">
-          <p className="text-sm text-gray-600">Cancellations</p>
-          <div className="mt-1 flex items-baseline">
-            <p className="text-2xl font-bold text-navy-700 dark:text-white">
-              {appointmentStats.cancellations}
-            </p>
-            <span className="ml-2 text-sm font-medium text-red-600">-1</span>
-          </div>
-        </Card>
-
-        <Card extra="p-4">
-          <p className="text-sm text-gray-600">No-Shows</p>
-          <div className="mt-1 flex items-baseline">
-            <p className="text-2xl font-bold text-navy-700 dark:text-white">
-              {appointmentStats.noShows}
-            </p>
-            <span className="ml-2 text-sm font-medium text-gray-600">0</span>
-          </div>
-        </Card>
+      {/* Controls */}
+      <div className="mt-6">
+        <ControlsBar
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          onAddClick={() => setNewAppointmentModalOpen(true)}
+          onFilterClick={() => showToast("Filter coming soon", "info")}
+          onDownloadClick={() => showToast("Export coming soon", "info")}
+          onRefreshClick={refreshAppointments}
+        />
       </div>
 
-      {/* Main Content */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Calendar & Today's Schedule */}
-        <div className="lg:col-span-2">
-          <Card extra="p-6">
-            <div className="mb-6 flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <button
-                  className={`rounded-lg px-3 py-1.5 text-sm font-medium ${
-                    view === "day"
-                      ? "bg-brand-500 text-white"
-                      : "bg-gray-100 text-gray-700 dark:bg-navy-700 dark:text-gray-300"
-                  }`}
-                  onClick={() => setView("day")}
-                >
-                  Day
-                </button>
-                <button
-                  className={`rounded-lg px-3 py-1.5 text-sm font-medium ${
-                    view === "week"
-                      ? "bg-brand-500 text-white"
-                      : "bg-gray-100 text-gray-700 dark:bg-navy-700 dark:text-gray-300"
-                  }`}
-                  onClick={() => setView("week")}
-                >
-                  Week
-                </button>
-                <button
-                  className={`rounded-lg px-3 py-1.5 text-sm font-medium ${
-                    view === "month"
-                      ? "bg-brand-500 text-white"
-                      : "bg-gray-100 text-gray-700 dark:bg-navy-700 dark:text-gray-300"
-                  }`}
-                  onClick={() => setView("month")}
-                >
-                  Month
-                </button>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="relative">
-                  <MdSearch className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                  <input
-                    type="text"
-                    placeholder="Search appointments..."
-                    className="rounded-lg border border-gray-300 bg-white py-2 pl-10 pr-4 text-sm dark:border-navy-600 dark:bg-navy-700"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-                </div>
-                <button className="flex items-center rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm hover:bg-gray-50 dark:border-navy-600 dark:bg-navy-700 dark:hover:bg-navy-600">
-                  <MdDownload className="mr-2" />
-                  Export
-                </button>
-              </div>
-            </div>
-
-            {/* Calendar View */}
-            <div className="mb-6 rounded-lg border border-gray-200 p-4 dark:border-navy-600">
-              <div className="mb-4 flex items-center justify-between">
-                <h4 className="font-bold text-navy-700 dark:text-white">
-                  {selectedDate.toLocaleDateString("en-US", {
-                    month: "long",
-                    year: "numeric",
-                  })}
-                </h4>
-                <div className="flex space-x-2">
-                  <button
-                    onClick={() =>
-                      setSelectedDate(
-                        new Date(
-                          selectedDate.setDate(selectedDate.getDate() - 1)
-                        )
-                      )
-                    }
-                    className="rounded-lg p-2 hover:bg-gray-100 dark:hover:bg-navy-600"
-                  >
-                    ←
-                  </button>
-                  <button
-                    onClick={() => setSelectedDate(new Date())}
-                    className="rounded-lg bg-gray-100 px-4 py-2 text-sm dark:bg-navy-600"
-                  >
-                    Today
-                  </button>
-                  <button
-                    onClick={() =>
-                      setSelectedDate(
-                        new Date(
-                          selectedDate.setDate(selectedDate.getDate() + 1)
-                        )
-                      )
-                    }
-                    className="rounded-lg p-2 hover:bg-gray-100 dark:hover:bg-navy-600"
-                  >
-                    →
-                  </button>
-                </div>
-              </div>
-              <div className="grid grid-cols-7 gap-2">
-                {["S", "M", "T", "W", "T", "F", "S"].map((day, index) => (
-                  <div
-                    key={index}
-                    className="text-center text-sm font-medium text-gray-600"
-                  >
-                    {day}
-                  </div>
-                ))}
-                {Array.from({ length: 30 }, (_, i) => i + 1).map((day) => (
-                  <div
-                    key={day}
-                    className={`cursor-pointer rounded-lg p-2 text-center ${
-                      day === selectedDate.getDate()
-                        ? "bg-brand-500 text-white"
-                        : "hover:bg-gray-100 dark:hover:bg-navy-600"
-                    }`}
-                    onClick={() => {
-                      const newDate = new Date(selectedDate);
-                      newDate.setDate(day);
-                      setSelectedDate(newDate);
-                    }}
-                  >
-                    {day}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Today's Schedule */}
-            <div>
-              <h4 className="mb-4 text-lg font-bold text-navy-700 dark:text-white">
-                Today's Schedule
-              </h4>
-              <TodaySchedule />
-            </div>
-          </Card>
+      {/* Main Grid */}
+      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
+        {/* Left Section */}
+        <div className="space-y-6 lg:col-span-2">
+          <CalendarView
+            selectedDate={selectedDate}
+            onDateChange={setSelectedDate}
+          />
+          <div>
+            <h4 className="mb-4 text-lg font-bold text-navy-700 dark:text-white">
+              Today's Schedule
+            </h4>
+            <TodaySchedule />
+          </div>
         </div>
 
         {/* Right Sidebar */}
         <div className="space-y-6">
-          {/* Upcoming Appointments */}
-          <Card extra="p-6">
-            <div className="mb-4 flex items-center justify-between">
-              <h4 className="text-lg font-bold text-navy-700 dark:text-white">
-                Upcoming
-              </h4>
-              <span className="text-sm text-gray-600">Next 2 hours</span>
-            </div>
-            <div className="space-y-4">
-              {upcomingAppointments.map((apt) => (
-                <div
-                  key={apt.id}
-                  className="rounded-lg border border-gray-200 p-3 dark:border-navy-600"
-                >
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h5 className="font-medium text-navy-700 dark:text-white">
-                        {apt.patient}
-                      </h5>
-                      <p className="text-sm text-gray-600">
-                        ID: {apt.patientId} • {apt.doctor}
-                      </p>
-                    </div>
-                    <span
-                      className={`rounded-full px-2 py-1 text-xs font-medium ${
-                        apt.status === "confirmed"
-                          ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
-                          : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300"
-                      }`}
-                    >
-                      {apt.status}
-                    </span>
-                  </div>
-                  <div className="mt-2 flex items-center justify-between text-sm">
-                    <span className="flex items-center text-gray-600">
-                      <MdCalendarToday className="mr-1 h-4 w-4" />
-                      {apt.time}
-                    </span>
-                    <span className="text-gray-600">{apt.type}</span>
-                  </div>
-                  <div className="mt-3 grid grid-cols-2 gap-2">
-                    <button
-                      onClick={() => handleStartAppointment(apt.id)}
-                      className="rounded-lg bg-brand-500 py-1.5 text-sm text-white hover:bg-brand-600"
-                    >
-                      Start
-                    </button>
-                    <button
-                      onClick={() => handleReschedule(apt)}
-                      className="rounded-lg border border-gray-300 py-1.5 text-sm hover:bg-gray-50 dark:border-navy-600"
-                    >
-                      Reschedule
-                    </button>
-                    <button
-                      onClick={() => handleCancelAppointment(apt)}
-                      className="rounded-lg border border-red-300 bg-red-50 py-1.5 text-sm text-red-700 hover:bg-red-100 dark:border-red-700 dark:text-red-400"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Card>
-
-          {/* Appointment Types Distribution */}
-          <Card extra="p-6">
-            <h4 className="mb-4 text-lg font-bold text-navy-700 dark:text-white">
-              Appointment Types
-            </h4>
-            <div className="space-y-3">
-              {appointmentTypes.map((type, index) => (
-                <div key={index} className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <div
-                      className={`mr-3 h-3 w-3 rounded-full ${type.color}`}
-                    ></div>
-                    <span className="text-sm text-gray-600">{type.type}</span>
-                  </div>
-                  <div className="flex items-center">
-                    <span className="mr-2 text-sm font-medium">
-                      {type.count}
-                    </span>
-                    <div className="h-2 w-16 rounded-full bg-gray-200 dark:bg-navy-600">
-                      <div
-                        className="h-full rounded-full"
-                        style={{
-                          width: `${(type.count / 62) * 100}%`,
-                          backgroundColor: type.color.replace("bg-", ""),
-                        }}
-                      ></div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Card>
-
-          {/* Quick Actions */}
-          <Card extra="p-6">
-            <h4 className="mb-4 text-lg font-bold text-navy-700 dark:text-white">
-              Quick Actions
-            </h4>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Auto-confirm</span>
-                <label className="relative inline-flex cursor-pointer items-center">
-                  <input
-                    type="checkbox"
-                    className="peer sr-only"
-                    defaultChecked
-                  />
-                  <div className="peer h-6 w-11 rounded-full bg-gray-200 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-brand-500 peer-checked:after:translate-x-full peer-checked:after:border-white dark:border-gray-600 dark:bg-gray-700"></div>
-                </label>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Send reminders</span>
-                <label className="relative inline-flex cursor-pointer items-center">
-                  <input
-                    type="checkbox"
-                    className="peer sr-only"
-                    defaultChecked
-                  />
-                  <div className="peer h-6 w-11 rounded-full bg-gray-200 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-brand-500 peer-checked:after:translate-x-full peer-checked:after:border-white dark:border-gray-600 dark:bg-gray-700"></div>
-                </label>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Allow walk-ins</span>
-                <label className="relative inline-flex cursor-pointer items-center">
-                  <input
-                    type="checkbox"
-                    className="peer sr-only"
-                    defaultChecked
-                  />
-                  <div className="peer h-6 w-11 rounded-full bg-gray-200 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-brand-500 peer-checked:after:translate-x-full peer-checked:after:border-white dark:border-gray-600 dark:bg-gray-700"></div>
-                </label>
-              </div>
-            </div>
-            <button className="linear mt-4 w-full rounded-lg bg-brand-500 py-2.5 text-sm font-medium text-white transition duration-200 hover:bg-brand-600">
-              Manage Settings
-            </button>
-          </Card>
+          <UpcomingList
+            appointments={upcomingAppointments}
+            onStart={handleStartAppointment}
+            onReschedule={handleReschedule}
+            onCancel={handleCancelAppointment}
+          />
+          <AppointmentTypesCard types={appointmentTypes} />
+          <QuickActionsCard />
         </div>
       </div>
     </div>
