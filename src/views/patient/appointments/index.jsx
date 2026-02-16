@@ -23,6 +23,7 @@ import {
   getStatusDisplay,
   filterAppointments,
 } from "./components/appointmentUtils";
+import { useAuth } from "context/AuthContext";
 
 const PatientAppointments = () => {
   const [view, setView] = useState("upcoming");
@@ -37,6 +38,8 @@ const PatientAppointments = () => {
   const { showToast } = useToast();
 
   const { patient } = usePatient();
+
+  const { user } = useAuth();
   const {
     getAppointmentsByPatient,
     rescheduleAppointment,
@@ -49,10 +52,10 @@ const PatientAppointments = () => {
 
   // Load appointments on component mount
   useEffect(() => {
-    if (patient?.user_id) {
+    if (user?.id) {
       loadPatientAppointments();
     }
-  }, [patient?.user_id]);
+  }, [user?.id]);
 
   // Handle errors
   useEffect(() => {
@@ -62,11 +65,15 @@ const PatientAppointments = () => {
     }
   }, [error]);
 
+  console.log("users", user);
+
   const loadPatientAppointments = async () => {
-    if (patient?.user_id) {
-      await getAppointmentsByPatient(patient?.user_id);
+    if (user?.id) {
+      await getAppointmentsByPatient(user?.id);
     }
   };
+
+  console.log("appointments", appointments);
 
   const categorizedAppointments = categorizeAppointments(appointments);
   const filteredAppointments = filterAppointments(
@@ -115,7 +122,7 @@ const PatientAppointments = () => {
 
     const result = await cancelAppointment(selectedAppointment.id, {
       cancellation_reason: cancellationReason,
-      cancelled_by: patient?.user_id,
+      cancelled_by: user?.id,
     });
 
     if (result.success) {
