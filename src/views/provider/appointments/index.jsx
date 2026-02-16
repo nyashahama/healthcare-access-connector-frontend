@@ -18,6 +18,7 @@ import {
 
 // Existing component
 import TodaySchedule from "../components/TodaySchedule";
+import { useProvider } from "hooks/useProvider";
 
 const Appointments = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -39,6 +40,8 @@ const Appointments = () => {
     confirmAppointment,
   } = useAppointment();
 
+  const { clinic, getClinics } = useProvider();
+
   const currentUser = getCurrentUser();
 
   // Modal states
@@ -46,11 +49,12 @@ const Appointments = () => {
   const [rescheduleModalOpen, setRescheduleModalOpen] = useState(false);
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
+  const [clinicId, setClinicId] = useState(null);
 
   // Form states
   const [newAppointment, setNewAppointment] = useState({
-    clinic_id: currentUser?.clinic_id || "",
-    patient_id: currentUser?.id || "",
+    clinic_id: "",
+    patient_id: "",
     patient_name: "",
     patient_phone: "",
     patient_email: "",
@@ -102,38 +106,65 @@ const Appointments = () => {
     }));
   }, [appointments]);
 
-  // Get upcoming appointments
+  // Get upcoming appointments - now shows all future appointments, not just next 2 hours
   const upcomingAppointments = React.useMemo(() => {
-    const now = new Date();
-    const twoHoursFromNow = new Date(now.getTime() + 2 * 60 * 60 * 1000);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
     return (
-      todayAppointments
+      appointments
         ?.filter((apt) => {
-          const aptTime = new Date(apt.appointment_datetime);
-          return aptTime >= now && aptTime <= twoHoursFromNow;
+          const appointmentDate = new Date(apt.appointment_date);
+          appointmentDate.setHours(0, 0, 0, 0);
+          // Show future appointments (after today) that aren't cancelled or completed
+          return (
+            appointmentDate > today &&
+            apt.status !== "cancelled" &&
+            apt.status !== "completed"
+          );
         })
-        ?.map((apt) => ({
-          id: apt.id,
-          patient: apt.patient_name,
-          time: apt.appointment_time,
-          type: apt.reason_for_visit,
-          doctor: "Staff Member",
-          status: apt.status,
-          patientId: apt.patient_id,
-          date: apt.appointment_date,
-        })) || []
+        ?.sort(
+          (a, b) =>
+            new Date(a.appointment_datetime) - new Date(b.appointment_datetime)
+        ) || []
     );
-  }, [todayAppointments]);
+  }, [appointments]);
 
   // Load appointments on mount
   useEffect(() => {
-    if (currentUser?.id) {
-      getTodayAppointments(currentUser.id);
-      getPendingAppointments(currentUser.id);
-      getAppointmentsByClinic(currentUser.id);
-    }
-  }, [currentUser?.id]);
+    const fetchClinicAndAppointments = async () => {
+      // Get clinics list - this returns the user's clinic
+      const result = await getClinics();
+
+      if (
+        result.success &&
+        result.data?.clinics &&
+        result.data.clinics.length > 0
+      ) {
+        // Use the first clinic from the list
+        const userClinic = result.data.clinics[0];
+        console.log("Got clinic from getClinics:", userClinic);
+        setClinicId(userClinic.id);
+
+        // Fetch appointments for this clinic
+        getTodayAppointments(userClinic.id);
+        getPendingAppointments(userClinic.id);
+        getAppointmentsByClinic(userClinic.id);
+
+        // Update form with clinic_id
+        setNewAppointment((prev) => ({
+          ...prev,
+          clinic_id: userClinic.id,
+        }));
+      } else {
+        showToast("No clinic found for this user", "error");
+      }
+    };
+
+    fetchClinicAndAppointments();
+  }, []);
+
+  console.log("do i have a clinic id?", clinic);
 
   // Show error toast
   useEffect(() => {
@@ -143,10 +174,10 @@ const Appointments = () => {
   }, [error]);
 
   const refreshAppointments = async () => {
-    if (currentUser?.clinic_id) {
-      await getTodayAppointments(currentUser.clinic_id);
-      await getPendingAppointments(currentUser.clinic_id);
-      await getAppointmentsByClinic(currentUser.clinic_id);
+    if (clinicId) {
+      await getTodayAppointments(clinicId);
+      await getPendingAppointments(clinicId);
+      await getAppointmentsByClinic(clinicId);
       showToast("Appointments refreshed!", "success");
     }
   };
@@ -173,8 +204,8 @@ const Appointments = () => {
         "success"
       );
       setNewAppointment({
-        clinic_id: currentUser?.clinic_id || "",
-        patient_id: currentUser?.id || "",
+        clinic_id: clinicId || "",
+        patient_id: "",
         patient_name: "",
         patient_phone: "",
         patient_email: "",
@@ -223,7 +254,7 @@ const Appointments = () => {
 
     const result = await cancelAppointment(selectedAppointment.id, {
       ...cancelForm,
-      cancelled_by: currentUser?.id,
+      cancelled_by: currentUser?.id || "",
     });
 
     if (result.success) {
