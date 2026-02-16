@@ -32,7 +32,7 @@ const ClinicCard = ({ clinic, onViewDetails, onEdit, onDelete, onApprove }) => {
             {getStatusBadge(clinic.verification_status)}
           </div>
           <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            {clinic.contact_number || "No contact"}
+            {clinic.primary_phone || "No contact"}
           </div>
         </div>
       </div>
