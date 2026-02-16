@@ -8,7 +8,6 @@ import PatientQueue from "../../components/PatientQueue";
 import RecentConsultations from "../../components/RecentConsultations";
 import QuickActions from "../../components/QuickActions";
 import { useAuth } from "hooks/useAuth";
-import { useStaff } from "hooks/useStaff";
 import { useAppointment } from "hooks/useAppointment";
 import { useToast } from "hooks/useToast";
 
@@ -19,12 +18,6 @@ import { useToast } from "hooks/useToast";
 const DoctorDashboard = ({ clinicId }) => {
   const { showToast } = useToast();
   const { getCurrentUser } = useAuth();
-  const {
-    listClinicStaff,
-    getStaff,
-    staff,
-    loading: staffLoading,
-  } = useStaff();
   const {
     getTodayAppointments,
     getAppointmentsByClinic,
@@ -45,54 +38,33 @@ const DoctorDashboard = ({ clinicId }) => {
   const [doctorInfo, setDoctorInfo] = useState(null);
 
   useEffect(() => {
+    console.log("useEffect triggered! clinicId:", clinicId);
+
     const fetchDashboardData = async () => {
+      console.log("fetchDashboardData started");
       try {
         setLoading(true);
 
         // 1. Get authenticated user
         const currentUser = getCurrentUser();
+
         if (!currentUser) {
           showToast("User not authenticated", "error");
           setLoading(false);
           return;
         }
 
-        // 2. Get all staff of this clinic
-        const staffListResult = await listClinicStaff(clinicId);
-        if (!staffListResult.success) {
-          showToast(
-            staffListResult.error || "Failed to load clinic staff",
-            "error"
-          );
-          setLoading(false);
-          return;
-        }
-
-        // 3. Find the staff record that belongs to the current user
-        const currentStaff = staffListResult.data.staff?.find(
-          (s) => s.user_id === currentUser.id
-        );
-
-        if (!currentStaff) {
-          showToast("You are not registered as staff for this clinic", "error");
-          setLoading(false);
-          return;
-        }
-
-        // 4. (Optional) Fetch full staff details – this populates the `staff` state in the hook
-        await getStaff(currentStaff.id);
-
-        // 5. Set doctor info from the staff record
+        // 2. Set doctor info from current user
         setDoctorInfo({
-          firstName: currentStaff.first_name || currentUser.first_name,
-          lastName: currentStaff.last_name || currentUser.last_name,
-          professionalTitle:
-            currentStaff.professional_title || "General Practitioner",
-          specialization: currentStaff.specialization || "",
+          firstName: currentUser.first_name || "Doctor",
+          lastName: currentUser.last_name || "",
+          professionalTitle: "General Practitioner",
+          specialization: "",
         });
 
-        // 6. Fetch today's appointments
+        // 3. Fetch today's appointments
         const todayResult = await getTodayAppointments(clinicId);
+
         if (!todayResult.success) {
           showToast(
             todayResult.error || "Failed to load today's appointments",
@@ -100,8 +72,9 @@ const DoctorDashboard = ({ clinicId }) => {
           );
         }
 
-        // 7. Fetch all appointments for stats
+        // 4. Fetch all appointments for stats
         const allApptResult = await getAppointmentsByClinic(clinicId);
+
         if (!allApptResult.success) {
           showToast(
             allApptResult.error || "Failed to load appointments",
@@ -109,23 +82,18 @@ const DoctorDashboard = ({ clinicId }) => {
           );
         }
 
-        // 8. Filter appointments belonging to this doctor
-        const doctorAppointments =
-          todayResult.data?.appointments?.filter(
-            (appt) =>
-              appt.staff_id === currentStaff.id ||
-              appt.doctor_id === currentUser.id
-          ) || [];
+        // 5. Calculate stats from today's appointments
+        const allTodayAppointments = todayResult.data?.appointments || [];
 
-        const completedToday = doctorAppointments.filter(
+        const completedToday = allTodayAppointments.filter(
           (a) => a.status === "completed"
         ).length;
 
-        const waitingPatients = doctorAppointments.filter(
+        const waitingPatients = allTodayAppointments.filter(
           (a) => a.status === "confirmed" || a.status === "checked_in"
         ).length;
 
-        const todayCount = doctorAppointments.length;
+        const todayCount = allTodayAppointments.length;
         const completionRate =
           todayCount > 0 ? Math.round((completedToday / todayCount) * 100) : 0;
 
@@ -147,18 +115,12 @@ const DoctorDashboard = ({ clinicId }) => {
 
     if (clinicId) {
       fetchDashboardData();
+    } else {
+      console.log("clinicId is falsy:", clinicId);
     }
-  }, [
-    clinicId,
-    getCurrentUser,
-    listClinicStaff,
-    getStaff,
-    getTodayAppointments,
-    getAppointmentsByClinic,
-    showToast,
-  ]);
+  }, [clinicId]);
 
-  if (loading || staffLoading || appointmentsLoading) {
+  if (loading || appointmentsLoading) {
     return (
       <div className="flex h-full items-center justify-center">
         <div className="text-center">
