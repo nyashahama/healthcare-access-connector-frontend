@@ -10,15 +10,15 @@ import {
 } from "react-icons/md";
 import { FaUserMd, FaUserInjured, FaShieldAlt } from "react-icons/fa";
 import { useToast } from "hooks/useToast";
-import UserStats from "./UserStats";
-import UserSearchHeader from "./UserSearchHeader";
-import UserTable from "./UserTable";
-import ViewUserModal from "./ViewUserModal";
-import EditUserModal from "./EditUserModal";
-import SuspendUserModal from "./SuspendUserModal";
-import DeleteUserModal from "./DeleteUserModal";
-import AddUserModal from "./AddUserModal";
-import QuickActions from "./QuickActions";
+import UserStats from "./components/UserStats";
+import UserSearchHeader from "./components/UserSearchHeader";
+import UserTable from "./components/UserTable";
+import ViewUserModal from "./components/ViewUserModal";
+import EditUserModal from "./components/EditUserModal";
+import SuspendUserModal from "./components/SuspendUserModal";
+import DeleteUserModal from "./components/DeleteUserModal";
+import AddUserModal from "./components/AddUserModal";
+import QuickActions from "./components/QuickActions";
 import Card from "components/card";
 
 const UserManagement = () => {
