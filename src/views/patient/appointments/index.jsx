@@ -65,15 +65,11 @@ const PatientAppointments = () => {
     }
   }, [error]);
 
-  console.log("users", user);
-
   const loadPatientAppointments = async () => {
     if (user?.id) {
       await getAppointmentsByPatient(user?.id);
     }
   };
-
-  console.log("appointments", appointments);
 
   const categorizedAppointments = categorizeAppointments(appointments);
   const filteredAppointments = filterAppointments(
