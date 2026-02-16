@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "hooks/useAuth";
 import { useProvider } from "hooks/useProvider";
-import ClinicAdminDashboard from "./ClinicAdminDashboard";
-import DoctorDashboard from "./DoctorDashboard";
-import NurseDashboard from "./NurseDashboard";
-import ManagerDashboard from "./ManagerDashboard";
-import ReceptionistDashboard from "./ReceptionistDashboard";
+import ClinicAdminDashboard from "./components/ClinicAdminDashboard";
+import DoctorDashboard from "./components/DoctorDashboard";
+import NurseDashboard from "./components/NurseDashboard";
+import ManagerDashboard from "./components/ManagerDashboard";
+import ReceptionistDashboard from "./components/ReceptionistDashboard";
 
 /**
  * Main Provider Dashboard - Routes to role-specific dashboards
