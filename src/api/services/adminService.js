@@ -23,7 +23,7 @@ const adminService = {
    * @returns {Promise<Object>} Created system admin profile
    */
   createSystemAdmin: async (data) => {
-    const response = await apiClient.post("/api/v1/admins/system-admins", data);
+    const response = await apiClient.post("/api/v1/admin/system-admins", data);
     return response.data;
   },
 
@@ -34,7 +34,7 @@ const adminService = {
    */
   getSystemAdminByUserId: async (userId) => {
     const response = await apiClient.get(
-      `/api/v1/admins/system-admins/user/${userId}`
+      `/api/v1/admin/system-admins/user/${userId}`
     );
     return response.data;
   },
@@ -46,7 +46,7 @@ const adminService = {
    */
   getSystemAdmin: async (adminId) => {
     const response = await apiClient.get(
-      `/api/v1/admins/system-admins/${adminId}`
+      `/api/v1/admin/system-admins/${adminId}`
     );
     return response.data;
   },
@@ -59,7 +59,7 @@ const adminService = {
    */
   updateSystemAdmin: async (adminId, data) => {
     const response = await apiClient.put(
-      `/api/v1/admins/system-admins/${adminId}`,
+      `/api/v1/admin/system-admins/${adminId}`,
       data
     );
     return response.data;
@@ -72,7 +72,7 @@ const adminService = {
    */
   deleteSystemAdmin: async (adminId) => {
     const response = await apiClient.delete(
-      `/api/v1/admins/system-admins/${adminId}`
+      `/api/v1/admin/system-admins/${adminId}`
     );
     return response.data;
   },
@@ -84,7 +84,7 @@ const adminService = {
    */
   deleteSystemAdminByUserId: async (userId) => {
     const response = await apiClient.delete(
-      `/api/v1/admins/system-admins/user/${userId}`
+      `/api/v1/admin/system-admins/user/${userId}`
     );
     return response.data;
   },
@@ -111,7 +111,7 @@ const adminService = {
     });
 
     const response = await apiClient.get(
-      `/api/v1/admins/system-admins/search?${queryParams.toString()}`
+      `/api/v1/admin/system-admins/search?${queryParams.toString()}`
     );
     return response.data;
   },
