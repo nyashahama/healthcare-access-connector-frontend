@@ -42,12 +42,28 @@ export const useStaff = () => {
     setError(null);
     try {
       const response = await staffService.getStaff(staffId);
-
       setStaff(response);
       setLoading(false);
       return { success: true, data: response };
     } catch (err) {
       const errorMessage = err.response?.data?.error || "Failed to load staff";
+      setError(errorMessage);
+      setLoading(false);
+      return { success: false, error: errorMessage };
+    }
+  }, []);
+
+  const getStaffByUserId = useCallback(async (userId) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await staffService.getStaffByUserId(userId);
+      setStaff(response);
+      setLoading(false);
+      return { success: true, data: response };
+    } catch (err) {
+      const errorMessage =
+        err.response?.data?.error || "Failed to load staff by user ID";
       setError(errorMessage);
       setLoading(false);
       return { success: false, error: errorMessage };
@@ -123,6 +139,24 @@ export const useStaff = () => {
     }
   }, []);
 
+  const listAllClinicStaff = useCallback(async (clinicId) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await staffService.listAllClinicStaff(clinicId);
+      setStaffList(response.staff || []);
+      setStaffTotal(response.total || 0);
+      setLoading(false);
+      return { success: true, data: response };
+    } catch (err) {
+      const errorMessage =
+        err.response?.data?.error || "Failed to list all clinic staff";
+      setError(errorMessage);
+      setLoading(false);
+      return { success: false, error: errorMessage };
+    }
+  }, []);
+
   const listActiveClinicStaff = useCallback(async (clinicId) => {
     setLoading(true);
     setError(null);
@@ -147,7 +181,6 @@ export const useStaff = () => {
     setError(null);
     try {
       const response = await staffService.inviteStaff(clinicId, data);
-      // response contains staff data with invitation token
       setInvitation(response);
       setLoading(false);
       return { success: true, data: response };
@@ -182,8 +215,8 @@ export const useStaff = () => {
     setError(null);
     try {
       const response = await staffService.acceptInvitation(token);
-      setStaff(response.staff); // set the newly created staff
-      setInvitation(null); // invitation is consumed
+      setStaff(response.staff);
+      setInvitation(null);
       setLoading(false);
       return { success: true, data: response };
     } catch (err) {
@@ -253,7 +286,6 @@ export const useStaff = () => {
     setError(null);
     try {
       const response = await staffService.cancelInvitation(clinicId, token);
-      // Remove from local invitations list if present
       setInvitations((prev) =>
         prev.filter((inv) => inv.invitation_token !== token)
       );
@@ -313,12 +345,14 @@ export const useStaff = () => {
     // Staff CRUD
     createStaff,
     getStaff,
+    getStaffByUserId, //
     updateStaff,
     deleteStaff,
     checkStaffExists,
 
     // Clinic Staff Lists
     listClinicStaff,
+    listAllClinicStaff,
     listActiveClinicStaff,
 
     // Staff Invitations
