@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import Dropdown from "components/dropdown";
 import { FiAlignJustify } from "react-icons/fi";
 import { Link } from "react-router-dom";
@@ -7,15 +7,25 @@ import { FiSearch } from "react-icons/fi";
 import { RiMoonFill, RiSunFill } from "react-icons/ri";
 import { IoMdNotificationsOutline } from "react-icons/io";
 import { FaUserMd } from "react-icons/fa";
-import { useProvider } from "hooks/useProvider";
 import { useLogoutHandler } from "hooks/useLogoutHandler";
+import { useStaff } from "hooks/useStaff";
+import { useAuth } from "context/AuthContext";
 
 const ProviderNavbar = (props) => {
   const { onOpenSidenav, brandText } = props;
   const [darkmode, setDarkmode] = React.useState(false);
 
-  const { staff } = useProvider();
+  const { user } = useAuth();
+  const { staff, getStaffByUserId } = useStaff();
+
+  useEffect(() => {
+    if (user?.id) {
+      getStaffByUserId(user.id);
+    }
+  }, [user?.id, getStaffByUserId]);
   const { handleLogout } = useLogoutHandler();
+
+  console.log("staff:", staff);
 
   return (
     <nav className="sticky top-4 z-40 flex flex-row flex-wrap items-center justify-between rounded-xl bg-white/10 p-2 backdrop-blur-xl dark:bg-[#0b14374d]">
