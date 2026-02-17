@@ -26,6 +26,18 @@ const staffService = {
   },
 
   /**
+   * Get a staff member by user ID
+   * @param {string} userId
+   * @returns {Promise<Object>} Staff data
+   */
+  getStaffByUserId: async (userId) => {
+    const response = await apiClient.get(
+      `/api/v1/providers/staff/user/${userId}`
+    );
+    return response.data;
+  },
+
+  /**
    * Update a staff member
    * @param {string} staffId
    * @param {Object} data - Updated fields
@@ -72,6 +84,18 @@ const staffService = {
   listClinicStaff: async (clinicId) => {
     const response = await apiClient.get(
       `/api/v1/providers/clinics/${clinicId}/staff`
+    );
+    return response.data;
+  },
+
+  /**
+   * List all staff members of a clinic (including inactive/invited etc.)
+   * @param {string} clinicId
+   * @returns {Promise<Object>} { staff: [], total }
+   */
+  listAllClinicStaff: async (clinicId) => {
+    const response = await apiClient.get(
+      `/api/v1/providers/clinics/${clinicId}/staff/all`
     );
     return response.data;
   },
