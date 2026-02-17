@@ -23,9 +23,6 @@ const AdminNavbar = (props) => {
       getSystemAdminByUserId(user.id);
     }
   }, [user?.id, getSystemAdminByUserId]);
-
-  console.log("admin: ", admin);
-
   const { handleLogout } = useLogoutHandler();
 
   return (
@@ -145,7 +142,7 @@ const AdminNavbar = (props) => {
             <div className="flex items-center gap-2">
               <FaUserShield className="h-6 w-6 text-navy-700 dark:text-white" />
               <span className="hidden text-sm font-medium md:block">
-                {admin.admin_level}
+                {admin?.admin_level}
               </span>
             </div>
           }
@@ -154,7 +151,7 @@ const AdminNavbar = (props) => {
               <div className="p-4">
                 <div className="flex items-center gap-2">
                   <p className="text-sm font-bold text-navy-700 dark:text-white">
-                    👋 {admin.admin_level}
+                    👋 {admin?.admin_level}
                   </p>
                 </div>
               </div>
