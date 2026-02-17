@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import Dropdown from "components/dropdown";
 import { FiAlignJustify } from "react-icons/fi";
 import { Link } from "react-router-dom";
@@ -8,13 +8,23 @@ import { RiMoonFill, RiSunFill } from "react-icons/ri";
 import { IoMdNotificationsOutline } from "react-icons/io";
 import { FaUserShield } from "react-icons/fa";
 import { useLogoutHandler } from "hooks/useLogoutHandler";
-import { useStaff } from "hooks/useStaff";
+import { useAdmin } from "hooks/useAdmin";
+import { useAuth } from "context/AuthContext";
 
 const AdminNavbar = (props) => {
   const { onOpenSidenav, brandText } = props;
   const [darkmode, setDarkmode] = React.useState(false);
 
-  const { staff } = useStaff();
+  const { user } = useAuth();
+  const { admin, getSystemAdminByUserId } = useAdmin();
+
+  useEffect(() => {
+    if (user?.id) {
+      getSystemAdminByUserId(user.id);
+    }
+  }, [user?.id, getSystemAdminByUserId]);
+
+  console.log("admin: ", admin);
 
   const { handleLogout } = useLogoutHandler();
 
@@ -134,7 +144,9 @@ const AdminNavbar = (props) => {
           button={
             <div className="flex items-center gap-2">
               <FaUserShield className="h-6 w-6 text-navy-700 dark:text-white" />
-              <span className="hidden text-sm font-medium md:block">Admin</span>
+              <span className="hidden text-sm font-medium md:block">
+                {admin.admin_level}
+              </span>
             </div>
           }
           children={
@@ -142,7 +154,7 @@ const AdminNavbar = (props) => {
               <div className="p-4">
                 <div className="flex items-center gap-2">
                   <p className="text-sm font-bold text-navy-700 dark:text-white">
-                    👋 System Admin
+                    👋 {admin.admin_level}
                   </p>
                 </div>
               </div>
