@@ -18,7 +18,6 @@ import {
   NutritionTipModal,
 } from "./components/DashboardModals";
 
-// Existing components (keep these imports)
 import UpcomingAppointments from "../components/UpcomingAppointments";
 import QuickActions from "../components/QuickActions";
 import ClinicSuggestions from "../components/ClinicSuggestions";
@@ -140,6 +139,8 @@ const PatientDashboard = () => {
   const patientName = getPatientName(patient, user);
   const modalAppointments = getUpcomingForModal(appointments);
 
+  console.log("appointments:", appointments);
+
   return (
     <div>
       {/* Modals */}
@@ -215,7 +216,7 @@ const PatientDashboard = () => {
       <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-2">
         {/* Left Column */}
         <div className="space-y-5">
-          <UpcomingAppointments />
+          <UpcomingAppointments appointments={appointments} />
           <ClinicSuggestions />
         </div>
 
