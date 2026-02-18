@@ -1,81 +1,150 @@
 import React from "react";
 import Card from "components/card";
+import { triageBadge } from "./symptomData";
 
+/**
+ * ResultCard renders the actual API response from the symptom checker backend.
+ *
+ * Props:
+ *  session  – the SymptomSessionResponse object from the API
+ *  config   – the matching resultConfig entry (icon, actions, color)
+ *  onSaveResult, onShareResult, onAction, onRestart – handlers
+ */
 const ResultCard = ({
-  result,
+  session,
+  config,
   onSaveResult,
   onShareResult,
   onAction,
   onRestart,
 }) => {
+  const triage = triageBadge[session.triage_level] ?? {
+    label: session.triage_level,
+    color: "bg-gray-100 text-gray-700",
+  };
+
+  const colorMap = {
+    green: "text-green-600",
+    blue: "text-blue-600",
+    yellow: "text-yellow-600",
+    red: "text-red-600",
+  };
+
+  const borderMap = {
+    green:
+      "border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20",
+    blue: "border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-900/20",
+    yellow:
+      "border-yellow-200 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-900/20",
+    red: "border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20",
+  };
+
   return (
     <Card extra="p-6">
       <div className="flex flex-col items-center text-center">
-        <div className="mb-4">{result.icon}</div>
+        {/* Icon + Title */}
+        <div className="mb-3">{config.icon}</div>
         <h4
           className={`text-2xl font-bold ${
-            result.color === "green"
-              ? "text-green-600"
-              : result.color === "yellow"
-              ? "text-yellow-600"
-              : "text-red-600"
+            colorMap[config.color] || "text-navy-700"
           }`}
         >
-          {result.title}
+          {config.label}
         </h4>
-        <p className="mt-2 text-gray-600 dark:text-gray-300">
-          Based on your symptoms, here's our assessment
-        </p>
 
-        {/* Recommendations */}
-        <div className="mt-6 w-full">
-          <h5 className="mb-4 text-lg font-bold text-navy-700 dark:text-white">
-            Recommendations
-          </h5>
-          <div className="space-y-3">
-            {result.recommendations.map((rec, idx) => (
-              <div
-                key={idx}
-                className="flex items-start rounded-lg bg-gray-50 p-4 dark:bg-navy-700"
-              >
-                <div
-                  className={`mr-3 flex h-6 w-6 items-center justify-center rounded-full ${
-                    result.color === "green"
-                      ? "bg-green-100 text-green-600"
-                      : result.color === "yellow"
-                      ? "bg-yellow-100 text-yellow-600"
-                      : "bg-red-100 text-red-600"
-                  }`}
-                >
-                  {idx + 1}
-                </div>
-                <p className="flex-1 text-left text-gray-700 dark:text-gray-300">
-                  {rec}
-                </p>
-              </div>
-            ))}
-          </div>
+        {/* Triage badge */}
+        <div className="mt-3 flex items-center gap-2">
+          <span className="text-sm text-gray-500 dark:text-gray-400">
+            Triage Level:
+          </span>
+          <span
+            className={`rounded-full px-3 py-0.5 text-xs font-semibold ${triage.color}`}
+          >
+            {triage.label}
+          </span>
         </div>
 
-        {/* Additional Action Buttons */}
+        {/* AI Summary */}
+        {session.ai_summary && (
+          <div
+            className={`mt-5 w-full rounded-xl border p-4 text-left ${
+              borderMap[config.color]
+            }`}
+          >
+            <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+              AI Clinical Summary
+            </p>
+            <p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300">
+              {session.ai_summary}
+            </p>
+          </div>
+        )}
+
+        {/* Symptom summary */}
+        <div className="mt-5 w-full text-left">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+            Symptoms Reported
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {session.symptoms_reported?.map((s) => (
+              <span
+                key={s}
+                className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700 dark:bg-navy-700 dark:text-gray-300"
+              >
+                {s.replace(/_/g, " ")}
+              </span>
+            ))}
+          </div>
+
+          {session.body_systems_affected?.length > 0 && (
+            <>
+              <p className="mb-2 mt-4 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                Body Systems Affected
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {session.body_systems_affected.map((s) => (
+                  <span
+                    key={s}
+                    className="rounded-full bg-brand-50 px-3 py-1 text-xs font-medium text-brand-700 dark:bg-brand-900/20 dark:text-brand-300"
+                  >
+                    {s}
+                  </span>
+                ))}
+              </div>
+            </>
+          )}
+
+          {session.severity_score != null && (
+            <div className="mt-4 flex items-center gap-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                Severity Score:
+              </p>
+              <span className="text-sm font-bold text-navy-700 dark:text-white">
+                {session.severity_score} / 10
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Save / Share */}
         <div className="mt-6 flex w-full flex-wrap justify-center gap-3">
           <button
             onClick={onSaveResult}
-            className="rounded-lg border border-gray-300 bg-white px-4 py-2 font-medium hover:bg-gray-50 dark:border-gray-600"
+            className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium hover:bg-gray-50 dark:border-gray-600 dark:bg-navy-700 dark:text-gray-300"
           >
             Save Result
           </button>
           <button
             onClick={onShareResult}
-            className="rounded-lg border border-gray-300 bg-white px-4 py-2 font-medium hover:bg-gray-50 dark:border-gray-600"
+            className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium hover:bg-gray-50 dark:border-gray-600 dark:bg-navy-700 dark:text-gray-300"
           >
             Share
           </button>
         </div>
 
-        {/* Action Buttons */}
-        <div className="mt-8 grid w-full grid-cols-1 gap-3 sm:grid-cols-2">
-          {result.actions.map((action, idx) => (
+        {/* Action buttons */}
+        <div className="mt-6 grid w-full grid-cols-1 gap-3 sm:grid-cols-2">
+          {config.actions.map((action, idx) => (
             <button
               key={idx}
               onClick={() => onAction(action.type)}
@@ -86,13 +155,19 @@ const ResultCard = ({
           ))}
         </div>
 
-        {/* Restart Button */}
+        {/* Restart */}
         <button
           onClick={onRestart}
-          className="linear mt-6 rounded-lg border border-gray-300 bg-white px-6 py-2 font-medium text-gray-700 transition duration-200 hover:bg-gray-50 dark:border-gray-600 dark:bg-navy-700 dark:text-gray-300"
+          className="linear mt-6 rounded-lg border border-gray-300 bg-white px-6 py-2 text-sm font-medium text-gray-700 transition duration-200 hover:bg-gray-50 dark:border-gray-600 dark:bg-navy-700 dark:text-gray-300"
         >
           Start Over
         </button>
+
+        {/* Session meta */}
+        <p className="mt-4 text-xs text-gray-400">
+          Session ID: {session.id} &middot;{" "}
+          {new Date(session.created_at).toLocaleString()}
+        </p>
       </div>
     </Card>
   );
