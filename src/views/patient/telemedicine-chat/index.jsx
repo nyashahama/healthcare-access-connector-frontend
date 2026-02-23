@@ -71,6 +71,12 @@ const TelemedicineChat = () => {
   const wsRef = useRef(null);
   const typingTimeoutRef = useRef(null);
   const heartbeatIntervalRef = useRef(null);
+  // Stable ref so ws.onmessage always calls the *latest* handleWsEvent without
+  // needing to re-run connectWebSocket every time user/showToast changes.
+  const wsEventHandlerRef = useRef(null);
+  // Stable ref to consultationId for use inside WS close/reconnect callbacks
+  // so the auto-reconnect closure never captures a stale value.
+  const consultationIdRef = useRef(null);
 
   // Modal states
   const [endChatModalOpen, setEndChatModalOpen] = useState(false);
@@ -79,6 +85,11 @@ const TelemedicineChat = () => {
   const [rateModalOpen, setRateModalOpen] = useState(false);
 
   const consultationId = activeConsultation?.id || currentConsultation?.id;
+
+  // Keep consultationIdRef in sync so WS reconnect always knows the current id.
+  useEffect(() => {
+    consultationIdRef.current = consultationId ?? null;
+  }, [consultationId]);
 
   // ── Scroll to bottom whenever messages change ────────────────────────────
   useEffect(() => {
@@ -111,92 +122,55 @@ const TelemedicineChat = () => {
   }, [consultationId]);
 
   // ── WebSocket ────────────────────────────────────────────────────────────
-  const connectWebSocket = useCallback(
-    (id) => {
-      if (wsRef.current?.readyState === WebSocket.OPEN) return;
-
-      const token = getToken();
-      if (!token) return;
-
-      const url = `${WS_BASE_URL}/ws/consultations/${id}?token=${token}`;
-      const ws = new WebSocket(url);
-      wsRef.current = ws;
-
-      ws.onopen = () => {
-        showToast("Real-time connection established", "success");
-        // Heartbeat to keep connection alive
-        heartbeatIntervalRef.current = setInterval(() => {
-          if (ws.readyState === WebSocket.OPEN) {
-            ws.send(JSON.stringify({ type: "ping" }));
-          }
-        }, 25000);
-      };
-
-      ws.onmessage = (event) => {
-        try {
-          const envelope = JSON.parse(event.data);
-          handleWsEvent(envelope);
-        } catch (e) {
-          console.error("WS parse error", e);
-        }
-      };
-
-      ws.onerror = (err) => {
-        console.error("WebSocket error", err);
-      };
-
-      ws.onclose = () => {
-        clearInterval(heartbeatIntervalRef.current);
-      };
-    },
-    [getToken, showToast]
-  );
-
-  const disconnectWebSocket = useCallback(() => {
-    clearInterval(heartbeatIntervalRef.current);
-    if (wsRef.current) {
-      wsRef.current.close();
-      wsRef.current = null;
-    }
-  }, []);
-
+  // ── Keep wsEventHandlerRef always pointing at the latest handler so the
+  //    WebSocket onmessage callback never closes over a stale version.
+  //    This is the standard React pattern for "stable ref to latest callback".
   const handleWsEvent = useCallback(
     (envelope) => {
       switch (envelope.type) {
-        case "message":
+        case "message": {
+          const payload = envelope.payload;
           setWsMessages((prev) => {
-            // Deduplicate by id
-            const payload = envelope.payload;
             if (prev.some((m) => m.id === payload.message_id)) return prev;
             return [
               ...prev,
               {
-                id: payload.message_id || Date.now(),
+                id: payload.message_id || `ws-${Date.now()}`,
                 text: payload.content,
-                sender:
-                  envelope.sender_user_id === user?.id ? "user" : "provider",
-                time: new Date(envelope.sent_at).toLocaleTimeString([], {
+                // Use sender_role from the payload — it is always present and
+                // reliable. sender_user_id is NOT guaranteed at the envelope
+                // top level (it may be nested or absent), so comparing it to
+                // user?.id can silently produce the wrong result.
+                sender: payload.sender_role === "patient" ? "user" : "provider",
+                time: new Date(
+                  envelope.sent_at ?? Date.now()
+                ).toLocaleTimeString([], {
                   hour: "2-digit",
                   minute: "2-digit",
                 }),
                 provider:
-                  envelope.sender_user_id !== user?.id ? "Provider" : undefined,
+                  payload.sender_role !== "patient" ? "Provider" : undefined,
                 sender_role: payload.sender_role,
                 message_type: payload.message_type,
               },
             ];
           });
           break;
+        }
         case "typing":
-          if (envelope.sender_user_id !== user?.id) {
+          if (envelope.payload?.sender_role !== "patient") {
             setProviderTyping(true);
-            setTimeout(() => setProviderTyping(false), 3000);
+            clearTimeout(typingTimeoutRef.current);
+            typingTimeoutRef.current = setTimeout(
+              () => setProviderTyping(false),
+              3000
+            );
           }
           break;
         case "presence":
           if (
             envelope.payload?.action === "joined" &&
-            envelope.sender_user_id !== user?.id
+            envelope.payload?.sender_role !== "patient"
           ) {
             showToast("Provider has joined the consultation", "info");
           }
@@ -215,6 +189,75 @@ const TelemedicineChat = () => {
     [user?.id, showToast]
   );
 
+  // Always keep the ref in sync with the latest handler version.
+  useEffect(() => {
+    wsEventHandlerRef.current = handleWsEvent;
+  }, [handleWsEvent]);
+
+  const reconnectTimeoutRef = useRef(null);
+
+  const connectWebSocket = useCallback(
+    (id) => {
+      if (wsRef.current?.readyState === WebSocket.OPEN) return;
+
+      const token = getToken();
+      if (!token) return;
+
+      const url = `${WS_BASE_URL}/ws/consultations/${id}?token=${token}`;
+      const ws = new WebSocket(url);
+      wsRef.current = ws;
+
+      ws.onopen = () => {
+        showToast("Real-time connection established", "success");
+        // Clear any pending reconnect timer
+        clearTimeout(reconnectTimeoutRef.current);
+        // Heartbeat to keep connection alive through NAT/proxies
+        heartbeatIntervalRef.current = setInterval(() => {
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ type: "ping" }));
+          }
+        }, 25000);
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const envelope = JSON.parse(event.data);
+          // Always dispatch through the ref so we always call the latest
+          // version of handleWsEvent — never a stale closure.
+          wsEventHandlerRef.current?.(envelope);
+        } catch (e) {
+          console.error("WS parse error", e);
+        }
+      };
+
+      ws.onerror = (err) => {
+        console.error("WebSocket error", err);
+      };
+
+      ws.onclose = (event) => {
+        clearInterval(heartbeatIntervalRef.current);
+        // Auto-reconnect unless the close was intentional (code 1000 = normal)
+        // or the consultation is no longer active.
+        if (event.code !== 1000 && consultationIdRef.current) {
+          reconnectTimeoutRef.current = setTimeout(() => {
+            console.info("WS: reconnecting…");
+            connectWebSocket(consultationIdRef.current);
+          }, 3000);
+        }
+      };
+    },
+    [getToken, showToast] // eslint-disable-line react-hooks/exhaustive-deps
+  );
+
+  const disconnectWebSocket = useCallback(() => {
+    clearTimeout(reconnectTimeoutRef.current);
+    clearInterval(heartbeatIntervalRef.current);
+    if (wsRef.current) {
+      wsRef.current.close(1000, "intentional");
+      wsRef.current = null;
+    }
+  }, []);
+
   const sendTypingIndicator = useCallback(() => {
     if (wsRef.current?.readyState === WebSocket.OPEN && consultationId) {
       wsRef.current.send(
@@ -228,7 +271,8 @@ const TelemedicineChat = () => {
     const dbMessages = messages.map((m) => ({
       id: m.id,
       text: m.content || "",
-      sender: m.sender_user_id === user?.id ? "user" : "provider",
+      // Use sender_role — the authoritative field stamped by the backend.
+      sender: m.sender_role === "patient" ? "user" : "provider",
       time: new Date(m.sent_at).toLocaleTimeString([], {
         hour: "2-digit",
         minute: "2-digit",
