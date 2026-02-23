@@ -5,13 +5,12 @@ import { useAuth } from "context/AuthContext";
 import { useConsultation } from "hooks/useConsultation";
 import { useConsultationMessages } from "hooks/useConsultationMessages";
 import { useConsultationNotes } from "hooks/useConsultationNotes";
-import { useProviderAvailability } from "hooks/useProviderAvailability";
 
-import ProviderChatHeader from "./components/ProviderChatHeader";
 import PatientQueue from "./components/PatientQueue";
+import PatientInfo from "./components/PatientInfo";
+import ProviderChatHeader from "./components/ProviderChatHeader";
 import ProviderMessagesContainer from "./components/ProviderMessagesContainer";
 import ProviderMessageInput from "./components/ProviderMessageInput";
-import PatientInfo from "./components/PatientInfo";
 import {
   ProviderQuickActionsCard,
   PrescriptionPadCard,
@@ -24,32 +23,117 @@ import {
 } from "./components/ProviderChatModals";
 
 const WS_BASE_URL = process.env.REACT_APP_WS_URL || "ws://localhost:8080";
-const WAITING_ROOM_POLL_MS = 30_000;
+
+// ─── Helpers ───────────────────────────────────────────────────────────────────
+
+const mapWaitingRoomEntry = (entry) => ({
+  id: entry.consultation_id ?? entry.id,
+  consultationId: entry.consultation_id ?? entry.id,
+  name: entry.patient_name ?? "Unknown Patient",
+  chiefComplaint: entry.chief_complaint ?? "—",
+  triageLevel: entry.triage_level,
+  severityScore: entry.severity_score,
+  channel: entry.channel,
+  fee: entry.consultation_fee,
+  aiSummary: entry.ai_summary,
+  requestedAt: entry.requested_at,
+  priority: entry.priority ?? "normal",
+  waitTime: entry.wait_time ?? formatWaitTime(entry.requested_at),
+  status: "waiting",
+});
+
+/**
+ * BUG 2 FIX — mapActivePatient now also handles the flat shape returned by
+ * GET /consultations/provider/active, which has:
+ *   patient_first_name / patient_last_name  (not patient_name)
+ *   preferred_communication_method          (not preferred_communication)
+ * We support both shapes so the same mapper works for both the resume path
+ * (flat active consultation) and the detail path (rich hydrated response).
+ */
+const mapActivePatient = (details) => {
+  const firstName = details.patient_first_name ?? "";
+  const lastName = details.patient_last_name ?? "";
+  const fullName =
+    details.patient_name ??
+    (firstName || lastName ? `${firstName} ${lastName}`.trim() : "Patient");
+
+  return {
+    id: details.patient_id,
+    consultationId: details.id,
+    name: fullName,
+    chiefComplaint: details.chief_complaint ?? "—",
+    channel: details.channel,
+    triageLevel: details.triage_level_at_start,
+    severityScore: details.severity_score,
+    aiSummary: details.ai_summary,
+    symptomsReported: details.symptoms_reported ?? [],
+    preferredComm:
+      details.preferred_communication ?? details.preferred_communication_method,
+    priority: details.priority ?? "normal",
+  };
+};
+
+const mapDbMessage = (m) => ({
+  id: m.id,
+  text: m.content ?? "",
+  sender: m.sender_role, // "provider" | "patient" | "system"
+  patient: m.sender_role === "patient" ? "Patient" : undefined,
+  time: new Date(m.sent_at).toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  }),
+  sender_role: m.sender_role,
+  message_type: m.message_type,
+  is_read: m.is_read,
+});
+
+const mapWsMessage = (envelope) => ({
+  id: envelope.payload?.message_id ?? `ws-${Date.now()}`,
+  text: envelope.payload?.content ?? "",
+  sender: envelope.payload?.sender_role ?? "patient",
+  patient: envelope.payload?.sender_role === "patient" ? "Patient" : undefined,
+  time: new Date(envelope.sent_at ?? Date.now()).toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  }),
+  sender_role: envelope.payload?.sender_role,
+  message_type: envelope.payload?.message_type,
+});
+
+function formatWaitTime(requestedAt) {
+  if (!requestedAt) return "—";
+  const diffMs = Date.now() - new Date(requestedAt).getTime();
+  const mins = Math.floor(diffMs / 60000);
+  if (mins < 1) return "< 1 min";
+  if (mins < 60) return `${mins} min`;
+  return `${Math.floor(mins / 60)}h ${mins % 60}m`;
+}
+
+// ─── Component ─────────────────────────────────────────────────────────────────
 
 const ProviderTelemedicineChat = () => {
-  const { user, getToken } = useAuth();
+  const { getToken } = useAuth();
   const { showToast } = useToast();
 
-  // ── Hooks ──────────────────────────────────────────────────────────────────
+  // ── Hooks ────────────────────────────────────────────────────────────────────
   const {
-    waitingRoom,
     fetchWaitingRoom,
+    // BUG 1 FIX — use the PROVIDER-scoped hook, not the patient one.
+    // fetchPatientActiveConsultation hits GET /consultations/me/active which
+    // resolves a *patient* profile from the JWT. A provider_staff user has no
+    // patient profile, so the backend returns 401/404 → AuthContext sees a 401
+    // and signs the user out.
     fetchProviderActiveConsultations,
+    fetchConsultationWithDetails,
     acceptConsultation,
     startConsultation,
     completeConsultation,
     declineConsultation,
-    fetchConsultationWithDetails,
     loading: consultationLoading,
   } = useConsultation();
 
-  const {
-    messages,
-    fetchMessages,
-    sendMessage,
-    markAllPatientMessagesRead,
-    clearMessages,
-  } = useConsultationMessages();
+  const { messages, fetchMessages, sendMessage, clearMessages } =
+    useConsultationMessages();
 
   const {
     note,
@@ -57,359 +141,245 @@ const ProviderTelemedicineChat = () => {
     createNote,
     updateNote,
     finaliseNote,
-    clearNote,
   } = useConsultationNotes();
 
-  const {
-    fetchMyAvailability,
-    goOnline,
-    goOffline,
-    setAccepting,
-    sendHeartbeat,
-    isOnline,
-    isAccepting,
-  } = useProviderAvailability();
-
-  // ── Local state ────────────────────────────────────────────────────────────
+  // ── Local state ──────────────────────────────────────────────────────────────
+  const [patients, setPatients] = useState([]);
+  const [activePatient, setActivePatient] = useState(null);
+  const [activeConsultationId, setActiveConsultationId] = useState(null);
   const [newMessage, setNewMessage] = useState("");
-  // Full ConsultationWithDetailsResponse for the currently active consultation
-  const [activeConsultation, setActiveConsultation] = useState(null);
-  const [isConsulting, setIsConsulting] = useState(false);
   const [wsMessages, setWsMessages] = useState([]);
   const [patientTyping, setPatientTyping] = useState(false);
-  const [isTyping, setIsTyping] = useState(false);
+  const [queueLoading, setQueueLoading] = useState(false);
+
+  const [endModalOpen, setEndModalOpen] = useState(false);
+  const [prescriptionModalOpen, setPrescriptionModalOpen] = useState(false);
+  const [referralModalOpen, setReferralModalOpen] = useState(false);
+  const [labModalOpen, setLabModalOpen] = useState(false);
 
   const messagesEndRef = useRef(null);
   const wsRef = useRef(null);
-  const heartbeatIntervalRef = useRef(null);
-  const pollIntervalRef = useRef(null);
+  const heartbeatRef = useRef(null);
   const typingTimeoutRef = useRef(null);
-  // Ref keeps activeConsultation accessible inside WS callbacks without stale closures
-  const activeConsultationRef = useRef(null);
 
-  // Modal states
-  const [endConsultationModalOpen, setEndConsultationModalOpen] =
-    useState(false);
-  const [prescriptionModalOpen, setPrescriptionModalOpen] = useState(false);
-  const [referralModalOpen, setReferralModalOpen] = useState(false);
-  const [labOrderModalOpen, setLabOrderModalOpen] = useState(false);
+  const isConsulting = !!activePatient && !!activeConsultationId;
 
-  const consultationId = activeConsultation?.id;
-
-  // Keep ref in sync with state
-  useEffect(() => {
-    activeConsultationRef.current = activeConsultation;
-  }, [activeConsultation]);
-
-  // ── Scroll to bottom ───────────────────────────────────────────────────────
+  // ── Scroll to bottom ─────────────────────────────────────────────────────────
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, wsMessages]);
 
-  // ── On mount ───────────────────────────────────────────────────────────────
+  // ── On mount: load waiting room + check for already-active consultation ──────
   useEffect(() => {
-    fetchMyAvailability();
-    fetchWaitingRoom();
-    fetchProviderActiveConsultations();
-
-    // Provider heartbeat — keeps the availability record alive server-side
-    const availabilityHeartbeat = setInterval(() => {
-      sendHeartbeat();
-    }, 60_000);
-
-    // Poll waiting room so new patients appear automatically
-    pollIntervalRef.current = setInterval(() => {
-      fetchWaitingRoom();
-    }, WAITING_ROOM_POLL_MS);
-
-    return () => {
-      clearInterval(availabilityHeartbeat);
-      clearInterval(pollIntervalRef.current);
-    };
+    loadQueue();
+    resumeActiveConsultation();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── When a consultation becomes active load messages + note ───────────────
-  useEffect(() => {
-    if (consultationId) {
-      fetchMessages(consultationId, { limit: 50 });
-      fetchNoteByConsultation(consultationId);
-      markAllPatientMessagesRead(consultationId);
-      connectWebSocket(consultationId);
-    }
-    return () => {
-      disconnectWebSocket();
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [consultationId]);
+  /**
+   * BUG 1 FIX — calls fetchProviderActiveConsultations (provider-scoped endpoint)
+   * instead of fetchPatientActiveConsultation.
+   *
+   * BUG 2 FIX — the active consultations response shape is:
+   *   { consultations: [...], count: N }
+   * Each item has patient_first_name + patient_last_name (not patient_name).
+   * mapActivePatient now handles both field names.
+   *
+   * BUG 3 FIX — we set activePatient directly from the flat consultation item
+   * so the patient panel is populated immediately without waiting for a second
+   * /details round-trip (though we still fetch details for richer data).
+   */
+  const resumeActiveConsultation = useCallback(async () => {
+    const result = await fetchProviderActiveConsultations();
+    if (result.success && result.data?.consultations?.length > 0) {
+      const active = result.data.consultations[0];
+      const consultationId = active.id;
 
-  // ── WebSocket ──────────────────────────────────────────────────────────────
+      // Show patient immediately with data we already have
+      setActiveConsultationId(consultationId);
+      setActivePatient(mapActivePatient(active));
+
+      // Then hydrate with full details (enriches symptomsReported etc.)
+      await hydrateConsultation(consultationId, /* skipPatientSet */ true);
+    }
+  }, [fetchProviderActiveConsultations]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const loadQueue = useCallback(async () => {
+    setQueueLoading(true);
+    const result = await fetchWaitingRoom();
+    if (result.success) {
+      const entries = result.data?.entries ?? [];
+      setPatients(entries.map(mapWaitingRoomEntry));
+    }
+    setQueueLoading(false);
+  }, [fetchWaitingRoom]);
+
+  /**
+   * Fetch full consultation details and messages, then connect to WebSocket.
+   * skipPatientSet=true when the caller has already set activePatient from
+   * the lighter active-consultations payload.
+   */
+  const hydrateConsultation = useCallback(
+    async (consultationId, skipPatientSet = false) => {
+      if (!skipPatientSet) {
+        setActiveConsultationId(consultationId);
+      }
+
+      // Rich details (symptoms, AI summary, preferred comm, etc.)
+      const detailsResult = await fetchConsultationWithDetails(consultationId);
+      if (detailsResult.success && !skipPatientSet) {
+        setActivePatient(mapActivePatient(detailsResult.data));
+      } else if (detailsResult.success && skipPatientSet) {
+        // Upgrade the patient record with richer fields
+        setActivePatient(mapActivePatient(detailsResult.data));
+      }
+
+      await fetchMessages(consultationId, { limit: 50 });
+      await fetchNoteByConsultation(consultationId);
+      connectWebSocket(consultationId);
+    },
+    [fetchConsultationWithDetails, fetchMessages, fetchNoteByConsultation] // eslint-disable-line react-hooks/exhaustive-deps
+  );
+
+  // ── Accept patient from queue ────────────────────────────────────────────────
+  const handleAcceptPatient = useCallback(
+    async (patient) => {
+      const consultationId = patient.consultationId ?? patient.id;
+
+      const acceptResult = await acceptConsultation(consultationId);
+      if (!acceptResult.success) {
+        showToast(
+          acceptResult.error ?? "Failed to accept consultation",
+          "error"
+        );
+        return;
+      }
+
+      await startConsultation(consultationId);
+      setPatients((prev) => prev.filter((p) => p.id !== patient.id));
+      showToast(`Consultation started with ${patient.name}`, "success");
+      await hydrateConsultation(consultationId);
+    },
+    [acceptConsultation, startConsultation, hydrateConsultation, showToast]
+  );
+
+  const handleDeclinePatient = useCallback(
+    async (patient) => {
+      const consultationId = patient.consultationId ?? patient.id;
+      await declineConsultation(consultationId);
+      setPatients((prev) => prev.filter((p) => p.id !== patient.id));
+      showToast(`Declined consultation with ${patient.name}`, "info");
+    },
+    [declineConsultation, showToast]
+  );
+
+  // ── WebSocket ────────────────────────────────────────────────────────────────
   const connectWebSocket = useCallback(
-    (id) => {
+    (consultationId) => {
       if (wsRef.current?.readyState === WebSocket.OPEN) return;
+
       const token = getToken();
       if (!token) return;
 
-      const ws = new WebSocket(
-        `${WS_BASE_URL}/ws/consultations/${id}?token=${token}`
-      );
+      const url = `${WS_BASE_URL}/ws/consultations/${consultationId}?token=${token}`;
+      const ws = new WebSocket(url);
       wsRef.current = ws;
 
       ws.onopen = () => {
-        heartbeatIntervalRef.current = setInterval(() => {
+        showToast("Real-time connection established", "success");
+        heartbeatRef.current = setInterval(() => {
           if (ws.readyState === WebSocket.OPEN) {
             ws.send(JSON.stringify({ type: "ping" }));
           }
-        }, 25_000);
+        }, 25000);
       };
 
       ws.onmessage = (event) => {
         try {
-          handleWsEvent(JSON.parse(event.data));
+          const envelope = JSON.parse(event.data);
+          handleWsEvent(envelope);
         } catch (e) {
           console.error("WS parse error", e);
         }
       };
 
-      ws.onerror = (err) => console.error("Provider WS error", err);
-      ws.onclose = () => clearInterval(heartbeatIntervalRef.current);
+      ws.onerror = (err) => console.error("WS error", err);
+      ws.onclose = () => clearInterval(heartbeatRef.current);
     },
-    [getToken] // handleWsEvent deliberately excluded — read via closure over ref
+    [getToken, showToast] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   const disconnectWebSocket = useCallback(() => {
-    clearInterval(heartbeatIntervalRef.current);
-    if (wsRef.current) {
-      wsRef.current.close();
-      wsRef.current = null;
-    }
+    clearInterval(heartbeatRef.current);
+    wsRef.current?.close();
+    wsRef.current = null;
   }, []);
 
   const handleWsEvent = useCallback(
     (envelope) => {
-      const ac = activeConsultationRef.current;
       switch (envelope.type) {
         case "message": {
-          const payload = envelope.payload;
+          const mapped = mapWsMessage(envelope);
           setWsMessages((prev) => {
-            if (prev.some((m) => m.id === payload.message_id)) return prev;
-            const isOwnMessage = envelope.sender_user_id === user?.id;
-            return [
-              ...prev,
-              {
-                id: payload.message_id || Date.now(),
-                text: payload.content,
-                // Provider POV: own = right ("provider"), patient = left ("patient")
-                sender: isOwnMessage ? "provider" : "patient",
-                time: new Date(envelope.sent_at).toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                }),
-                patient:
-                  !isOwnMessage && ac
-                    ? `${ac.patient_first_name} ${ac.patient_last_name}`
-                    : undefined,
-                message_type: payload.message_type,
-              },
-            ];
+            if (prev.some((m) => m.id === mapped.id)) return prev;
+            return [...prev, mapped];
           });
           break;
         }
         case "typing":
-          if (envelope.sender_user_id !== user?.id) {
+          if (
+            envelope.payload?.sender_role === "patient" ||
+            envelope.role === "patient"
+          ) {
             setPatientTyping(true);
-            setTimeout(() => setPatientTyping(false), 3000);
+            clearTimeout(typingTimeoutRef.current);
+            typingTimeoutRef.current = setTimeout(
+              () => setPatientTyping(false),
+              3000
+            );
           }
           break;
         case "presence":
-          if (
-            envelope.payload?.action === "joined" &&
-            envelope.sender_user_id !== user?.id
-          ) {
+          if (envelope.payload?.action === "joined") {
             showToast("Patient has joined the consultation", "info");
           }
-          break;
-        case "consult_end":
-          showToast("The consultation was ended by the patient", "warning");
-          handlePostConsultation();
           break;
         default:
           break;
       }
     },
-    [user?.id, showToast] // activeConsultation read via ref — no stale dependency
+    [showToast]
   );
 
-  const sendTypingIndicator = useCallback(() => {
-    if (wsRef.current?.readyState === WebSocket.OPEN && consultationId) {
-      wsRef.current.send(
-        JSON.stringify({ type: "typing", consultation_id: consultationId })
-      );
-    }
-  }, [consultationId]);
-
-  // ── Merged messages ────────────────────────────────────────────────────────
+  // ── Merge DB messages + WS messages ─────────────────────────────────────────
   const allMessages = React.useMemo(() => {
-    const patientName = activeConsultation
-      ? `${activeConsultation.patient_first_name} ${activeConsultation.patient_last_name}`
-      : "Patient";
-
-    const dbMessages = (messages || []).map((m) => ({
-      id: m.id,
-      text: m.content || "",
-      sender: m.sender_role === "provider" ? "provider" : "patient",
-      time: new Date(m.sent_at).toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-      patient: m.sender_role !== "provider" ? patientName : undefined,
-      message_type: m.message_type,
-      is_read: m.is_read,
-    }));
-
-    const seen = new Set(dbMessages.map((m) => m.id));
+    const dbMapped = messages.map(mapDbMessage);
+    const seen = new Set(dbMapped.map((m) => m.id));
     const newWs = wsMessages.filter((m) => !seen.has(m.id));
-    return [...dbMessages, ...newWs];
-  }, [messages, wsMessages, activeConsultation]);
+    return [...dbMapped, ...newWs];
+  }, [messages, wsMessages]);
 
-  // ── Map WaitingRoomEntryResponse → queue card shape ────────────────────────
-  const queuePatients = React.useMemo(
-    () =>
-      (waitingRoom || []).map((e) => ({
-        id: e.id,
-        name: `${e.patient_first_name} ${e.patient_last_name}`,
-        chiefComplaint: e.chief_complaint,
-        triageLevel: e.triage_level_at_start,
-        severityScore: e.severity_score,
-        channel: e.channel,
-        fee: e.consultation_fee,
-        aiSummary: e.ai_summary,
-        requestedAt: e.requested_at,
-        priority: ["high", "emergency"].includes(e.triage_level_at_start)
-          ? "urgent"
-          : "normal",
-        waitTime: e.requested_at
-          ? `${Math.round(
-              (Date.now() - new Date(e.requested_at).getTime()) / 60_000
-            )} min`
-          : "–",
-        status: "waiting",
-      })),
-    [waitingRoom]
-  );
-
-  // ── Map ConsultationWithDetailsResponse → PatientInfo / header shape ────────
-  const activePatientForUI = React.useMemo(() => {
-    if (!activeConsultation) return null;
-    return {
-      id: activeConsultation.id,
-      name: `${activeConsultation.patient_first_name} ${activeConsultation.patient_last_name}`,
-      chiefComplaint: activeConsultation.chief_complaint,
-      channel: activeConsultation.channel,
-      triageLevel: activeConsultation.triage_level_at_start,
-      severityScore: activeConsultation.severity_score,
-      aiSummary: activeConsultation.ai_summary,
-      symptomsReported: activeConsultation.symptoms_reported,
-      preferredComm: activeConsultation.preferred_communication_method,
-      priority: ["high", "emergency"].includes(
-        activeConsultation.triage_level_at_start
-      )
-        ? "urgent"
-        : "normal",
-    };
-  }, [activeConsultation]);
-
-  // ── Post-consultation cleanup ──────────────────────────────────────────────
-  const handlePostConsultation = useCallback(() => {
-    disconnectWebSocket();
-    setIsConsulting(false);
-    setActiveConsultation(null);
-    setWsMessages([]);
-    clearMessages();
-    clearNote();
-    fetchWaitingRoom();
-    fetchProviderActiveConsultations();
-  }, [
-    disconnectWebSocket,
-    clearMessages,
-    clearNote,
-    fetchWaitingRoom,
-    fetchProviderActiveConsultations,
-  ]);
-
-  // ── Action handlers ────────────────────────────────────────────────────────
-
-  const handleAcceptPatient = useCallback(
-    async (queueEntry) => {
-      // 1. Accept  →  2. Start  →  3. Fetch full details
-      const acceptResult = await acceptConsultation(queueEntry.id);
-      if (!acceptResult.success) {
-        showToast(acceptResult.error, "error");
-        return;
-      }
-
-      const startResult = await startConsultation(queueEntry.id);
-      if (!startResult.success) {
-        showToast(startResult.error, "error");
-        return;
-      }
-
-      const detailsResult = await fetchConsultationWithDetails(queueEntry.id);
-      if (!detailsResult.success) {
-        showToast(detailsResult.error, "error");
-        return;
-      }
-
-      setActiveConsultation(detailsResult.data);
-      setIsConsulting(true);
-      setWsMessages([]);
-      showToast(`Consultation started with ${queueEntry.name}`, "success");
-      fetchWaitingRoom();
-    },
-    [
-      acceptConsultation,
-      startConsultation,
-      fetchConsultationWithDetails,
-      fetchWaitingRoom,
-      showToast,
-    ]
-  );
-
-  const handleDeclinePatient = useCallback(
-    async (queueEntry) => {
-      const result = await declineConsultation(queueEntry.id);
-      if (result.success) {
-        showToast(`Declined consultation for ${queueEntry.name}`, "info");
-        fetchWaitingRoom();
-      } else {
-        showToast(result.error, "error");
-      }
-    },
-    [declineConsultation, fetchWaitingRoom, showToast]
-  );
-
+  // ── Send message ─────────────────────────────────────────────────────────────
   const handleSendMessage = async () => {
-    if (!newMessage.trim()) {
-      showToast("Please enter a message", "warning");
-      return;
-    }
-    if (!consultationId) return;
+    if (!newMessage.trim() || !activeConsultationId) return;
 
     const text = newMessage;
     setNewMessage("");
 
     if (wsRef.current?.readyState === WebSocket.OPEN) {
-      // Server persists → broadcasts back → handleWsEvent adds it (no duplicate)
       wsRef.current.send(
         JSON.stringify({
           type: "message",
-          consultation_id: consultationId,
-          payload: { message_type: "text", content: text },
+          consultation_id: activeConsultationId,
+          payload: {
+            message_type: "text",
+            content: text,
+            sender_role: "provider",
+          },
         })
       );
     } else {
-      // HTTP fallback — add the persisted response directly
-      const result = await sendMessage(consultationId, {
+      const result = await sendMessage(activeConsultationId, {
         sender_role: "provider",
         message_type: "text",
         content: text,
@@ -418,19 +388,7 @@ const ProviderTelemedicineChat = () => {
         const m = result.data;
         setWsMessages((prev) => {
           if (prev.some((msg) => msg.id === m.id)) return prev;
-          return [
-            ...prev,
-            {
-              id: m.id,
-              text: m.content || text,
-              sender: "provider",
-              time: new Date(m.sent_at).toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-              }),
-              message_type: m.message_type,
-            },
-          ];
+          return [...prev, mapDbMessage(m)];
         });
       } else {
         showToast(result.error, "error");
@@ -441,159 +399,116 @@ const ProviderTelemedicineChat = () => {
 
   const handleTyping = (value) => {
     setNewMessage(value);
-    if (!isTyping) {
-      setIsTyping(true);
-      sendTypingIndicator();
+    if (wsRef.current?.readyState === WebSocket.OPEN && activeConsultationId) {
+      wsRef.current.send(
+        JSON.stringify({
+          type: "typing",
+          consultation_id: activeConsultationId,
+          role: "provider",
+        })
+      );
     }
-    clearTimeout(typingTimeoutRef.current);
-    typingTimeoutRef.current = setTimeout(() => setIsTyping(false), 2000);
   };
 
-  const handleEndConsultation = () => setEndConsultationModalOpen(true);
+  // ── End consultation ─────────────────────────────────────────────────────────
+  const handleEndConsultation = () => setEndModalOpen(true);
 
   const confirmEndConsultation = async () => {
-    if (!consultationId) return;
-    const result = await completeConsultation(consultationId);
+    if (!activeConsultationId) return;
+    const result = await completeConsultation(activeConsultationId);
     if (result.success) {
-      // Notify the patient before closing the socket
+      disconnectWebSocket();
+      setActivePatient(null);
+      setActiveConsultationId(null);
+      clearMessages();
+      setWsMessages([]);
+      setEndModalOpen(false);
+      showToast("Consultation ended and saved to patient records", "success");
+      loadQueue();
+    } else {
+      showToast(result.error ?? "Failed to end consultation", "error");
+    }
+  };
+
+  // ── Clinical actions ─────────────────────────────────────────────────────────
+  const sendClinicalMessage = useCallback(
+    (message_type, content) => {
       if (wsRef.current?.readyState === WebSocket.OPEN) {
         wsRef.current.send(
           JSON.stringify({
-            type: "consult_end",
-            consultation_id: consultationId,
+            type: "message",
+            consultation_id: activeConsultationId,
+            payload: { message_type, content, sender_role: "provider" },
           })
         );
       }
-      setEndConsultationModalOpen(false);
-      handlePostConsultation();
-      showToast("Consultation ended. Records updated.", "info");
-    } else {
-      showToast(result.error, "error");
-    }
-  };
-
-  // Clinical events — persisted as system_event messages so they appear in
-  // both chat histories. WS broadcast shows them to the patient in real time.
-  const postSystemEvent = useCallback(
-    async (text) => {
-      if (!consultationId) return;
-      await sendMessage(consultationId, {
-        sender_role: "provider",
-        message_type: "system_event",
-        content: text,
-      });
     },
-    [consultationId, sendMessage]
+    [activeConsultationId]
   );
 
-  const handleIssuePrescription = () => setPrescriptionModalOpen(true);
-  const confirmPrescription = async (data) => {
+  const handlePrescriptionConfirm = (form) => {
     setPrescriptionModalOpen(false);
-    await postSystemEvent(
-      `📋 Prescription issued: ${data.medication} ${data.dosage} — ${data.frequency} for ${data.duration}` +
-        (data.instructions ? ` (${data.instructions})` : "")
+    sendClinicalMessage(
+      "prescription",
+      `Prescription issued: ${form.medication} ${form.dosage}, ${form.frequency} for ${form.duration}. ${form.instructions}`
     );
-    showToast("Prescription sent to patient", "success");
+    showToast("Prescription issued successfully", "success");
   };
 
-  const handleReferPatient = () => setReferralModalOpen(true);
-  const confirmReferral = async (data) => {
+  const handleReferralConfirm = (form) => {
     setReferralModalOpen(false);
-    await postSystemEvent(
-      `📤 Referral: ${data.specialist}` +
-        (data.facility ? ` at ${data.facility}` : "") +
-        ` — ${data.urgency}` +
-        (data.reason ? ` · ${data.reason}` : "")
+    sendClinicalMessage(
+      "referral",
+      `Referral sent to ${form.specialist}${
+        form.facility ? ` at ${form.facility}` : ""
+      }. Urgency: ${form.urgency}. Reason: ${form.reason}`
     );
     showToast("Referral sent successfully", "success");
   };
 
-  const handleOrderLab = () => setLabOrderModalOpen(true);
-  const confirmLabOrder = async (data) => {
-    setLabOrderModalOpen(false);
-    await postSystemEvent(
-      `🔬 Lab order: ${data.tests.join(", ")} — Urgency: ${data.urgency}`
+  const handleLabConfirm = (form) => {
+    setLabModalOpen(false);
+    sendClinicalMessage(
+      "lab_order",
+      `Lab order placed (${form.urgency}): ${form.tests.join(", ")}`
     );
     showToast("Lab order submitted", "success");
   };
 
-  const handleToggleAvailability = async () => {
-    if (isOnline) {
-      // Go offline — also marks is_accepting=false server-side
-      const result = await goOffline();
-      if (result.success) {
-        showToast("You are now offline", "info");
-      } else {
-        showToast(result.error, "error");
-      }
-    } else {
-      // Step 1: go online
-      const onlineResult = await goOnline();
-      if (!onlineResult.success) {
-        showToast(onlineResult.error, "error");
-        return;
-      }
-      // Step 2: set is_accepting=true so IncrementActiveConsultations succeeds.
-      // goOnline only sets is_online=true — is_accepting must be flipped separately.
-      const acceptResult = await setAccepting({ is_accepting: true });
-      if (!acceptResult.success) {
-        showToast(
-          acceptResult.error ||
-            "Online but failed to enable patient acceptance",
-          "warning"
-        );
-        return;
-      }
-      showToast("You are now online and accepting patients", "success");
-    }
-    // Re-sync availability state after any change
-    await fetchMyAvailability();
-  };
+  // ── Cleanup on unmount ───────────────────────────────────────────────────────
+  useEffect(() => {
+    return () => {
+      disconnectWebSocket();
+      clearTimeout(typingTimeoutRef.current);
+    };
+  }, [disconnectWebSocket]);
 
-  // ── Render ─────────────────────────────────────────────────────────────────
+  // ─── Render ──────────────────────────────────────────────────────────────────
   return (
     <div className="h-full">
-      <div className="mb-6 flex items-start justify-between">
-        <div>
-          <h2 className="text-3xl font-bold text-navy-700 dark:text-white">
-            Provider Consultation Dashboard
-          </h2>
-          <p className="mt-2 text-gray-600 dark:text-gray-300">
-            Manage patient consultations, issue prescriptions, and coordinate
-            care
-          </p>
-        </div>
-
-        <button
-          onClick={handleToggleAvailability}
-          className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-            isOnline
-              ? "bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400"
-              : "bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-navy-700 dark:text-gray-400"
-          }`}
-        >
-          <span
-            className={`h-2 w-2 rounded-full ${
-              isOnline ? "bg-green-500" : "bg-gray-400"
-            }`}
-          />
-          {isOnline ? "Online" : "Offline"}
-        </button>
+      <div className="mb-6">
+        <h2 className="text-3xl font-bold text-navy-700 dark:text-white">
+          Provider Consultation Room
+        </h2>
+        <p className="mt-2 text-gray-600 dark:text-gray-300">
+          Manage your patient queue and conduct secure consultations
+        </p>
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2">
+        {/* ── Main chat area (left, 2 cols) ── */}
+        <div className="space-y-6 lg:col-span-2">
           <Card extra="overflow-hidden">
             <ProviderChatHeader
               isConsulting={isConsulting}
-              activePatient={activePatientForUI}
+              activePatient={activePatient}
             />
 
             <ProviderMessagesContainer
               messages={allMessages}
               messagesEndRef={messagesEndRef}
               patientTyping={patientTyping}
-              patientName={activePatientForUI?.name}
+              patientName={activePatient?.name}
               isLoading={consultationLoading && allMessages.length === 0}
             />
 
@@ -602,64 +517,70 @@ const ProviderTelemedicineChat = () => {
               newMessage={newMessage}
               setNewMessage={handleTyping}
               onSendMessage={handleSendMessage}
-              onIssuePrescription={handleIssuePrescription}
-              onReferPatient={handleReferPatient}
-              onOrderLab={handleOrderLab}
+              onIssuePrescription={() => setPrescriptionModalOpen(true)}
+              onReferPatient={() => setReferralModalOpen(true)}
+              onOrderLab={() => setLabModalOpen(true)}
               onEndConsultation={handleEndConsultation}
             />
           </Card>
-        </div>
 
-        <div className="space-y-6">
-          <PatientQueue
-            patients={queuePatients}
-            activePatient={activePatientForUI}
-            onAcceptPatient={handleAcceptPatient}
-            onDeclinePatient={handleDeclinePatient}
-            loading={consultationLoading}
-            onRefresh={fetchWaitingRoom}
-          />
-
-          {activePatientForUI && (
+          {isConsulting && activePatient && (
             <PatientInfo
-              patient={activePatientForUI}
+              patient={activePatient}
               note={note}
-              consultationId={consultationId}
+              consultationId={activeConsultationId}
               onCreateNote={createNote}
               onUpdateNote={updateNote}
               onFinaliseNote={finaliseNote}
             />
           )}
+        </div>
 
+        {/* ── Right sidebar: queue + quick actions (1 col) ── */}
+        <div className="space-y-6">
+          <PatientQueue
+            patients={patients}
+            activePatient={activePatient}
+            onAcceptPatient={handleAcceptPatient}
+            onDeclinePatient={handleDeclinePatient}
+            loading={queueLoading}
+            onRefresh={loadQueue}
+          />
           <ProviderQuickActionsCard />
-
-          <PrescriptionPadCard onIssuePrescription={handleIssuePrescription} />
+          {isConsulting && (
+            <PrescriptionPadCard
+              onIssuePrescription={() => setPrescriptionModalOpen(true)}
+            />
+          )}
         </div>
       </div>
 
       <EndConsultationModal
-        isOpen={endConsultationModalOpen}
-        onClose={() => setEndConsultationModalOpen(false)}
+        isOpen={endModalOpen}
+        onClose={() => setEndModalOpen(false)}
         onConfirm={confirmEndConsultation}
-        patient={activePatientForUI}
+        patient={activePatient}
       />
+
       <PrescriptionModal
         isOpen={prescriptionModalOpen}
         onClose={() => setPrescriptionModalOpen(false)}
-        patient={activePatientForUI}
-        onConfirm={confirmPrescription}
+        patient={activePatient}
+        onConfirm={handlePrescriptionConfirm}
       />
+
       <ReferralModal
         isOpen={referralModalOpen}
         onClose={() => setReferralModalOpen(false)}
-        patient={activePatientForUI}
-        onConfirm={confirmReferral}
+        patient={activePatient}
+        onConfirm={handleReferralConfirm}
       />
+
       <LabOrderModal
-        isOpen={labOrderModalOpen}
-        onClose={() => setLabOrderModalOpen(false)}
-        patient={activePatientForUI}
-        onConfirm={confirmLabOrder}
+        isOpen={labModalOpen}
+        onClose={() => setLabModalOpen(false)}
+        patient={activePatient}
+        onConfirm={handleLabConfirm}
       />
     </div>
   );
