@@ -42,14 +42,6 @@ const mapWaitingRoomEntry = (entry) => ({
   status: "waiting",
 });
 
-/**
- * BUG 2 FIX — mapActivePatient now also handles the flat shape returned by
- * GET /consultations/provider/active, which has:
- *   patient_first_name / patient_last_name  (not patient_name)
- *   preferred_communication_method          (not preferred_communication)
- * We support both shapes so the same mapper works for both the resume path
- * (flat active consultation) and the detail path (rich hydrated response).
- */
 const mapActivePatient = (details) => {
   const firstName = details.patient_first_name ?? "";
   const lastName = details.patient_last_name ?? "";
@@ -98,6 +90,8 @@ const mapWsMessage = (envelope) => ({
   }),
   sender_role: envelope.payload?.sender_role,
   message_type: envelope.payload?.message_type,
+  // Incoming WS messages from patient are immediately seen by provider
+  is_read: envelope.payload?.sender_role === "patient" ? true : undefined,
 });
 
 function formatWaitTime(requestedAt) {
@@ -118,11 +112,6 @@ const ProviderTelemedicineChat = () => {
   // ── Hooks ────────────────────────────────────────────────────────────────────
   const {
     fetchWaitingRoom,
-    // BUG 1 FIX — use the PROVIDER-scoped hook, not the patient one.
-    // fetchPatientActiveConsultation hits GET /consultations/me/active which
-    // resolves a *patient* profile from the JWT. A provider_staff user has no
-    // patient profile, so the backend returns 401/404 → AuthContext sees a 401
-    // and signs the user out.
     fetchProviderActiveConsultations,
     fetchConsultationWithDetails,
     acceptConsultation,
@@ -132,8 +121,15 @@ const ProviderTelemedicineChat = () => {
     loading: consultationLoading,
   } = useConsultation();
 
-  const { messages, fetchMessages, sendMessage, clearMessages } =
-    useConsultationMessages();
+  const {
+    messages,
+    fetchMessages,
+    sendMessage,
+    clearMessages,
+    // ── FIX: pull in the mark-as-read helpers ──────────────────────────────
+    markAllPatientMessagesRead,
+    markMessageRead,
+  } = useConsultationMessages();
 
   const {
     note,
@@ -161,8 +157,15 @@ const ProviderTelemedicineChat = () => {
   const wsRef = useRef(null);
   const heartbeatRef = useRef(null);
   const typingTimeoutRef = useRef(null);
+  // Keep a stable ref to the active consultation ID for use inside WS callbacks
+  const activeConsultationIdRef = useRef(null);
 
   const isConsulting = !!activePatient && !!activeConsultationId;
+
+  // Keep the ref in sync with state so WS handlers always see the latest value
+  useEffect(() => {
+    activeConsultationIdRef.current = activeConsultationId;
+  }, [activeConsultationId]);
 
   // ── Scroll to bottom ─────────────────────────────────────────────────────────
   useEffect(() => {
@@ -176,30 +179,25 @@ const ProviderTelemedicineChat = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  /**
-   * BUG 1 FIX — calls fetchProviderActiveConsultations (provider-scoped endpoint)
-   * instead of fetchPatientActiveConsultation.
-   *
-   * BUG 2 FIX — the active consultations response shape is:
-   *   { consultations: [...], count: N }
-   * Each item has patient_first_name + patient_last_name (not patient_name).
-   * mapActivePatient now handles both field names.
-   *
-   * BUG 3 FIX — we set activePatient directly from the flat consultation item
-   * so the patient panel is populated immediately without waiting for a second
-   * /details round-trip (though we still fetch details for richer data).
-   */
+  // ── FIX: whenever the provider's active consultation changes and messages are
+  //    loaded, mark all patient messages in that consultation as read. This
+  //    updates is_read + read_at in the DB so the patient sees double-ticks and
+  //    the unread badge on the provider side goes to zero.
+  useEffect(() => {
+    if (activeConsultationId && messages.length > 0) {
+      markAllPatientMessagesRead(activeConsultationId);
+    }
+  }, [activeConsultationId, messages.length]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const resumeActiveConsultation = useCallback(async () => {
     const result = await fetchProviderActiveConsultations();
     if (result.success && result.data?.consultations?.length > 0) {
       const active = result.data.consultations[0];
       const consultationId = active.id;
 
-      // Show patient immediately with data we already have
       setActiveConsultationId(consultationId);
       setActivePatient(mapActivePatient(active));
 
-      // Then hydrate with full details (enriches symptomsReported etc.)
       await hydrateConsultation(consultationId, /* skipPatientSet */ true);
     }
   }, [fetchProviderActiveConsultations]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -225,15 +223,15 @@ const ProviderTelemedicineChat = () => {
         setActiveConsultationId(consultationId);
       }
 
-      // Rich details (symptoms, AI summary, preferred comm, etc.)
       const detailsResult = await fetchConsultationWithDetails(consultationId);
       if (detailsResult.success && !skipPatientSet) {
         setActivePatient(mapActivePatient(detailsResult.data));
       } else if (detailsResult.success && skipPatientSet) {
-        // Upgrade the patient record with richer fields
         setActivePatient(mapActivePatient(detailsResult.data));
       }
 
+      // Fetch messages — the useEffect above will call markAllPatientMessagesRead
+      // once messages.length > 0, so no extra call needed here.
       await fetchMessages(consultationId, { limit: 50 });
       await fetchNoteByConsultation(consultationId);
       connectWebSocket(consultationId);
@@ -324,6 +322,21 @@ const ProviderTelemedicineChat = () => {
             if (prev.some((m) => m.id === mapped.id)) return prev;
             return [...prev, mapped];
           });
+
+          // ── FIX: mark individual patient messages as read immediately when
+          //    they arrive via WebSocket while the provider has the chat open.
+          //    This sets is_read=true and read_at=NOW() in the DB so the patient
+          //    sees the double-tick receipt in real time.
+          if (
+            envelope.payload?.sender_role === "patient" &&
+            envelope.payload?.message_id &&
+            activeConsultationIdRef.current
+          ) {
+            markMessageRead(
+              activeConsultationIdRef.current,
+              envelope.payload.message_id
+            );
+          }
           break;
         }
         case "typing":
@@ -348,7 +361,7 @@ const ProviderTelemedicineChat = () => {
           break;
       }
     },
-    [showToast]
+    [showToast, markMessageRead]
   );
 
   // ── Merge DB messages + WS messages ─────────────────────────────────────────
@@ -374,13 +387,13 @@ const ProviderTelemedicineChat = () => {
           payload: {
             message_type: "text",
             content: text,
-            sender_role: "provider",
+            sender_role: "provider_staff",
           },
         })
       );
     } else {
       const result = await sendMessage(activeConsultationId, {
-        sender_role: "provider",
+        sender_role: "provider_staff",
         message_type: "text",
         content: text,
       });
@@ -404,7 +417,7 @@ const ProviderTelemedicineChat = () => {
         JSON.stringify({
           type: "typing",
           consultation_id: activeConsultationId,
-          role: "provider",
+          role: "provider_staff",
         })
       );
     }
@@ -438,7 +451,7 @@ const ProviderTelemedicineChat = () => {
           JSON.stringify({
             type: "message",
             consultation_id: activeConsultationId,
-            payload: { message_type, content, sender_role: "provider" },
+            payload: { message_type, content, sender_role: "provider_staff" },
           })
         );
       }
