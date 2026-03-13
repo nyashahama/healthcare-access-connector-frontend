@@ -31,29 +31,14 @@ const UpcomingAppointments = ({
 
   // Filter and format upcoming appointments
   const upcomingAppointments = useMemo(() => {
-    console.log("UpcomingAppointments - Raw appointments:", appointments);
-
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    console.log("UpcomingAppointments - Today:", today);
 
-    const filtered = (appointments || [])
+    return (appointments || [])
       .filter((apt) => {
-        const appointmentDate = new Date(apt.appointment_date);
+        const appointmentDate = parseLocalDate(apt.appointment_date);
+        if (!appointmentDate) return false;
         appointmentDate.setHours(0, 0, 0, 0);
-
-        console.log("Checking appointment:", {
-          id: apt.id.slice(0, 8),
-          date: apt.appointment_date,
-          parsedDate: appointmentDate,
-          today: today,
-          isAfterToday: appointmentDate >= today,
-          status: apt.status,
-          willShow:
-            appointmentDate >= today &&
-            apt.status !== "cancelled" &&
-            apt.status !== "completed",
-        });
 
         return (
           appointmentDate >= today && // Include today
@@ -74,74 +59,71 @@ const UpcomingAppointments = ({
         isToday: isToday(apt.appointment_date),
         isTomorrow: isTomorrow(apt.appointment_date),
       }));
-
-    console.log("UpcomingAppointments - Filtered results:", filtered);
-    return filtered;
   }, [appointments]);
+
+  // Date-only strings (YYYY-MM-DD) are parsed as UTC midnight by the JS spec,
+  // which shifts the displayed date by one day in UTC- timezones. Appending
+  // T00:00:00 forces the engine to treat it as local time instead.
+  function parseLocalDate(str) {
+    if (!str) return null;
+    const normalized = /^\d{4}-\d{2}-\d{2}$/.test(str)
+      ? `${str}T00:00:00`
+      : str;
+    const d = new Date(normalized);
+    return isNaN(d.getTime()) ? null : d;
+  }
 
   function formatDate(isoString) {
     if (!isoString) return "N/A";
-    try {
-      const date = new Date(isoString);
-      return date.toLocaleDateString("en-US", {
-        weekday: "long",
-        month: "long",
-        day: "numeric",
-        year: "numeric",
-      });
-    } catch (e) {
-      return "N/A";
-    }
+    const date = parseLocalDate(isoString);
+    if (!date) return "N/A";
+    return date.toLocaleDateString("en-US", {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    });
   }
 
-  function formatTime(isoString) {
-    if (!isoString) return "N/A";
-    try {
-      const date = new Date(isoString);
-      return date.toLocaleTimeString("en-US", {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: true,
-      });
-    } catch (e) {
-      return "N/A";
-    }
+  function formatTime(timeString) {
+    if (!timeString) return "N/A";
+    // appointment_time is a time-only string (HH:MM:SS); prefix a dummy date
+    // so the Date constructor produces a valid object in all browsers.
+    const d = new Date(`1970-01-01T${timeString}`);
+    if (isNaN(d.getTime())) return "N/A";
+    return d.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
   }
 
   function formatDateTime(isoString) {
     if (!isoString) return "N/A";
-    try {
-      const date = new Date(isoString);
-      return date.toLocaleString("en-US", {
-        month: "short",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: true,
-      });
-    } catch (e) {
-      return "N/A";
-    }
+    const date = new Date(isoString);
+    if (isNaN(date.getTime())) return "N/A";
+    return date.toLocaleString("en-US", {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
   }
 
   function getDaysUntil(isoString) {
-    if (!isoString) return null;
-    try {
-      const appointmentDate = new Date(isoString);
-      const today = new Date();
-      appointmentDate.setHours(0, 0, 0, 0);
-      today.setHours(0, 0, 0, 0);
-      const diffTime = appointmentDate - today;
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      return diffDays;
-    } catch (e) {
-      return null;
-    }
+    const appointmentDate = parseLocalDate(isoString);
+    if (!appointmentDate) return null;
+    const today = new Date();
+    appointmentDate.setHours(0, 0, 0, 0);
+    today.setHours(0, 0, 0, 0);
+    const diffTime = appointmentDate - today;
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   }
 
   function isToday(isoString) {
-    if (!isoString) return false;
-    const appointmentDate = new Date(isoString);
+    const appointmentDate = parseLocalDate(isoString);
+    if (!appointmentDate) return false;
     const today = new Date();
     appointmentDate.setHours(0, 0, 0, 0);
     today.setHours(0, 0, 0, 0);
@@ -149,8 +131,8 @@ const UpcomingAppointments = ({
   }
 
   function isTomorrow(isoString) {
-    if (!isoString) return false;
-    const appointmentDate = new Date(isoString);
+    const appointmentDate = parseLocalDate(isoString);
+    if (!appointmentDate) return false;
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     appointmentDate.setHours(0, 0, 0, 0);

@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "context/AuthContext";
 
 /**
@@ -6,33 +7,25 @@ import { useAuth } from "context/AuthContext";
  */
 export const useLogoutHandler = () => {
   const { logout } = useAuth();
+  const navigate = useNavigate();
 
   const handleLogout = async () => {
+    // Clear all profile/clinic caches before navigating
+    const cacheKeys = Object.keys(localStorage).filter(
+      (key) =>
+        key.startsWith("profile_check_") || key.startsWith("clinic_check_")
+    );
+    cacheKeys.forEach((key) => localStorage.removeItem(key));
+
     try {
-      // Call logout
-      const result = await logout();
-
-      if (result.success) {
-        // Clear all profile/clinic caches
-        const cacheKeys = Object.keys(localStorage).filter(
-          (key) =>
-            key.startsWith("profile_check_") || key.startsWith("clinic_check_")
-        );
-        cacheKeys.forEach((key) => localStorage.removeItem(key));
-
-        // Force a hard navigation to sign-in
-        // This ensures all components unmount and remount fresh
-        window.location.href = "/auth/sign-in";
-      } else {
-        console.error("Logout failed:", result.error);
-        // Even if logout fails on backend, clear frontend state
-        window.location.href = "/auth/sign-in";
-      }
-    } catch (error) {
-      console.error("Logout error:", error);
-      // Force navigation even on error
-      window.location.href = "/auth/sign-in";
+      await logout();
+    } catch {
+      // Logout failed on the backend — auth context already cleared local state
     }
+
+    // Use React Router so component unmount lifecycle runs (closes WebSockets,
+    // clears intervals) before the sign-in page mounts.
+    navigate("/auth/sign-in", { replace: true });
   };
 
   return { handleLogout };

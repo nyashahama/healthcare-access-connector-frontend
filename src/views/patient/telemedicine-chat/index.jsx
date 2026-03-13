@@ -195,6 +195,15 @@ const TelemedicineChat = () => {
   }, [handleWsEvent]);
 
   const reconnectTimeoutRef = useRef(null);
+  const isMountedRef = useRef(true);
+
+  // Mark unmounted so the WS onclose handler never schedules a reconnect
+  // for a component that is no longer in the tree.
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   const connectWebSocket = useCallback(
     (id) => {
@@ -238,11 +247,14 @@ const TelemedicineChat = () => {
 
       ws.onclose = (event) => {
         clearInterval(heartbeatIntervalRef.current);
-        // Auto-reconnect unless the close was intentional (code 1000 = normal)
-        // or the consultation is no longer active.
-        if (event.code !== 1000 && consultationIdRef.current) {
+        // Auto-reconnect unless the close was intentional (code 1000 = normal),
+        // the consultation is no longer active, or the component has unmounted.
+        if (
+          event.code !== 1000 &&
+          consultationIdRef.current &&
+          isMountedRef.current
+        ) {
           reconnectTimeoutRef.current = setTimeout(() => {
-            console.info("WS: reconnecting…");
             connectWebSocket(consultationIdRef.current);
           }, 3000);
         }
