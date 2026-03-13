@@ -164,12 +164,13 @@ const TelemedicineChat = () => {
             );
 
             // Resolve the true sender_role: prefer broadcast, fall back to
-            // the optimistic's role (we know what we sent), then "patient".
+            // the optimistic's role (we know what we sent). If no optimistic
+            // matched, the message came from the provider — not from this patient.
             const resolvedRole =
               payload.sender_role ||
               (optimisticIdx >= 0
                 ? prev[optimisticIdx].sender_role
-                : "patient");
+                : "provider_staff");
 
             const incoming = {
               id: payload.message_id || `ws-${Date.now()}`,
