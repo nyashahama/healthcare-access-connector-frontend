@@ -65,34 +65,55 @@ const mapActivePatient = (details) => {
   };
 };
 
-const mapDbMessage = (m) => ({
-  id: m.id,
-  text: m.content ?? "",
-  sender: m.sender_role, // "provider" | "patient" | "system"
-  patient: m.sender_role === "patient" ? "Patient" : undefined,
-  time: new Date(m.sent_at).toLocaleTimeString([], {
-    hour: "2-digit",
-    minute: "2-digit",
-  }),
-  sender_role: m.sender_role,
-  message_type: m.message_type,
-  is_read: m.is_read,
-});
+// Normalize any provider-related role to "provider" so ProviderMessageBubble
+// can use a simple === check. "provider_staff", "provider", etc. all become
+// "provider"; "patient" and "system" pass through unchanged.
+function normalizeSender(role) {
+  if (!role || role === "system") return role ?? "system";
+  if (role === "patient") return "patient";
+  return "provider"; // "provider", "provider_staff", etc.
+}
 
-const mapWsMessage = (envelope) => ({
-  id: envelope.payload?.message_id ?? `ws-${Date.now()}`,
-  text: envelope.payload?.content ?? "",
-  sender: envelope.payload?.sender_role ?? "patient",
-  patient: envelope.payload?.sender_role === "patient" ? "Patient" : undefined,
-  time: new Date(envelope.sent_at ?? Date.now()).toLocaleTimeString([], {
-    hour: "2-digit",
-    minute: "2-digit",
-  }),
-  sender_role: envelope.payload?.sender_role,
-  message_type: envelope.payload?.message_type,
-  // Incoming WS messages from patient are immediately seen by provider
-  is_read: envelope.payload?.sender_role === "patient" ? true : undefined,
-});
+function safeTime(ts) {
+  if (!ts) return "";
+  const d = new Date(ts);
+  if (isNaN(d.getTime())) return "";
+  return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+}
+
+const mapDbMessage = (m) => {
+  const ts = m.sent_at || m.created_at || null;
+  return {
+    id: m.id,
+    text: m.content ?? "",
+    sender: normalizeSender(m.sender_role),
+    patient: m.sender_role === "patient" ? "Patient" : undefined,
+    time: safeTime(ts),
+    sent_at: ts,
+    sender_role: m.sender_role,
+    message_type: m.message_type,
+    is_read: m.is_read,
+  };
+};
+
+const mapWsMessage = (envelope) => {
+  const role = envelope.payload?.sender_role;
+  const ts = envelope.sent_at
+    ? new Date(envelope.sent_at).toISOString()
+    : new Date().toISOString();
+  return {
+    id: envelope.payload?.message_id ?? `ws-${Date.now()}`,
+    text: envelope.payload?.content ?? "",
+    sender: normalizeSender(role),
+    patient: role === "patient" ? "Patient" : undefined,
+    time: safeTime(ts),
+    sent_at: ts,
+    sender_role: role,
+    message_type: envelope.payload?.message_type,
+    // Incoming WS messages from patient are immediately seen by provider
+    is_read: role === "patient" ? true : undefined,
+  };
+};
 
 function formatWaitTime(requestedAt) {
   if (!requestedAt) return "—";

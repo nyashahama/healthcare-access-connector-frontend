@@ -130,6 +130,13 @@ const TelemedicineChat = () => {
       switch (envelope.type) {
         case "message": {
           const payload = envelope.payload;
+          const ts = envelope.sent_at
+            ? new Date(envelope.sent_at).toISOString()
+            : new Date().toISOString();
+          const d = new Date(ts);
+          const timeStr = isNaN(d.getTime())
+            ? ""
+            : d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
           setWsMessages((prev) => {
             if (prev.some((m) => m.id === payload.message_id)) return prev;
             return [
@@ -142,12 +149,8 @@ const TelemedicineChat = () => {
                 // top level (it may be nested or absent), so comparing it to
                 // user?.id can silently produce the wrong result.
                 sender: payload.sender_role === "patient" ? "user" : "provider",
-                time: new Date(
-                  envelope.sent_at ?? Date.now()
-                ).toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                }),
+                time: timeStr,
+                sent_at: ts,
                 provider:
                   payload.sender_role !== "patient" ? "Provider" : undefined,
                 sender_role: payload.sender_role,
@@ -282,26 +285,31 @@ const TelemedicineChat = () => {
 
   // ── All messages merged (DB + real-time) ─────────────────────────────────
   const allMessages = React.useMemo(() => {
-    const dbMessages = messages.map((m) => ({
-      id: m.id,
-      text: m.content || "",
-      // Use sender_role — the authoritative field stamped by the backend.
-      sender: m.sender_role === "patient" ? "user" : "provider",
-      time: new Date(m.sent_at).toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-      provider: m.sender_role === "provider" ? "Provider" : undefined,
-      sender_role: m.sender_role,
-      message_type: m.message_type,
-      is_read: m.is_read,
-    }));
+    const dbMessages = messages.map((m) => {
+      const ts = m.sent_at || m.created_at || null;
+      const d = ts ? new Date(ts) : null;
+      const validDate = d && !isNaN(d.getTime());
+      return {
+        id: m.id,
+        text: m.content || "",
+        // Use sender_role — the authoritative field stamped by the backend.
+        sender: m.sender_role === "patient" ? "user" : "provider",
+        time: validDate
+          ? d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+          : "",
+        sent_at: validDate ? ts : null,
+        provider: m.sender_role !== "patient" ? "Provider" : undefined,
+        sender_role: m.sender_role,
+        message_type: m.message_type,
+        is_read: m.is_read,
+      };
+    });
 
     // Merge, deduplicate
     const seen = new Set(dbMessages.map((m) => m.id));
     const newWs = wsMessages.filter((m) => !seen.has(m.id));
     return [...dbMessages, ...newWs];
-  }, [messages, wsMessages, user?.id]);
+  }, [messages, wsMessages]);
 
   // ── Active provider derived from consultation ────────────────────────────
   const activeProvider = React.useMemo(() => {

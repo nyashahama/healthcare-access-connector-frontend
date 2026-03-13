@@ -23,6 +23,53 @@ const TypingIndicator = ({ patientName }) => (
   </div>
 );
 
+const DateSeparator = ({ label }) => (
+  <div className="flex items-center gap-3 py-1">
+    <div className="flex-1 border-t border-gray-200 dark:border-navy-600" />
+    <span className="whitespace-nowrap rounded-full bg-gray-100 px-3 py-0.5 text-xs text-gray-400 dark:bg-navy-700 dark:text-gray-500">
+      {label}
+    </span>
+    <div className="flex-1 border-t border-gray-200 dark:border-navy-600" />
+  </div>
+);
+
+function getDateLabel(sent_at) {
+  if (!sent_at) return null;
+  const d = new Date(sent_at);
+  if (isNaN(d.getTime())) return null;
+
+  const msgDay = new Date(d);
+  msgDay.setHours(0, 0, 0, 0);
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  if (msgDay.getTime() === today.getTime()) return "Today";
+  if (msgDay.getTime() === yesterday.getTime()) return "Yesterday";
+  return d.toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  });
+}
+
+function insertDateSeparators(messages) {
+  const result = [];
+  let lastLabel = null;
+  for (const msg of messages) {
+    const label = getDateLabel(msg.sent_at);
+    if (label && label !== lastLabel) {
+      result.push({ _separator: true, label, id: `sep-${label}` });
+      lastLabel = label;
+    }
+    result.push(msg);
+  }
+  return result;
+}
+
 /**
  * ProviderMessagesContainer
  *
@@ -61,9 +108,13 @@ const ProviderMessagesContainer = ({
         </div>
       ) : (
         <div className="space-y-4">
-          {messages.map((message) => (
-            <ProviderMessageBubble key={message.id} message={message} />
-          ))}
+          {insertDateSeparators(messages).map((item) =>
+            item._separator ? (
+              <DateSeparator key={item.id} label={item.label} />
+            ) : (
+              <ProviderMessageBubble key={item.id} message={item} />
+            )
+          )}
           {patientTyping && <TypingIndicator patientName={patientName} />}
           <div ref={messagesEndRef} />
         </div>

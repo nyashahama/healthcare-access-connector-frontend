@@ -11,8 +11,10 @@ const ProviderMessageBubble = ({ message }) => {
     );
   }
 
-  // From provider's perspective: "provider" = self (right), "patient" = them (left)
-  const isProvider = message.sender === "provider";
+  // From provider's perspective: own messages on right, patient on left.
+  // "provider_staff" is the raw DB role — treat it the same as "provider".
+  const isProvider =
+    message.sender === "provider" || message.sender === "provider_staff";
 
   return (
     <div className={`flex ${isProvider ? "justify-end" : "justify-start"}`}>
@@ -28,7 +30,7 @@ const ProviderMessageBubble = ({ message }) => {
             {message.patient}
           </div>
         )}
-        <p>{message.text}</p>
+        <p className="text-sm leading-relaxed">{message.text}</p>
         <div
           className={`mt-1 text-xs ${
             isProvider ? "text-white/70" : "text-gray-500"
