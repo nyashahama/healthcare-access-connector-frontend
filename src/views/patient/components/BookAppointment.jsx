@@ -144,7 +144,9 @@ const BookAppointment = () => {
           setPatientId(result.data.id);
           setPatientName(
             result.data.full_name ||
-              result.data.first_name + " " + result.data.last_name ||
+              [result.data.first_name, result.data.last_name]
+                .filter(Boolean)
+                .join(" ") ||
               ""
           );
           setPatientPhone(result.data.phone_number || "");
@@ -176,7 +178,9 @@ const BookAppointment = () => {
   useEffect(() => {
     if (patient) {
       setPatientName(
-        patient.full_name || patient.first_name + " " + patient.last_name || ""
+        patient.full_name ||
+          [patient.first_name, patient.last_name].filter(Boolean).join(" ") ||
+          ""
       );
       setPatientPhone(patient.phone_number || "");
     }

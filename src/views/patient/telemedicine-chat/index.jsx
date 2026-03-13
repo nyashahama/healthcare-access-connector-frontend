@@ -211,6 +211,8 @@ const TelemedicineChat = () => {
         showToast("Real-time connection established", "success");
         // Clear any pending reconnect timer
         clearTimeout(reconnectTimeoutRef.current);
+        // Clear any existing heartbeat before starting a new one
+        clearInterval(heartbeatIntervalRef.current);
         // Heartbeat to keep connection alive through NAT/proxies
         heartbeatIntervalRef.current = setInterval(() => {
           if (ws.readyState === WebSocket.OPEN) {

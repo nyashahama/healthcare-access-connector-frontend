@@ -38,10 +38,11 @@ const DoctorDashboard = ({ clinicId }) => {
   const [doctorInfo, setDoctorInfo] = useState(null);
 
   useEffect(() => {
-    console.log("useEffect triggered! clinicId:", clinicId);
+    if (!clinicId) return;
+
+    let isCurrent = true;
 
     const fetchDashboardData = async () => {
-      console.log("fetchDashboardData started");
       try {
         setLoading(true);
 
@@ -50,20 +51,23 @@ const DoctorDashboard = ({ clinicId }) => {
 
         if (!currentUser) {
           showToast("User not authenticated", "error");
-          setLoading(false);
+          if (isCurrent) setLoading(false);
           return;
         }
 
         // 2. Set doctor info from current user
-        setDoctorInfo({
-          firstName: currentUser.first_name || "Doctor",
-          lastName: currentUser.last_name || "",
-          professionalTitle: "General Practitioner",
-          specialization: "",
-        });
+        if (isCurrent) {
+          setDoctorInfo({
+            firstName: currentUser.first_name || "Doctor",
+            lastName: currentUser.last_name || "",
+            professionalTitle: "General Practitioner",
+            specialization: "",
+          });
+        }
 
         // 3. Fetch today's appointments
         const todayResult = await getTodayAppointments(clinicId);
+        if (!isCurrent) return;
 
         if (!todayResult.success) {
           showToast(
@@ -74,6 +78,7 @@ const DoctorDashboard = ({ clinicId }) => {
 
         // 4. Fetch all appointments for stats
         const allApptResult = await getAppointmentsByClinic(clinicId);
+        if (!isCurrent) return;
 
         if (!allApptResult.success) {
           showToast(
@@ -97,27 +102,30 @@ const DoctorDashboard = ({ clinicId }) => {
         const completionRate =
           todayCount > 0 ? Math.round((completedToday / todayCount) * 100) : 0;
 
-        setDashboardStats({
-          todayAppointments: todayCount,
-          completedToday,
-          waitingPatients,
-          completionRate: `${completionRate}%`,
-          totalAppointments: allApptResult.data?.appointments?.length || 0,
-        });
-
-        setLoading(false);
+        if (isCurrent) {
+          setDashboardStats({
+            todayAppointments: todayCount,
+            completedToday,
+            waitingPatients,
+            completionRate: `${completionRate}%`,
+            totalAppointments: allApptResult.data?.appointments?.length || 0,
+          });
+          setLoading(false);
+        }
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
-        showToast("Error loading dashboard data", "error");
-        setLoading(false);
+        if (isCurrent) {
+          showToast("Error loading dashboard data", "error");
+          setLoading(false);
+        }
       }
     };
 
-    if (clinicId) {
-      fetchDashboardData();
-    } else {
-      console.log("clinicId is falsy:", clinicId);
-    }
+    fetchDashboardData();
+
+    return () => {
+      isCurrent = false;
+    };
   }, [clinicId]);
 
   if (loading || appointmentsLoading) {

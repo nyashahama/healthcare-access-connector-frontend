@@ -159,6 +159,8 @@ const ProviderTelemedicineChat = () => {
   const typingTimeoutRef = useRef(null);
   // Keep a stable ref to the active consultation ID for use inside WS callbacks
   const activeConsultationIdRef = useRef(null);
+  // Stable ref to handleWsEvent so ws.onmessage never closes over a stale version
+  const wsEventHandlerRef = useRef(null);
 
   const isConsulting = !!activePatient && !!activeConsultationId;
 
@@ -285,6 +287,7 @@ const ProviderTelemedicineChat = () => {
 
       ws.onopen = () => {
         showToast("Real-time connection established", "success");
+        clearInterval(heartbeatRef.current);
         heartbeatRef.current = setInterval(() => {
           if (ws.readyState === WebSocket.OPEN) {
             ws.send(JSON.stringify({ type: "ping" }));
@@ -295,7 +298,7 @@ const ProviderTelemedicineChat = () => {
       ws.onmessage = (event) => {
         try {
           const envelope = JSON.parse(event.data);
-          handleWsEvent(envelope);
+          wsEventHandlerRef.current?.(envelope);
         } catch (e) {
           console.error("WS parse error", e);
         }
@@ -363,6 +366,9 @@ const ProviderTelemedicineChat = () => {
     },
     [showToast, markMessageRead]
   );
+
+  // Always keep the ref in sync so ws.onmessage dispatches to the latest handler.
+  wsEventHandlerRef.current = handleWsEvent;
 
   // ── Merge DB messages + WS messages ─────────────────────────────────────────
   const allMessages = React.useMemo(() => {
