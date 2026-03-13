@@ -253,11 +253,19 @@ const ProviderTelemedicineChat = () => {
         setActivePatient(mapActivePatient(detailsResult.data));
       }
 
-      // Fetch messages — the useEffect above will call markAllPatientMessagesRead
-      // once messages.length > 0, so no extra call needed here.
+      // Clear stale WS messages and connect WS before the DB fetch so the
+      // connection is ready immediately. After the DB fetch resolves, flush
+      // wsMessages so any WS messages that raced in with fallback IDs are
+      // replaced by the authoritative DB snapshot.
+      setWsMessages([]);
+      connectWebSocket(consultationId);
+
       await fetchMessages(consultationId, { limit: 50 });
       await fetchNoteByConsultation(consultationId);
-      connectWebSocket(consultationId);
+
+      // DB is now the source of truth — discard any WS messages that arrived
+      // during the fetch window (they are in the DB response).
+      setWsMessages([]);
     },
     [fetchConsultationWithDetails, fetchMessages, fetchNoteByConsultation] // eslint-disable-line react-hooks/exhaustive-deps
   );

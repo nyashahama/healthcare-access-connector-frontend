@@ -109,12 +109,22 @@ const TelemedicineChat = () => {
 
   // ── When active consultation is found, load messages + note ─────────────
   useEffect(() => {
-    if (consultationId) {
-      fetchMessages(consultationId, { limit: 50 });
-      fetchNoteByConsultation(consultationId);
-      setIsConnected(true);
-      connectWebSocket(consultationId);
-    }
+    if (!consultationId) return;
+
+    // Clear any stale WS messages from a previous session before connecting.
+    setWsMessages([]);
+    setIsConnected(true);
+    connectWebSocket(consultationId);
+    fetchNoteByConsultation(consultationId);
+
+    // Fetch DB messages, then flush wsMessages so any WS messages that raced
+    // in during the fetch (with fallback ws-{ts} IDs) are replaced by the
+    // authoritative DB snapshot. Real-time messages arriving after this point
+    // will be genuinely new and deduplicated correctly.
+    fetchMessages(consultationId, { limit: 50 }).then(() => {
+      setWsMessages([]);
+    });
+
     return () => {
       disconnectWebSocket();
     };
