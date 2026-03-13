@@ -193,11 +193,6 @@ const ProviderTelemedicineChat = () => {
     activeConsultationIdRef.current = activeConsultationId;
   }, [activeConsultationId]);
 
-  // ── Scroll to bottom ─────────────────────────────────────────────────────────
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, wsMessages]);
-
   // ── On mount: load waiting room + check for already-active consultation ──────
   useEffect(() => {
     loadQueue();

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { FaStethoscope } from "react-icons/fa";
 import MessageBubble from "./MessageBubble";
 
@@ -77,8 +77,16 @@ const MessagesContainer = ({
   providerName,
   isLoading = false,
 }) => {
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    if (containerRef.current) {
+      containerRef.current.scrollTop = containerRef.current.scrollHeight;
+    }
+  }, [messages, providerTyping]);
+
   return (
-    <div className="h-[400px] overflow-y-auto p-4">
+    <div ref={containerRef} className="h-[400px] overflow-y-auto p-4">
       {isLoading && messages.length === 0 ? (
         <div className="flex h-full items-center justify-center">
           <div className="flex flex-col items-center gap-3">

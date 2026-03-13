@@ -91,11 +91,6 @@ const TelemedicineChat = () => {
     consultationIdRef.current = consultationId ?? null;
   }, [consultationId]);
 
-  // ── Scroll to bottom whenever messages change ────────────────────────────
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, wsMessages]);
-
   // ── On mount: check for active consultation + load providers ─────────────
   useEffect(() => {
     fetchPatientActiveConsultation();
