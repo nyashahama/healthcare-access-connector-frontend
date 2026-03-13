@@ -211,13 +211,6 @@ const BookAppointment = () => {
     const clinicId = clinic?.id || clinic?.clinic_id || clinic?.clinicId;
 
     if (!clinicId) {
-      console.error("All possible clinic ID fields:", {
-        id: clinic?.id,
-        clinic_id: clinic?.clinic_id,
-        clinicId: clinic?.clinicId,
-        clinicID: clinic?.clinicID,
-        fullClinic: clinic,
-      });
       throw new Error("Clinic ID is required for booking");
     }
 
