@@ -351,14 +351,25 @@ const ProviderTelemedicineChat = () => {
         case "message": {
           const mapped = mapWsMessage(envelope);
           setWsMessages((prev) => {
+            // Already have this exact message
             if (prev.some((m) => m.id === mapped.id)) return prev;
+            // Replace the optimistic bubble sent by this provider
+            const optimisticIdx = prev.findIndex(
+              (m) =>
+                m._optimistic &&
+                m.sender_role === envelope.payload?.sender_role &&
+                m.text === envelope.payload?.content
+            );
+            if (optimisticIdx >= 0) {
+              const updated = [...prev];
+              updated[optimisticIdx] = mapped;
+              return updated;
+            }
             return [...prev, mapped];
           });
 
-          // ── FIX: mark individual patient messages as read immediately when
-          //    they arrive via WebSocket while the provider has the chat open.
-          //    This sets is_read=true and read_at=NOW() in the DB so the patient
-          //    sees the double-tick receipt in real time.
+          // Mark incoming patient messages as read immediately so the patient
+          // sees the double-tick receipt in real time.
           if (
             envelope.payload?.sender_role === "patient" &&
             envelope.payload?.message_id &&
@@ -415,6 +426,27 @@ const ProviderTelemedicineChat = () => {
     setNewMessage("");
 
     if (wsRef.current?.readyState === WebSocket.OPEN) {
+      // Show the message immediately (optimistic). The server broadcast will
+      // replace this bubble with the real one via handleWsEvent.
+      const now = new Date().toISOString();
+      const tempId = `optimistic-${Date.now()}`;
+      setWsMessages((prev) => [
+        ...prev,
+        {
+          id: tempId,
+          text,
+          sender: "provider",
+          time: new Date(now).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+          sent_at: now,
+          sender_role: "provider_staff",
+          message_type: "text",
+          _optimistic: true,
+        },
+      ]);
+
       wsRef.current.send(
         JSON.stringify({
           type: "message",

@@ -147,26 +147,35 @@ const TelemedicineChat = () => {
           const timeStr = isNaN(d.getTime())
             ? ""
             : d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+          const incoming = {
+            id: payload.message_id || `ws-${Date.now()}`,
+            text: payload.content,
+            sender: payload.sender_role === "patient" ? "user" : "provider",
+            time: timeStr,
+            sent_at: ts,
+            provider:
+              payload.sender_role !== "patient" ? "Provider" : undefined,
+            sender_role: payload.sender_role,
+            message_type: payload.message_type,
+          };
+
           setWsMessages((prev) => {
-            if (prev.some((m) => m.id === payload.message_id)) return prev;
-            return [
-              ...prev,
-              {
-                id: payload.message_id || `ws-${Date.now()}`,
-                text: payload.content,
-                // Use sender_role from the payload — it is always present and
-                // reliable. sender_user_id is NOT guaranteed at the envelope
-                // top level (it may be nested or absent), so comparing it to
-                // user?.id can silently produce the wrong result.
-                sender: payload.sender_role === "patient" ? "user" : "provider",
-                time: timeStr,
-                sent_at: ts,
-                provider:
-                  payload.sender_role !== "patient" ? "Provider" : undefined,
-                sender_role: payload.sender_role,
-                message_type: payload.message_type,
-              },
-            ];
+            // Already have this exact message
+            if (prev.some((m) => m.id === incoming.id)) return prev;
+            // Replace the optimistic bubble sent by this client
+            const optimisticIdx = prev.findIndex(
+              (m) =>
+                m._optimistic &&
+                m.sender_role === payload.sender_role &&
+                m.text === payload.content
+            );
+            if (optimisticIdx >= 0) {
+              const updated = [...prev];
+              updated[optimisticIdx] = incoming;
+              return updated;
+            }
+            return [...prev, incoming];
           });
           break;
         }
@@ -348,24 +357,38 @@ const TelemedicineChat = () => {
     const text = newMessage;
     setNewMessage(""); // Clear input immediately for responsiveness
 
-    // Send over WebSocket — the server persists it and broadcasts back to ALL
-    // clients including the sender. The broadcast handler is the single place
-    // that adds messages to wsMessages, so no duplicate can occur.
     if (wsRef.current?.readyState === WebSocket.OPEN) {
+      // Show the message immediately (optimistic). The server will broadcast it
+      // back and handleWsEvent will replace this bubble with the real one.
+      const now = new Date().toISOString();
+      const tempId = `optimistic-${Date.now()}`;
+      setWsMessages((prev) => [
+        ...prev,
+        {
+          id: tempId,
+          text,
+          sender: "user",
+          time: new Date(now).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+          sent_at: now,
+          sender_role: "patient",
+          message_type: "text",
+          is_read: false,
+          _optimistic: true,
+        },
+      ]);
+
       wsRef.current.send(
         JSON.stringify({
           type: "message",
           consultation_id: consultationId,
-          payload: {
-            message_type: "text",
-            content: text,
-          },
+          payload: { message_type: "text", content: text },
         })
       );
     } else {
-      // WS is down — fall back to HTTP. The HTTP response is the persisted
-      // message; add it directly to wsMessages so it appears immediately
-      // without waiting for a page refresh.
+      // WS is down — fall back to HTTP.
       const result = await sendMessage(consultationId, {
         sender_role: "patient",
         message_type: "text",
@@ -373,6 +396,8 @@ const TelemedicineChat = () => {
       });
       if (result.success) {
         const m = result.data;
+        const ts = m.sent_at || m.created_at || new Date().toISOString();
+        const d = new Date(ts);
         setWsMessages((prev) => {
           if (prev.some((msg) => msg.id === m.id)) return prev;
           return [
@@ -381,11 +406,15 @@ const TelemedicineChat = () => {
               id: m.id,
               text: m.content || text,
               sender: "user",
-              time: new Date(m.sent_at).toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-              }),
+              time: isNaN(d.getTime())
+                ? ""
+                : d.toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  }),
+              sent_at: isNaN(d.getTime()) ? null : ts,
               is_read: false,
+              sender_role: "patient",
               message_type: m.message_type,
             },
           ];
