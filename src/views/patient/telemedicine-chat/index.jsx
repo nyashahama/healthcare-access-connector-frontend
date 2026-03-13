@@ -148,28 +148,45 @@ const TelemedicineChat = () => {
             ? ""
             : d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
-          const incoming = {
-            id: payload.message_id || `ws-${Date.now()}`,
-            text: payload.content,
-            sender: payload.sender_role === "patient" ? "user" : "provider",
-            time: timeStr,
-            sent_at: ts,
-            provider:
-              payload.sender_role !== "patient" ? "Provider" : undefined,
-            sender_role: payload.sender_role,
-            message_type: payload.message_type,
-          };
-
           setWsMessages((prev) => {
-            // Already have this exact message
-            if (prev.some((m) => m.id === incoming.id)) return prev;
-            // Replace the optimistic bubble sent by this client
+            // Deduplicate by message ID
+            if (
+              payload.message_id &&
+              prev.some((m) => m.id === payload.message_id)
+            )
+              return prev;
+
+            // Find a matching optimistic bubble from this client.
+            // If the server omits sender_role in the broadcast, match by
+            // content alone so our own optimistic is always replaced rather
+            // than leaving a ghost bubble + a wrongly-classified duplicate.
             const optimisticIdx = prev.findIndex(
               (m) =>
                 m._optimistic &&
-                m.sender_role === payload.sender_role &&
-                m.text === payload.content
+                m.text === payload.content &&
+                (!payload.sender_role ||
+                  m.sender_role === payload.sender_role)
             );
+
+            // Resolve the true sender_role: prefer broadcast, fall back to
+            // the optimistic's role (we know what we sent), then "patient".
+            const resolvedRole =
+              payload.sender_role ||
+              (optimisticIdx >= 0
+                ? prev[optimisticIdx].sender_role
+                : "patient");
+
+            const incoming = {
+              id: payload.message_id || `ws-${Date.now()}`,
+              text: payload.content,
+              sender: resolvedRole === "patient" ? "user" : "provider",
+              time: timeStr,
+              sent_at: ts,
+              provider: resolvedRole !== "patient" ? "Provider" : undefined,
+              sender_role: resolvedRole,
+              message_type: payload.message_type,
+            };
+
             if (optimisticIdx >= 0) {
               const updated = [...prev];
               updated[optimisticIdx] = incoming;
@@ -384,7 +401,7 @@ const TelemedicineChat = () => {
         JSON.stringify({
           type: "message",
           consultation_id: consultationId,
-          payload: { message_type: "text", content: text },
+          payload: { message_type: "text", content: text, sender_role: "patient" },
         })
       );
     } else {

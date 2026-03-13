@@ -68,9 +68,12 @@ const mapActivePatient = (details) => {
 // Normalize any provider-related role to "provider" so ProviderMessageBubble
 // can use a simple === check. "provider_staff", "provider", etc. all become
 // "provider"; "patient" and "system" pass through unchanged.
+// Missing role defaults to "patient" — type:"message" envelopes are never
+// system events, and a missing sender_role is more likely a patient message
+// than a system one (system events use a different envelope type).
 function normalizeSender(role) {
-  if (!role || role === "system") return role ?? "system";
-  if (role === "patient") return "patient";
+  if (role === "system") return "system";
+  if (!role || role === "patient") return "patient";
   return "provider"; // "provider", "provider_staff", etc.
 }
 
@@ -350,19 +353,34 @@ const ProviderTelemedicineChat = () => {
       switch (envelope.type) {
         case "message": {
           const mapped = mapWsMessage(envelope);
+          const broadcastRole = envelope.payload?.sender_role;
+          const broadcastContent = envelope.payload?.content;
+
           setWsMessages((prev) => {
-            // Already have this exact message
+            // Deduplicate by message ID
+            if (
+              envelope.payload?.message_id &&
+              prev.some((m) => m.id === envelope.payload.message_id)
+            )
+              return prev;
             if (prev.some((m) => m.id === mapped.id)) return prev;
-            // Replace the optimistic bubble sent by this provider
+
+            // Find matching optimistic bubble. If the server omits sender_role,
+            // match by content alone so provider's own bubbles are replaced
+            // rather than duplicated as centered system events.
             const optimisticIdx = prev.findIndex(
               (m) =>
                 m._optimistic &&
-                m.sender_role === envelope.payload?.sender_role &&
-                m.text === envelope.payload?.content
+                m.text === broadcastContent &&
+                (!broadcastRole || m.sender_role === broadcastRole)
             );
             if (optimisticIdx >= 0) {
               const updated = [...prev];
-              updated[optimisticIdx] = mapped;
+              // If sender_role is missing from the broadcast, keep the optimistic's
+              // sender so the bubble stays on the correct side.
+              updated[optimisticIdx] = broadcastRole
+                ? mapped
+                : { ...mapped, sender: prev[optimisticIdx].sender, sender_role: prev[optimisticIdx].sender_role };
               return updated;
             }
             return [...prev, mapped];
