@@ -1,29 +1,187 @@
 import appointmentService from "api/services/appointmentService";
 import { useCallback, useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "platform/query/queryKeys";
 
 /**
  * Custom hook for appointment operations
  * @returns {Object} Appointment methods and state
  */
 export const useAppointment = () => {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const queryClient = useQueryClient();
+
   const [appointment, setAppointment] = useState(null);
   const [appointments, setAppointments] = useState([]);
   const [appointmentCount, setAppointmentCount] = useState(0);
   const [todayAppointments, setTodayAppointments] = useState([]);
   const [pendingAppointments, setPendingAppointments] = useState([]);
+  const [error, setError] = useState(null);
+  const [loadingCount, setLoadingCount] = useState(0);
+
+  const startLoading = useCallback(() => setLoadingCount((c) => c + 1), []);
+  const stopLoading = useCallback(() => setLoadingCount((c) => Math.max(0, c - 1)), []);
+  const loading = loadingCount > 0;
+
+  // Query parameter states for useQuery hooks with enabled: false
+  const [activeAppointmentId, setActiveAppointmentId] = useState(null);
+  const [activePatientId, setActivePatientId] = useState(null);
+  const [activeClinicId, setActiveClinicId] = useState(null);
+  const [activeClinicDate, setActiveClinicDate] = useState({ clinicId: null, date: null });
+  const [activeTodayClinicId, setActiveTodayClinicId] = useState(null);
+  const [activePendingClinicId, setActivePendingClinicId] = useState(null);
+  const [activeCountPatientId, setActiveCountPatientId] = useState(null);
+
+  // useQuery hooks with enabled: false (for cache registration only)
+  useQuery({
+    queryKey: queryKeys.appointment.detail(activeAppointmentId),
+    queryFn: () => appointmentService.getAppointmentById(activeAppointmentId),
+    enabled: false,
+  });
+
+  useQuery({
+    queryKey: [...queryKeys.appointment.list, { patientId: activePatientId }],
+    queryFn: () => appointmentService.getAppointmentsByPatient(activePatientId),
+    enabled: false,
+  });
+
+  useQuery({
+    queryKey: [...queryKeys.appointment.list, { clinicId: activeClinicId }],
+    queryFn: () => appointmentService.getAppointmentsByClinic(activeClinicId),
+    enabled: false,
+  });
+
+  useQuery({
+    queryKey: [...queryKeys.appointment.list, { clinicId: activeClinicDate.clinicId, date: activeClinicDate.date }],
+    queryFn: () =>
+      appointmentService.getAppointmentsByClinicAndDate(activeClinicDate.clinicId, activeClinicDate.date),
+    enabled: false,
+  });
+
+  useQuery({
+    queryKey: [...queryKeys.appointment.today, { clinicId: activeTodayClinicId }],
+    queryFn: () => appointmentService.getTodayAppointments(activeTodayClinicId),
+    enabled: false,
+  });
+
+  useQuery({
+    queryKey: [...queryKeys.appointment.pending, { clinicId: activePendingClinicId }],
+    queryFn: () => appointmentService.getPendingAppointments(activePendingClinicId),
+    enabled: false,
+  });
+
+  useQuery({
+    queryKey: [...queryKeys.appointment.list, "count", { patientId: activeCountPatientId }],
+    queryFn: () => appointmentService.getAppointmentCount(activeCountPatientId),
+    enabled: false,
+  });
+
+  // Mutations
+  const bookMutation = useMutation({
+    mutationFn: (data) => appointmentService.bookAppointment(data),
+    onSuccess: (data) => {
+      setAppointment(data);
+      queryClient.invalidateQueries({ queryKey: queryKeys.appointment.list });
+      queryClient.invalidateQueries({ queryKey: queryKeys.appointment.today });
+      queryClient.invalidateQueries({ queryKey: queryKeys.appointment.pending });
+    },
+  });
+
+  const rescheduleMutation = useMutation({
+    mutationFn: ({ id, data }) => appointmentService.rescheduleAppointment(id, data),
+    onSuccess: (data) => {
+      setAppointment(data);
+      queryClient.invalidateQueries({ queryKey: queryKeys.appointment.list });
+      queryClient.invalidateQueries({ queryKey: queryKeys.appointment.today });
+      queryClient.invalidateQueries({ queryKey: queryKeys.appointment.pending });
+      if (data?.id) {
+        queryClient.invalidateQueries({ queryKey: queryKeys.appointment.detail(data.id) });
+      }
+    },
+  });
+
+  const confirmMutation = useMutation({
+    mutationFn: ({ id, data }) => appointmentService.confirmAppointment(id, data),
+    onSuccess: (data) => {
+      setAppointment(data);
+      queryClient.invalidateQueries({ queryKey: queryKeys.appointment.list });
+      queryClient.invalidateQueries({ queryKey: queryKeys.appointment.today });
+      queryClient.invalidateQueries({ queryKey: queryKeys.appointment.pending });
+      if (data?.id) {
+        queryClient.invalidateQueries({ queryKey: queryKeys.appointment.detail(data.id) });
+      }
+    },
+  });
+
+  const updateNotesMutation = useMutation({
+    mutationFn: ({ id, data }) => appointmentService.updateAppointmentNotes(id, data),
+    onSuccess: (data) => {
+      setAppointment(data);
+      queryClient.invalidateQueries({ queryKey: queryKeys.appointment.list });
+      queryClient.invalidateQueries({ queryKey: queryKeys.appointment.today });
+      queryClient.invalidateQueries({ queryKey: queryKeys.appointment.pending });
+      if (data?.id) {
+        queryClient.invalidateQueries({ queryKey: queryKeys.appointment.detail(data.id) });
+      }
+    },
+  });
+
+  const completeMutation = useMutation({
+    mutationFn: (id) => appointmentService.completeAppointment(id),
+    onSuccess: (data) => {
+      setAppointment(data);
+      queryClient.invalidateQueries({ queryKey: queryKeys.appointment.list });
+      queryClient.invalidateQueries({ queryKey: queryKeys.appointment.today });
+      queryClient.invalidateQueries({ queryKey: queryKeys.appointment.pending });
+      if (data?.id) {
+        queryClient.invalidateQueries({ queryKey: queryKeys.appointment.detail(data.id) });
+      }
+    },
+  });
+
+  const cancelMutation = useMutation({
+    mutationFn: ({ id, data }) => appointmentService.cancelAppointment(id, data),
+    onSuccess: (data) => {
+      setAppointment(data);
+      queryClient.invalidateQueries({ queryKey: queryKeys.appointment.list });
+      queryClient.invalidateQueries({ queryKey: queryKeys.appointment.today });
+      queryClient.invalidateQueries({ queryKey: queryKeys.appointment.pending });
+      if (data?.id) {
+        queryClient.invalidateQueries({ queryKey: queryKeys.appointment.detail(data.id) });
+      }
+    },
+  });
+
+  const updateStatusMutation = useMutation({
+    mutationFn: ({ id, data }) => appointmentService.updateAppointmentStatus(id, data),
+    onSuccess: (data) => {
+      setAppointment(data);
+      queryClient.invalidateQueries({ queryKey: queryKeys.appointment.list });
+      queryClient.invalidateQueries({ queryKey: queryKeys.appointment.today });
+      queryClient.invalidateQueries({ queryKey: queryKeys.appointment.pending });
+      if (data?.id) {
+        queryClient.invalidateQueries({ queryKey: queryKeys.appointment.detail(data.id) });
+      }
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id) => appointmentService.deleteAppointment(id),
+    onSuccess: () => {
+      setAppointment(null);
+      queryClient.invalidateQueries({ queryKey: queryKeys.appointment.list });
+      queryClient.invalidateQueries({ queryKey: queryKeys.appointment.today });
+      queryClient.invalidateQueries({ queryKey: queryKeys.appointment.pending });
+    },
+  });
 
   // Appointment Operations
 
-  const bookAppointment = useCallback(async (data) => {
-    setLoading(true);
+  const bookAppointment = async (data) => {
+    startLoading();
     setError(null);
-
     try {
-      const response = await appointmentService.bookAppointment(data);
-      setAppointment(response);
-      setLoading(false);
+      const response = await bookMutation.mutateAsync(data);
+      stopLoading();
       return { success: true, data: response };
     } catch (err) {
       const errorMessage =
@@ -31,19 +189,22 @@ export const useAppointment = () => {
         err.message ||
         "Failed to book appointment";
       setError(errorMessage);
-      setLoading(false);
+      stopLoading();
       return { success: false, error: errorMessage };
     }
-  }, []);
+  };
 
-  const getAppointmentById = useCallback(async (id) => {
-    setLoading(true);
+  const getAppointmentById = async (id) => {
+    startLoading();
     setError(null);
-
     try {
-      const response = await appointmentService.getAppointmentById(id);
+      const response = await queryClient.fetchQuery({
+        queryKey: queryKeys.appointment.detail(id),
+        queryFn: () => appointmentService.getAppointmentById(id),
+      });
       setAppointment(response);
-      setLoading(false);
+      setActiveAppointmentId(id);
+      stopLoading();
       return { success: true, data: response };
     } catch (err) {
       const errorMessage =
@@ -51,21 +212,22 @@ export const useAppointment = () => {
         err.message ||
         "Failed to fetch appointment";
       setError(errorMessage);
-      setLoading(false);
+      stopLoading();
       return { success: false, error: errorMessage };
     }
-  }, []);
+  };
 
-  const getAppointmentsByPatient = useCallback(async (patientId) => {
-    setLoading(true);
+  const getAppointmentsByPatient = async (patientId) => {
+    startLoading();
     setError(null);
-
     try {
-      const response = await appointmentService.getAppointmentsByPatient(
-        patientId
-      );
+      const response = await queryClient.fetchQuery({
+        queryKey: [...queryKeys.appointment.list, { patientId }],
+        queryFn: () => appointmentService.getAppointmentsByPatient(patientId),
+      });
       setAppointments(response.appointments || []);
-      setLoading(false);
+      setActivePatientId(patientId);
+      stopLoading();
       return { success: true, data: response };
     } catch (err) {
       const errorMessage =
@@ -73,21 +235,22 @@ export const useAppointment = () => {
         err.message ||
         "Failed to fetch patient appointments";
       setError(errorMessage);
-      setLoading(false);
+      stopLoading();
       return { success: false, error: errorMessage };
     }
-  }, []);
+  };
 
-  const getAppointmentsByClinic = useCallback(async (clinicId) => {
-    setLoading(true);
+  const getAppointmentsByClinic = async (clinicId) => {
+    startLoading();
     setError(null);
-
     try {
-      const response = await appointmentService.getAppointmentsByClinic(
-        clinicId
-      );
+      const response = await queryClient.fetchQuery({
+        queryKey: [...queryKeys.appointment.list, { clinicId }],
+        queryFn: () => appointmentService.getAppointmentsByClinic(clinicId),
+      });
       setAppointments(response.appointments || []);
-      setLoading(false);
+      setActiveClinicId(clinicId);
+      stopLoading();
       return { success: true, data: response };
     } catch (err) {
       const errorMessage =
@@ -95,22 +258,22 @@ export const useAppointment = () => {
         err.message ||
         "Failed to fetch clinic appointments";
       setError(errorMessage);
-      setLoading(false);
+      stopLoading();
       return { success: false, error: errorMessage };
     }
-  }, []);
+  };
 
-  const getAppointmentsByClinicAndDate = useCallback(async (clinicId, date) => {
-    setLoading(true);
+  const getAppointmentsByClinicAndDate = async (clinicId, date) => {
+    startLoading();
     setError(null);
-
     try {
-      const response = await appointmentService.getAppointmentsByClinicAndDate(
-        clinicId,
-        date
-      );
+      const response = await queryClient.fetchQuery({
+        queryKey: [...queryKeys.appointment.list, { clinicId, date }],
+        queryFn: () => appointmentService.getAppointmentsByClinicAndDate(clinicId, date),
+      });
       setAppointments(response.appointments || []);
-      setLoading(false);
+      setActiveClinicDate({ clinicId, date });
+      stopLoading();
       return { success: true, data: response };
     } catch (err) {
       const errorMessage =
@@ -118,19 +281,22 @@ export const useAppointment = () => {
         err.message ||
         "Failed to fetch appointments";
       setError(errorMessage);
-      setLoading(false);
+      stopLoading();
       return { success: false, error: errorMessage };
     }
-  }, []);
+  };
 
-  const getTodayAppointments = useCallback(async (clinicId) => {
-    setLoading(true);
+  const getTodayAppointments = async (clinicId) => {
+    startLoading();
     setError(null);
-
     try {
-      const response = await appointmentService.getTodayAppointments(clinicId);
+      const response = await queryClient.fetchQuery({
+        queryKey: [...queryKeys.appointment.today, { clinicId }],
+        queryFn: () => appointmentService.getTodayAppointments(clinicId),
+      });
       setTodayAppointments(response.appointments || []);
-      setLoading(false);
+      setActiveTodayClinicId(clinicId);
+      stopLoading();
       return { success: true, data: response };
     } catch (err) {
       const errorMessage =
@@ -138,21 +304,22 @@ export const useAppointment = () => {
         err.message ||
         "Failed to fetch today's appointments";
       setError(errorMessage);
-      setLoading(false);
+      stopLoading();
       return { success: false, error: errorMessage };
     }
-  }, []);
+  };
 
-  const getPendingAppointments = useCallback(async (clinicId) => {
-    setLoading(true);
+  const getPendingAppointments = async (clinicId) => {
+    startLoading();
     setError(null);
-
     try {
-      const response = await appointmentService.getPendingAppointments(
-        clinicId
-      );
+      const response = await queryClient.fetchQuery({
+        queryKey: [...queryKeys.appointment.pending, { clinicId }],
+        queryFn: () => appointmentService.getPendingAppointments(clinicId),
+      });
       setPendingAppointments(response.appointments || []);
-      setLoading(false);
+      setActivePendingClinicId(clinicId);
+      stopLoading();
       return { success: true, data: response };
     } catch (err) {
       const errorMessage =
@@ -160,19 +327,17 @@ export const useAppointment = () => {
         err.message ||
         "Failed to fetch pending appointments";
       setError(errorMessage);
-      setLoading(false);
+      stopLoading();
       return { success: false, error: errorMessage };
     }
-  }, []);
+  };
 
-  const rescheduleAppointment = useCallback(async (id, data) => {
-    setLoading(true);
+  const rescheduleAppointment = async (id, data) => {
+    startLoading();
     setError(null);
-
     try {
-      const response = await appointmentService.rescheduleAppointment(id, data);
-      setAppointment(response);
-      setLoading(false);
+      const response = await rescheduleMutation.mutateAsync({ id, data });
+      stopLoading();
       return { success: true, data: response };
     } catch (err) {
       const errorMessage =
@@ -180,19 +345,17 @@ export const useAppointment = () => {
         err.message ||
         "Failed to reschedule appointment";
       setError(errorMessage);
-      setLoading(false);
+      stopLoading();
       return { success: false, error: errorMessage };
     }
-  }, []);
+  };
 
-  const confirmAppointment = useCallback(async (id, data) => {
-    setLoading(true);
+  const confirmAppointment = async (id, data) => {
+    startLoading();
     setError(null);
-
     try {
-      const response = await appointmentService.confirmAppointment(id, data);
-      setAppointment(response);
-      setLoading(false);
+      const response = await confirmMutation.mutateAsync({ id, data });
+      stopLoading();
       return { success: true, data: response };
     } catch (err) {
       const errorMessage =
@@ -200,22 +363,17 @@ export const useAppointment = () => {
         err.message ||
         "Failed to confirm appointment";
       setError(errorMessage);
-      setLoading(false);
+      stopLoading();
       return { success: false, error: errorMessage };
     }
-  }, []);
+  };
 
-  const updateAppointmentNotes = useCallback(async (id, data) => {
-    setLoading(true);
+  const updateAppointmentNotes = async (id, data) => {
+    startLoading();
     setError(null);
-
     try {
-      const response = await appointmentService.updateAppointmentNotes(
-        id,
-        data
-      );
-      setAppointment(response);
-      setLoading(false);
+      const response = await updateNotesMutation.mutateAsync({ id, data });
+      stopLoading();
       return { success: true, data: response };
     } catch (err) {
       const errorMessage =
@@ -223,19 +381,17 @@ export const useAppointment = () => {
         err.message ||
         "Failed to update appointment notes";
       setError(errorMessage);
-      setLoading(false);
+      stopLoading();
       return { success: false, error: errorMessage };
     }
-  }, []);
+  };
 
-  const completeAppointment = useCallback(async (id) => {
-    setLoading(true);
+  const completeAppointment = async (id) => {
+    startLoading();
     setError(null);
-
     try {
-      const response = await appointmentService.completeAppointment(id);
-      setAppointment(response);
-      setLoading(false);
+      const response = await completeMutation.mutateAsync(id);
+      stopLoading();
       return { success: true, data: response };
     } catch (err) {
       const errorMessage =
@@ -243,19 +399,17 @@ export const useAppointment = () => {
         err.message ||
         "Failed to complete appointment";
       setError(errorMessage);
-      setLoading(false);
+      stopLoading();
       return { success: false, error: errorMessage };
     }
-  }, []);
+  };
 
-  const cancelAppointment = useCallback(async (id, data) => {
-    setLoading(true);
+  const cancelAppointment = async (id, data) => {
+    startLoading();
     setError(null);
-
     try {
-      const response = await appointmentService.cancelAppointment(id, data);
-      setAppointment(response);
-      setLoading(false);
+      const response = await cancelMutation.mutateAsync({ id, data });
+      stopLoading();
       return { success: true, data: response };
     } catch (err) {
       const errorMessage =
@@ -263,22 +417,17 @@ export const useAppointment = () => {
         err.message ||
         "Failed to cancel appointment";
       setError(errorMessage);
-      setLoading(false);
+      stopLoading();
       return { success: false, error: errorMessage };
     }
-  }, []);
+  };
 
-  const updateAppointmentStatus = useCallback(async (id, data) => {
-    setLoading(true);
+  const updateAppointmentStatus = async (id, data) => {
+    startLoading();
     setError(null);
-
     try {
-      const response = await appointmentService.updateAppointmentStatus(
-        id,
-        data
-      );
-      setAppointment(response);
-      setLoading(false);
+      const response = await updateStatusMutation.mutateAsync({ id, data });
+      stopLoading();
       return { success: true, data: response };
     } catch (err) {
       const errorMessage =
@@ -286,19 +435,17 @@ export const useAppointment = () => {
         err.message ||
         "Failed to update appointment status";
       setError(errorMessage);
-      setLoading(false);
+      stopLoading();
       return { success: false, error: errorMessage };
     }
-  }, []);
+  };
 
-  const deleteAppointment = useCallback(async (id) => {
-    setLoading(true);
+  const deleteAppointment = async (id) => {
+    startLoading();
     setError(null);
-
     try {
-      await appointmentService.deleteAppointment(id);
-      setAppointment(null);
-      setLoading(false);
+      await deleteMutation.mutateAsync(id);
+      stopLoading();
       return { success: true };
     } catch (err) {
       const errorMessage =
@@ -306,19 +453,22 @@ export const useAppointment = () => {
         err.message ||
         "Failed to delete appointment";
       setError(errorMessage);
-      setLoading(false);
+      stopLoading();
       return { success: false, error: errorMessage };
     }
-  }, []);
+  };
 
-  const getAppointmentCount = useCallback(async (patientId) => {
-    setLoading(true);
+  const getAppointmentCount = async (patientId) => {
+    startLoading();
     setError(null);
-
     try {
-      const response = await appointmentService.getAppointmentCount(patientId);
+      const response = await queryClient.fetchQuery({
+        queryKey: [...queryKeys.appointment.list, "count", { patientId }],
+        queryFn: () => appointmentService.getAppointmentCount(patientId),
+      });
       setAppointmentCount(response.count);
-      setLoading(false);
+      setActiveCountPatientId(patientId);
+      stopLoading();
       return { success: true, data: response };
     } catch (err) {
       const errorMessage =
@@ -326,14 +476,22 @@ export const useAppointment = () => {
         err.message ||
         "Failed to fetch appointment count";
       setError(errorMessage);
-      setLoading(false);
+      stopLoading();
       return { success: false, error: errorMessage };
     }
-  }, []);
+  };
 
   const clearError = useCallback(() => {
     setError(null);
-  }, []);
+    bookMutation.reset();
+    rescheduleMutation.reset();
+    confirmMutation.reset();
+    updateNotesMutation.reset();
+    completeMutation.reset();
+    cancelMutation.reset();
+    updateStatusMutation.reset();
+    deleteMutation.reset();
+  }, [bookMutation, rescheduleMutation, confirmMutation, updateNotesMutation, completeMutation, cancelMutation, updateStatusMutation, deleteMutation]);
 
   const clearAppointmentState = useCallback(() => {
     setAppointment(null);
@@ -342,7 +500,22 @@ export const useAppointment = () => {
     setTodayAppointments([]);
     setPendingAppointments([]);
     setError(null);
-  }, []);
+    setActiveAppointmentId(null);
+    setActivePatientId(null);
+    setActiveClinicId(null);
+    setActiveClinicDate({ clinicId: null, date: null });
+    setActiveTodayClinicId(null);
+    setActivePendingClinicId(null);
+    setActiveCountPatientId(null);
+    bookMutation.reset();
+    rescheduleMutation.reset();
+    confirmMutation.reset();
+    updateNotesMutation.reset();
+    completeMutation.reset();
+    cancelMutation.reset();
+    updateStatusMutation.reset();
+    deleteMutation.reset();
+  }, [bookMutation, rescheduleMutation, confirmMutation, updateNotesMutation, completeMutation, cancelMutation, updateStatusMutation, deleteMutation]);
 
   // Clear error on unmount
   useEffect(() => {

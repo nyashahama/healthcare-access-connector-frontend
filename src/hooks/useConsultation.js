@@ -1,5 +1,7 @@
 import consultationService from "api/services/consultationService";
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "platform/query/queryKeys";
 
 /**
  * Custom hook for consultation operations.
@@ -8,8 +10,15 @@ import { useCallback, useState } from "react";
  * never sends patient_id, user_id, or staff_id in request bodies.
  */
 export const useConsultation = () => {
-  const [loading, setLoading] = useState(false);
+  const queryClient = useQueryClient();
+
+  const [loadingCount, setLoadingCount] = useState(0);
+  const startLoading = useCallback(() => setLoadingCount((c) => c + 1), []);
+  const stopLoading = useCallback(() => setLoadingCount((c) => Math.max(0, c - 1)), []);
+  const loading = loadingCount > 0;
+
   const [error, setError] = useState(null);
+
   const [consultations, setConsultations] = useState([]); // patient history
   const [currentConsultation, setCurrentConsultation] = useState(null);
   const [activeConsultation, setActiveConsultation] = useState(null);
@@ -23,397 +32,538 @@ export const useConsultation = () => {
     total: 0,
   });
 
+  // Dynamic key states for useQuery hooks with enabled: false
+  const [activeDetailId, setActiveDetailId] = useState(null);
+  const [activePatientListParams, setActivePatientListParams] = useState({});
+  const [activeProviderHistoryParams, setActiveProviderHistoryParams] = useState({});
+
+  // useQuery hooks with enabled: false
+  useQuery({
+    queryKey: queryKeys.consultation.active,
+    queryFn: async () => {
+      try {
+        return await consultationService.getPatientActiveConsultation();
+      } catch (err) {
+        // 404 is expected when no active consultation — treat as null, not error
+        if (err.response?.status === 404) return null;
+        throw err;
+      }
+    },
+    enabled: false,
+  });
+
+  useQuery({
+    queryKey: [...queryKeys.consultation.list, activePatientListParams],
+    queryFn: () => consultationService.getPatientConsultations(activePatientListParams),
+    enabled: false,
+  });
+
+  useQuery({
+    queryKey: queryKeys.consultation.detail(activeDetailId),
+    queryFn: () => consultationService.getConsultationByID(activeDetailId),
+    enabled: false,
+  });
+
+  useQuery({
+    queryKey: ["consultations", "provider", "active"],
+    queryFn: () => consultationService.getProviderActiveConsultations(),
+    enabled: false,
+  });
+
+  useQuery({
+    queryKey: ["consultations", "provider", "history", activeProviderHistoryParams],
+    queryFn: () => consultationService.getProviderConsultationHistory(activeProviderHistoryParams),
+    enabled: false,
+  });
+
+  useQuery({
+    queryKey: ["consultations", "waitingRoom"],
+    queryFn: () => consultationService.getWaitingRoom(),
+    enabled: false,
+  });
+
+  // Mutations
+  const requestConsultationMutation = useMutation({
+    mutationFn: (data) => {
+      const { patient_id, ...cleanPayload } = data;
+      return consultationService.requestConsultation(cleanPayload);
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.consultation.active });
+      queryClient.invalidateQueries({ queryKey: queryKeys.consultation.list });
+      if (data?.id) {
+        queryClient.invalidateQueries({ queryKey: queryKeys.consultation.detail(data.id) });
+      }
+    },
+  });
+
+  const cancelConsultationMutation = useMutation({
+    mutationFn: (consultationId) => consultationService.cancelConsultation(consultationId),
+    onSuccess: (data, consultationId) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.consultation.active });
+      queryClient.invalidateQueries({ queryKey: queryKeys.consultation.list });
+      queryClient.invalidateQueries({ queryKey: queryKeys.consultation.detail(consultationId) });
+    },
+  });
+
+  const submitPatientRatingMutation = useMutation({
+    mutationFn: ({ consultationId, data }) =>
+      consultationService.submitPatientRating(consultationId, data),
+    onSuccess: (data, { consultationId }) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.consultation.detail(consultationId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.consultation.list });
+    },
+  });
+
+  const updateConsultationChannelMutation = useMutation({
+    mutationFn: ({ consultationId, data }) =>
+      consultationService.updateConsultationChannel(consultationId, data),
+    onSuccess: (data, { consultationId }) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.consultation.detail(consultationId) });
+    },
+  });
+
+  const acceptConsultationMutation = useMutation({
+    mutationFn: (consultationId) => consultationService.acceptConsultation(consultationId),
+    onSuccess: (data, consultationId) => {
+      queryClient.invalidateQueries({ queryKey: ["consultations", "waitingRoom"] });
+      queryClient.invalidateQueries({ queryKey: ["consultations", "provider", "active"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.consultation.detail(consultationId) });
+    },
+  });
+
+  const startConsultationMutation = useMutation({
+    mutationFn: (consultationId) => consultationService.startConsultation(consultationId),
+    onSuccess: (data, consultationId) => {
+      queryClient.invalidateQueries({ queryKey: ["consultations", "provider", "active"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.consultation.detail(consultationId) });
+    },
+  });
+
+  const completeConsultationMutation = useMutation({
+    mutationFn: (consultationId) => consultationService.completeConsultation(consultationId),
+    onSuccess: (data, consultationId) => {
+      queryClient.invalidateQueries({ queryKey: ["consultations", "provider", "active"] });
+      queryClient.invalidateQueries({ queryKey: ["consultations", "provider", "history"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.consultation.detail(consultationId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.consultation.list });
+    },
+  });
+
+  const escalateConsultationMutation = useMutation({
+    mutationFn: (consultationId) => consultationService.escalateConsultation(consultationId),
+    onSuccess: (data, consultationId) => {
+      queryClient.invalidateQueries({ queryKey: ["consultations", "provider", "active"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.consultation.detail(consultationId) });
+    },
+  });
+
+  const declineConsultationMutation = useMutation({
+    mutationFn: (consultationId) => consultationService.declineConsultation(consultationId),
+    onSuccess: (data, consultationId) => {
+      queryClient.invalidateQueries({ queryKey: ["consultations", "waitingRoom"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.consultation.detail(consultationId) });
+    },
+  });
+
+  const markNoShowMutation = useMutation({
+    mutationFn: (consultationId) => consultationService.markNoShow(consultationId),
+    onSuccess: (data, consultationId) => {
+      queryClient.invalidateQueries({ queryKey: ["consultations", "provider", "active"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.consultation.detail(consultationId) });
+    },
+  });
+
+  const updatePaymentStatusMutation = useMutation({
+    mutationFn: ({ consultationId, data }) =>
+      consultationService.updatePaymentStatus(consultationId, data),
+    onSuccess: (data, { consultationId }) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.consultation.detail(consultationId) });
+    },
+  });
+
+  const linkFollowUpAppointmentMutation = useMutation({
+    mutationFn: ({ consultationId, data }) =>
+      consultationService.linkFollowUpAppointment(consultationId, data),
+    onSuccess: (data, { consultationId }) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.consultation.detail(consultationId) });
+    },
+  });
+
   // ─── Patient actions ────────────────────────────────────────────────────
 
-  const requestConsultation = useCallback(async (data) => {
-    setLoading(true);
+  const requestConsultation = async (data) => {
+    startLoading();
     setError(null);
     try {
-      // Ensure identity fields are not sent
-      const { patient_id, ...cleanPayload } = data;
-      const response = await consultationService.requestConsultation(
-        cleanPayload
-      );
+      const response = await requestConsultationMutation.mutateAsync(data);
       setCurrentConsultation(response);
-      setLoading(false);
+      stopLoading();
       return { success: true, data: response };
     } catch (err) {
       const msg = err.response?.data?.error || "Failed to request consultation";
       setError(msg);
-      setLoading(false);
+      stopLoading();
       return { success: false, error: msg };
     }
-  }, []);
+  };
 
-  const fetchPatientActiveConsultation = useCallback(async () => {
-    setLoading(true);
+  const fetchPatientActiveConsultation = async () => {
+    startLoading();
     setError(null);
     try {
-      const response = await consultationService.getPatientActiveConsultation();
+      const response = await queryClient.fetchQuery({
+        queryKey: queryKeys.consultation.active,
+        queryFn: async () => {
+          try {
+            return await consultationService.getPatientActiveConsultation();
+          } catch (err) {
+            if (err.response?.status === 404) return null;
+            throw err;
+          }
+        },
+      });
       setActiveConsultation(response);
-      setLoading(false);
+      stopLoading();
       return { success: true, data: response };
     } catch (err) {
-      // 404 is expected when no active consultation — treat as null, not error
-      if (err.response?.status === 404) {
-        setActiveConsultation(null);
-        setLoading(false);
-        return { success: true, data: null };
-      }
       const msg =
         err.response?.data?.error || "Failed to fetch active consultation";
       setError(msg);
-      setLoading(false);
+      stopLoading();
       return { success: false, error: msg };
     }
-  }, []);
+  };
 
-  const fetchPatientConsultations = useCallback(async (params = {}) => {
-    setLoading(true);
+  const fetchPatientConsultations = async (params = {}) => {
+    startLoading();
     setError(null);
     try {
-      const response = await consultationService.getPatientConsultations(
-        params
-      );
+      const response = await queryClient.fetchQuery({
+        queryKey: [...queryKeys.consultation.list, params],
+        queryFn: () => consultationService.getPatientConsultations(params),
+      });
       setConsultations(response.consultations || []);
       setPagination({
         limit: response.limit,
         offset: response.offset,
         total: response.count,
       });
-      setLoading(false);
+      setActivePatientListParams(params);
+      stopLoading();
       return { success: true, data: response };
     } catch (err) {
       const msg =
         err.response?.data?.error || "Failed to load patient consultations";
       setError(msg);
-      setLoading(false);
+      stopLoading();
       return { success: false, error: msg };
     }
-  }, []);
+  };
 
-  const cancelConsultation = useCallback(
-    async (consultationId) => {
-      setLoading(true);
-      setError(null);
-      try {
-        const response = await consultationService.cancelConsultation(
-          consultationId
-        );
-        if (currentConsultation?.id === consultationId) {
-          setCurrentConsultation(response);
-        }
-        if (activeConsultation?.id === consultationId) {
-          setActiveConsultation(null);
-        }
-        setLoading(false);
-        return { success: true, data: response };
-      } catch (err) {
-        const msg =
-          err.response?.data?.error || "Failed to cancel consultation";
-        setError(msg);
-        setLoading(false);
-        return { success: false, error: msg };
-      }
-    },
-    [currentConsultation, activeConsultation]
-  );
-
-  const submitPatientRating = useCallback(async (consultationId, data) => {
-    setLoading(true);
+  const cancelConsultation = async (consultationId) => {
+    startLoading();
     setError(null);
     try {
-      const response = await consultationService.submitPatientRating(
-        consultationId,
-        data
-      );
-      setLoading(false);
+      const response = await cancelConsultationMutation.mutateAsync(consultationId);
+      if (currentConsultation?.id === consultationId) {
+        setCurrentConsultation(response);
+      }
+      if (activeConsultation?.id === consultationId) {
+        setActiveConsultation(null);
+      }
+      stopLoading();
+      return { success: true, data: response };
+    } catch (err) {
+      const msg =
+        err.response?.data?.error || "Failed to cancel consultation";
+      setError(msg);
+      stopLoading();
+      return { success: false, error: msg };
+    }
+  };
+
+  const submitPatientRating = async (consultationId, data) => {
+    startLoading();
+    setError(null);
+    try {
+      const response = await submitPatientRatingMutation.mutateAsync({ consultationId, data });
+      stopLoading();
       return { success: true, data: response };
     } catch (err) {
       const msg = err.response?.data?.error || "Failed to submit rating";
       setError(msg);
-      setLoading(false);
+      stopLoading();
       return { success: false, error: msg };
     }
-  }, []);
+  };
 
   // ─── Shared actions ─────────────────────────────────────────────────────
 
-  const fetchConsultationByID = useCallback(async (consultationId) => {
-    setLoading(true);
+  const fetchConsultationByID = async (consultationId) => {
+    startLoading();
     setError(null);
     try {
-      const response = await consultationService.getConsultationByID(
-        consultationId
-      );
+      const response = await queryClient.fetchQuery({
+        queryKey: queryKeys.consultation.detail(consultationId),
+        queryFn: () => consultationService.getConsultationByID(consultationId),
+      });
       setCurrentConsultation(response);
-      setLoading(false);
+      setActiveDetailId(consultationId);
+      stopLoading();
       return { success: true, data: response };
     } catch (err) {
       const msg = err.response?.data?.error || "Failed to fetch consultation";
       setError(msg);
-      setLoading(false);
+      stopLoading();
       return { success: false, error: msg };
     }
-  }, []);
+  };
 
-  const fetchConsultationWithDetails = useCallback(async (consultationId) => {
-    setLoading(true);
+  const fetchConsultationWithDetails = async (consultationId) => {
+    startLoading();
     setError(null);
     try {
-      const response = await consultationService.getConsultationWithDetails(
-        consultationId
-      );
+      const response = await queryClient.fetchQuery({
+        queryKey: queryKeys.consultation.detail(consultationId),
+        queryFn: () =>
+          consultationService.getConsultationWithDetails(consultationId),
+      });
       setCurrentConsultation(response);
-      setLoading(false);
+      setActiveDetailId(consultationId);
+      stopLoading();
       return { success: true, data: response };
     } catch (err) {
       const msg =
         err.response?.data?.error || "Failed to fetch consultation details";
       setError(msg);
-      setLoading(false);
+      stopLoading();
       return { success: false, error: msg };
     }
-  }, []);
+  };
 
-  const updateConsultationChannel = useCallback(
-    async (consultationId, data) => {
-      setLoading(true);
-      setError(null);
-      try {
-        const response = await consultationService.updateConsultationChannel(
-          consultationId,
-          data
-        );
-        setLoading(false);
-        return { success: true, data: response };
-      } catch (err) {
-        const msg = err.response?.data?.error || "Failed to update channel";
-        setError(msg);
-        setLoading(false);
-        return { success: false, error: msg };
-      }
-    },
-    []
-  );
+  const updateConsultationChannel = async (consultationId, data) => {
+    startLoading();
+    setError(null);
+    try {
+      const response = await updateConsultationChannelMutation.mutateAsync({ consultationId, data });
+      stopLoading();
+      return { success: true, data: response };
+    } catch (err) {
+      const msg = err.response?.data?.error || "Failed to update channel";
+      setError(msg);
+      stopLoading();
+      return { success: false, error: msg };
+    }
+  };
 
   // ─── Provider actions ───────────────────────────────────────────────────
 
-  const acceptConsultation = useCallback(async (consultationId) => {
-    setLoading(true);
+  const acceptConsultation = async (consultationId) => {
+    startLoading();
     setError(null);
     try {
-      const response = await consultationService.acceptConsultation(
-        consultationId
-      );
-      // Optionally update waiting room and active list
+      const response = await acceptConsultationMutation.mutateAsync(consultationId);
       setWaitingRoom((prev) => prev.filter((c) => c.id !== consultationId));
       setProviderActiveConsultations((prev) => [...prev, response]);
-      setLoading(false);
+      stopLoading();
       return { success: true, data: response };
     } catch (err) {
       const msg = err.response?.data?.error || "Failed to accept consultation";
       setError(msg);
-      setLoading(false);
+      stopLoading();
       return { success: false, error: msg };
     }
-  }, []);
+  };
 
-  const startConsultation = useCallback(async (consultationId) => {
-    setLoading(true);
+  const startConsultation = async (consultationId) => {
+    startLoading();
     setError(null);
     try {
-      const response = await consultationService.startConsultation(
-        consultationId
-      );
+      const response = await startConsultationMutation.mutateAsync(consultationId);
       setProviderActiveConsultations((prev) =>
         prev.map((c) => (c.id === consultationId ? response : c))
       );
-      setLoading(false);
+      stopLoading();
       return { success: true, data: response };
     } catch (err) {
       const msg = err.response?.data?.error || "Failed to start consultation";
       setError(msg);
-      setLoading(false);
+      stopLoading();
       return { success: false, error: msg };
     }
-  }, []);
+  };
 
-  const completeConsultation = useCallback(async (consultationId) => {
-    setLoading(true);
+  const completeConsultation = async (consultationId) => {
+    startLoading();
     setError(null);
     try {
-      const response = await consultationService.completeConsultation(
-        consultationId
-      );
+      const response = await completeConsultationMutation.mutateAsync(consultationId);
       setProviderActiveConsultations((prev) =>
         prev.filter((c) => c.id !== consultationId)
       );
-      setLoading(false);
+      stopLoading();
       return { success: true, data: response };
     } catch (err) {
       const msg =
         err.response?.data?.error || "Failed to complete consultation";
       setError(msg);
-      setLoading(false);
+      stopLoading();
       return { success: false, error: msg };
     }
-  }, []);
+  };
 
-  const escalateConsultation = useCallback(async (consultationId) => {
-    setLoading(true);
+  const escalateConsultation = async (consultationId) => {
+    startLoading();
     setError(null);
     try {
-      const response = await consultationService.escalateConsultation(
-        consultationId
-      );
+      const response = await escalateConsultationMutation.mutateAsync(consultationId);
       setProviderActiveConsultations((prev) =>
         prev.map((c) => (c.id === consultationId ? response : c))
       );
-      setLoading(false);
+      stopLoading();
       return { success: true, data: response };
     } catch (err) {
       const msg =
         err.response?.data?.error || "Failed to escalate consultation";
       setError(msg);
-      setLoading(false);
+      stopLoading();
       return { success: false, error: msg };
     }
-  }, []);
+  };
 
-  const declineConsultation = useCallback(async (consultationId) => {
-    setLoading(true);
+  const declineConsultation = async (consultationId) => {
+    startLoading();
     setError(null);
     try {
-      const response = await consultationService.declineConsultation(
-        consultationId
-      );
+      const response = await declineConsultationMutation.mutateAsync(consultationId);
       setWaitingRoom((prev) => prev.filter((c) => c.id !== consultationId));
-      setLoading(false);
+      stopLoading();
       return { success: true, data: response };
     } catch (err) {
       const msg = err.response?.data?.error || "Failed to decline consultation";
       setError(msg);
-      setLoading(false);
+      stopLoading();
       return { success: false, error: msg };
     }
-  }, []);
+  };
 
-  const markNoShow = useCallback(async (consultationId) => {
-    setLoading(true);
+  const markNoShow = async (consultationId) => {
+    startLoading();
     setError(null);
     try {
-      const response = await consultationService.markNoShow(consultationId);
+      const response = await markNoShowMutation.mutateAsync(consultationId);
       setProviderActiveConsultations((prev) =>
         prev.filter((c) => c.id !== consultationId)
       );
-      setLoading(false);
+      stopLoading();
       return { success: true, data: response };
     } catch (err) {
       const msg = err.response?.data?.error || "Failed to mark no-show";
       setError(msg);
-      setLoading(false);
+      stopLoading();
       return { success: false, error: msg };
     }
-  }, []);
+  };
 
-  const fetchProviderActiveConsultations = useCallback(async () => {
-    setLoading(true);
+  const fetchProviderActiveConsultations = async () => {
+    startLoading();
     setError(null);
     try {
-      const response =
-        await consultationService.getProviderActiveConsultations();
+      const response = await queryClient.fetchQuery({
+        queryKey: ["consultations", "provider", "active"],
+        queryFn: () => consultationService.getProviderActiveConsultations(),
+      });
       setProviderActiveConsultations(response.consultations || []);
-      setLoading(false);
+      stopLoading();
       return { success: true, data: response };
     } catch (err) {
       const msg =
         err.response?.data?.error ||
         "Failed to fetch provider active consultations";
       setError(msg);
-      setLoading(false);
+      stopLoading();
       return { success: false, error: msg };
     }
-  }, []);
+  };
 
-  const fetchProviderConsultationHistory = useCallback(async (params = {}) => {
-    setLoading(true);
+  const fetchProviderConsultationHistory = async (params = {}) => {
+    startLoading();
     setError(null);
     try {
-      const response = await consultationService.getProviderConsultationHistory(
-        params
-      );
+      const response = await queryClient.fetchQuery({
+        queryKey: ["consultations", "provider", "history", params],
+        queryFn: () => consultationService.getProviderConsultationHistory(params),
+      });
       setProviderHistory(response.consultations || []);
       setPagination({
         limit: response.limit,
         offset: response.offset,
         total: response.count,
       });
-      setLoading(false);
+      setActiveProviderHistoryParams(params);
+      stopLoading();
       return { success: true, data: response };
     } catch (err) {
       const msg =
         err.response?.data?.error || "Failed to fetch provider history";
       setError(msg);
-      setLoading(false);
+      stopLoading();
       return { success: false, error: msg };
     }
-  }, []);
+  };
 
-  const fetchWaitingRoom = useCallback(async () => {
-    setLoading(true);
+  const fetchWaitingRoom = async () => {
+    startLoading();
     setError(null);
     try {
-      const response = await consultationService.getWaitingRoom();
+      const response = await queryClient.fetchQuery({
+        queryKey: ["consultations", "waitingRoom"],
+        queryFn: () => consultationService.getWaitingRoom(),
+      });
       setWaitingRoom(response.entries || []);
-      setLoading(false);
+      stopLoading();
       return { success: true, data: response };
     } catch (err) {
       const msg = err.response?.data?.error || "Failed to fetch waiting room";
       setError(msg);
-      setLoading(false);
+      stopLoading();
       return { success: false, error: msg };
     }
-  }, []);
+  };
 
   // ─── Billing / admin actions ────────────────────────────────────────────
 
-  const updatePaymentStatus = useCallback(async (consultationId, data) => {
-    setLoading(true);
+  const updatePaymentStatus = async (consultationId, data) => {
+    startLoading();
     setError(null);
     try {
-      const response = await consultationService.updatePaymentStatus(
-        consultationId,
-        data
-      );
-      setLoading(false);
+      const response = await updatePaymentStatusMutation.mutateAsync({ consultationId, data });
+      stopLoading();
       return { success: true, data: response };
     } catch (err) {
       const msg =
         err.response?.data?.error || "Failed to update payment status";
       setError(msg);
-      setLoading(false);
+      stopLoading();
       return { success: false, error: msg };
     }
-  }, []);
+  };
 
-  const linkFollowUpAppointment = useCallback(async (consultationId, data) => {
-    setLoading(true);
+  const linkFollowUpAppointment = async (consultationId, data) => {
+    startLoading();
     setError(null);
     try {
-      const response = await consultationService.linkFollowUpAppointment(
-        consultationId,
-        data
-      );
-      setLoading(false);
+      const response = await linkFollowUpAppointmentMutation.mutateAsync({ consultationId, data });
+      stopLoading();
       return { success: true, data: response };
     } catch (err) {
       const msg = err.response?.data?.error || "Failed to link follow-up";
       setError(msg);
-      setLoading(false);
+      stopLoading();
       return { success: false, error: msg };
     }
-  }, []);
+  };
 
   // ─── Clear helpers ──────────────────────────────────────────────────────
 
@@ -425,10 +575,70 @@ export const useConsultation = () => {
     setProviderActiveConsultations([]);
     setProviderHistory([]);
     setError(null);
-  }, []);
+    setActiveDetailId(null);
+    setActivePatientListParams({});
+    setActiveProviderHistoryParams({});
+    requestConsultationMutation.reset();
+    cancelConsultationMutation.reset();
+    submitPatientRatingMutation.reset();
+    updateConsultationChannelMutation.reset();
+    acceptConsultationMutation.reset();
+    startConsultationMutation.reset();
+    completeConsultationMutation.reset();
+    escalateConsultationMutation.reset();
+    declineConsultationMutation.reset();
+    markNoShowMutation.reset();
+    updatePaymentStatusMutation.reset();
+    linkFollowUpAppointmentMutation.reset();
+  }, [
+    requestConsultationMutation,
+    cancelConsultationMutation,
+    submitPatientRatingMutation,
+    updateConsultationChannelMutation,
+    acceptConsultationMutation,
+    startConsultationMutation,
+    completeConsultationMutation,
+    escalateConsultationMutation,
+    declineConsultationMutation,
+    markNoShowMutation,
+    updatePaymentStatusMutation,
+    linkFollowUpAppointmentMutation,
+  ]);
 
   const clearError = useCallback(() => {
     setError(null);
+    requestConsultationMutation.reset();
+    cancelConsultationMutation.reset();
+    submitPatientRatingMutation.reset();
+    updateConsultationChannelMutation.reset();
+    acceptConsultationMutation.reset();
+    startConsultationMutation.reset();
+    completeConsultationMutation.reset();
+    escalateConsultationMutation.reset();
+    declineConsultationMutation.reset();
+    markNoShowMutation.reset();
+    updatePaymentStatusMutation.reset();
+    linkFollowUpAppointmentMutation.reset();
+  }, [
+    requestConsultationMutation,
+    cancelConsultationMutation,
+    submitPatientRatingMutation,
+    updateConsultationChannelMutation,
+    acceptConsultationMutation,
+    startConsultationMutation,
+    completeConsultationMutation,
+    escalateConsultationMutation,
+    declineConsultationMutation,
+    markNoShowMutation,
+    updatePaymentStatusMutation,
+    linkFollowUpAppointmentMutation,
+  ]);
+
+  // Clear error on unmount
+  useEffect(() => {
+    return () => {
+      setError(null);
+    };
   }, []);
 
   return {
