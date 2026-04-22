@@ -5,6 +5,8 @@ import { useAuth } from "context/AuthContext";
 import { useConsultation } from "hooks/useConsultation";
 import { useConsultationMessages } from "hooks/useConsultationMessages";
 import { useConsultationNotes } from "hooks/useConsultationNotes";
+import { createConsultationSocket } from "platform/realtime/consultationSocket";
+import { getRuntimeConfig } from "platform/config/runtime";
 
 import PatientQueue from "./components/PatientQueue";
 import PatientInfo from "./components/PatientInfo";
@@ -21,8 +23,6 @@ import {
   ReferralModal,
   LabOrderModal,
 } from "./components/ProviderChatModals";
-
-const WS_BASE_URL = process.env.REACT_APP_WS_URL || "ws://localhost:8080";
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -179,7 +179,6 @@ const ProviderTelemedicineChat = () => {
 
   const messagesEndRef = useRef(null);
   const wsRef = useRef(null);
-  const heartbeatRef = useRef(null);
   const typingTimeoutRef = useRef(null);
   // Keep a stable ref to the active consultation ID for use inside WS callbacks
   const activeConsultationIdRef = useRef(null);
@@ -303,43 +302,26 @@ const ProviderTelemedicineChat = () => {
   // ── WebSocket ────────────────────────────────────────────────────────────────
   const connectWebSocket = useCallback(
     (consultationId) => {
-      if (wsRef.current?.readyState === WebSocket.OPEN) return;
+      if (wsRef.current) return;
 
       const token = getToken();
       if (!token) return;
 
-      const url = `${WS_BASE_URL}/ws/consultations/${consultationId}?token=${token}`;
-      const ws = new WebSocket(url);
-      wsRef.current = ws;
+      const { wsUrl } = getRuntimeConfig();
+      const url = `${wsUrl}/ws/consultations/${consultationId}?token=${token}`;
 
-      ws.onopen = () => {
-        showToast("Real-time connection established", "success");
-        clearInterval(heartbeatRef.current);
-        heartbeatRef.current = setInterval(() => {
-          if (ws.readyState === WebSocket.OPEN) {
-            ws.send(JSON.stringify({ type: "ping" }));
-          }
-        }, 25000);
-      };
+      wsRef.current = createConsultationSocket({
+        url,
+        onEvent: (envelope) => wsEventHandlerRef.current?.(envelope),
+      });
 
-      ws.onmessage = (event) => {
-        try {
-          const envelope = JSON.parse(event.data);
-          wsEventHandlerRef.current?.(envelope);
-        } catch (e) {
-          console.error("WS parse error", e);
-        }
-      };
-
-      ws.onerror = (err) => console.error("WS error", err);
-      ws.onclose = () => clearInterval(heartbeatRef.current);
+      wsRef.current.connect();
     },
-    [getToken, showToast] // eslint-disable-line react-hooks/exhaustive-deps
+    [getToken] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   const disconnectWebSocket = useCallback(() => {
-    clearInterval(heartbeatRef.current);
-    wsRef.current?.close();
+    wsRef.current?.disconnect();
     wsRef.current = null;
   }, []);
 
@@ -438,7 +420,7 @@ const ProviderTelemedicineChat = () => {
     const text = newMessage;
     setNewMessage("");
 
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
+    if (wsRef.current?.isOpen?.()) {
       // Show the message immediately (optimistic). The server broadcast will
       // replace this bubble with the real one via handleWsEvent.
       const now = new Date().toISOString();
@@ -492,8 +474,8 @@ const ProviderTelemedicineChat = () => {
 
   const handleTyping = (value) => {
     setNewMessage(value);
-    if (wsRef.current?.readyState === WebSocket.OPEN && activeConsultationId) {
-      wsRef.current.send(
+    if (activeConsultationId) {
+      wsRef.current?.send(
         JSON.stringify({
           type: "typing",
           consultation_id: activeConsultationId,
@@ -526,15 +508,13 @@ const ProviderTelemedicineChat = () => {
   // ── Clinical actions ─────────────────────────────────────────────────────────
   const sendClinicalMessage = useCallback(
     (message_type, content) => {
-      if (wsRef.current?.readyState === WebSocket.OPEN) {
-        wsRef.current.send(
-          JSON.stringify({
-            type: "message",
-            consultation_id: activeConsultationId,
-            payload: { message_type, content, sender_role: "provider_staff" },
-          })
-        );
-      }
+      wsRef.current?.send(
+        JSON.stringify({
+          type: "message",
+          consultation_id: activeConsultationId,
+          payload: { message_type, content, sender_role: "provider_staff" },
+        })
+      );
     },
     [activeConsultationId]
   );
