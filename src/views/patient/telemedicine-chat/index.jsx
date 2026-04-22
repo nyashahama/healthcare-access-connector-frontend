@@ -9,6 +9,8 @@ import { useProviderAvailability } from "hooks/useProviderAvailability";
 import { useSymptomChecker } from "hooks/useSymptomChecker";
 import { createConsultationSocket } from "platform/realtime/consultationSocket";
 import { getRuntimeConfig } from "platform/config/runtime";
+import ErrorBoundaryWrapper from "components/error-boundaries/ErrorBoundaryWrapper";
+import CriticalFeatureFallback from "components/error-boundaries/CriticalFeatureFallback";
 
 import ChatHeader from "./components/ChatHeader";
 import MessagesContainer from "./components/MessagesContainer";
@@ -575,4 +577,15 @@ const TelemedicineChat = () => {
   );
 };
 
-export default TelemedicineChat;
+const TelemedicineChatWithBoundary = (props) => (
+  <ErrorBoundaryWrapper
+    fallback={(fallbackProps) => (
+      <CriticalFeatureFallback feature="Telemedicine" {...fallbackProps} />
+    )}
+    context="telemedicine"
+  >
+    <TelemedicineChat {...props} />
+  </ErrorBoundaryWrapper>
+);
+
+export default TelemedicineChatWithBoundary;
