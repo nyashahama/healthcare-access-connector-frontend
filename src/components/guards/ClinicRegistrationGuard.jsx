@@ -1,113 +1,21 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "context/AuthContext";
-import providerService from "api/services/providerService";
+import { useProvider } from "hooks/useProvider";
 
-/**
- * ClinicRegistrationGuard - Shows modal instead of redirecting
- */
 const ClinicRegistrationGuard = ({ children }) => {
   const navigate = useNavigate();
-  const { user, isAuthenticated, loading: authLoading } = useAuth();
   const location = useLocation();
-
-  const [state, setState] = useState({
-    isChecking: true,
-    showModal: false,
-  });
-
-  const hasCheckedRef = useRef(false);
-  const checkedUserIdRef = useRef(null);
+  const { user, loading: authLoading } = useAuth();
+  const { clinic, loading: clinicLoading, getMyClinic } = useProvider();
 
   useEffect(() => {
-    // Reset check if user changed (e.g., after logout/login)
-    if (user?.id !== checkedUserIdRef.current) {
-      hasCheckedRef.current = false;
-      checkedUserIdRef.current = user?.id;
+    if (user?.role === "clinic_admin") {
+      getMyClinic();
     }
+  }, [getMyClinic, user?.role]);
 
-    // Only check once per user
-    if (hasCheckedRef.current) return;
-
-    // Skip if on registration page
-    if (location.pathname === "/provider/clinic-registration") {
-      setState({ isChecking: false, showModal: false });
-      hasCheckedRef.current = true;
-      return;
-    }
-
-    if (authLoading) return;
-
-    // Only for clinic_admin
-    if (!user || user.role !== "clinic_admin") {
-      setState({ isChecking: false, showModal: false });
-      hasCheckedRef.current = true;
-      return;
-    }
-
-    hasCheckedRef.current = true;
-
-    // Check cache
-    const cacheKey = `clinic_check_${user.id}`;
-    const cached = localStorage.getItem(cacheKey);
-
-    if (cached) {
-      try {
-        const { hasClinic, timestamp } = JSON.parse(cached);
-        if (Date.now() - timestamp < 60000) {
-          setState({
-            isChecking: false,
-            showModal: !hasClinic,
-          });
-          return;
-        }
-      } catch (e) {
-        // Invalid cache
-      }
-    }
-
-    // Fetch clinic
-    providerService
-      .getMyClinic()
-      .then((response) => {
-        const hasClinic = !!(response && (response.clinic || response.id));
-
-        localStorage.setItem(
-          cacheKey,
-          JSON.stringify({
-            hasClinic,
-            timestamp: Date.now(),
-          })
-        );
-
-        setState({
-          isChecking: false,
-          showModal: !hasClinic,
-        });
-      })
-      .catch((error) => {
-        if (error.response?.status === 404) {
-          localStorage.setItem(
-            cacheKey,
-            JSON.stringify({
-              hasClinic: false,
-              timestamp: Date.now(),
-            })
-          );
-
-          setState({
-            isChecking: false,
-            showModal: true,
-          });
-        } else {
-          console.warn("Clinic check error:", error.message);
-          setState({ isChecking: false, showModal: false });
-        }
-      });
-  }, [authLoading, isAuthenticated, user?.id, user?.role, location.pathname]);
-
-  // Show loading
-  if (authLoading || state.isChecking) {
+  if (authLoading || clinicLoading) {
     return (
       <div className="flex h-screen items-center justify-center bg-lightPrimary dark:bg-navy-900">
         <div className="text-center">
@@ -140,12 +48,15 @@ const ClinicRegistrationGuard = ({ children }) => {
     );
   }
 
+  if (user?.role !== "clinic_admin" || clinic) return children;
+
+  const showModal = location.pathname !== "/provider/clinic-registration";
+
   return (
     <>
       {children}
 
-      {/* Modal for clinic registration */}
-      {state.showModal && (
+      {showModal && (
         <div className="bg-black fixed inset-0 z-50 flex items-center justify-center bg-opacity-50 p-4">
           <div className="max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-navy-800">
             <div className="mb-4 text-center">
@@ -183,10 +94,6 @@ const ClinicRegistrationGuard = ({ children }) => {
       )}
     </>
   );
-};
-
-export const clearClinicRegistrationCache = (userId) => {
-  localStorage.removeItem(`clinic_check_${userId}`);
 };
 
 export default ClinicRegistrationGuard;

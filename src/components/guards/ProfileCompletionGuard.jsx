@@ -1,126 +1,26 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import patientService from "api/services/patientService";
 import { useAuth } from "context/AuthContext";
+import { usePatient } from "hooks/usePatient";
 
-/**
- * ProfileCompletionGuard - Shows modal instead of redirecting
- * This prevents navigation loops
- */
 const ProfileCompletionGuard = ({ children, minCompletion = 50 }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, isAuthenticated, loading: authLoading } = useAuth();
-
-  const [state, setState] = useState({
-    isChecking: true,
-    showModal: false,
-    completion: 0,
-  });
-
-  const hasCheckedRef = useRef(false);
-  const checkedUserIdRef = useRef(null);
+  const {
+    patient,
+    profileCompletion,
+    loading: profileLoading,
+    getCurrentPatientProfile,
+  } = usePatient();
 
   useEffect(() => {
-    // Reset check if user changed (e.g., after logout/login)
-    if (user?.id !== checkedUserIdRef.current) {
-      hasCheckedRef.current = false;
-      checkedUserIdRef.current = user?.id;
+    if (isAuthenticated && user?.role === "patient") {
+      getCurrentPatientProfile();
     }
+  }, [getCurrentPatientProfile, isAuthenticated, user?.role]);
 
-    // Only check once per user
-    if (hasCheckedRef.current) return;
-
-    // Skip if on completion page
-    if (location.pathname === "/auth/complete-patient-profile") {
-      setState({ isChecking: false, showModal: false, completion: 100 });
-      hasCheckedRef.current = true;
-      return;
-    }
-
-    // Wait for auth
-    if (authLoading) return;
-
-    // Only for patients
-    if (!isAuthenticated || !user || user.role !== "patient") {
-      setState({ isChecking: false, showModal: false, completion: 100 });
-      hasCheckedRef.current = true;
-      return;
-    }
-
-    hasCheckedRef.current = true;
-
-    // Check cache
-    const cacheKey = `profile_check_${user.id}`;
-    const cached = localStorage.getItem(cacheKey);
-
-    if (cached) {
-      try {
-        const { completion, timestamp } = JSON.parse(cached);
-        if (Date.now() - timestamp < 60000) {
-          setState({
-            isChecking: false,
-            showModal: completion < minCompletion,
-            completion,
-          });
-          return;
-        }
-      } catch (e) {
-        // Invalid cache
-      }
-    }
-
-    // Fetch profile
-    patientService
-      .getPatientProfileByUserId(user.id)
-      .then((profile) => {
-        const completion = patientService.calculateProfileCompletion(profile);
-
-        localStorage.setItem(
-          cacheKey,
-          JSON.stringify({
-            completion,
-            timestamp: Date.now(),
-          })
-        );
-
-        setState({
-          isChecking: false,
-          showModal: completion < minCompletion,
-          completion,
-        });
-      })
-      .catch((error) => {
-        if (error.response?.status === 404) {
-          localStorage.setItem(
-            cacheKey,
-            JSON.stringify({
-              completion: 0,
-              timestamp: Date.now(),
-            })
-          );
-
-          setState({
-            isChecking: false,
-            showModal: true,
-            completion: 0,
-          });
-        } else {
-          console.error("Profile check error:", error);
-          setState({ isChecking: false, showModal: false, completion: 100 });
-        }
-      });
-  }, [
-    authLoading,
-    isAuthenticated,
-    user?.id,
-    user?.role,
-    location.pathname,
-    minCompletion,
-  ]);
-
-  // Show loading
-  if (authLoading || state.isChecking) {
+  if (authLoading || profileLoading) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-lightPrimary dark:bg-navy-900">
         <div className="text-center">
@@ -153,12 +53,16 @@ const ProfileCompletionGuard = ({ children, minCompletion = 50 }) => {
     );
   }
 
+  if (!isAuthenticated || user?.role !== "patient") return children;
+
+  const completion = patient ? profileCompletion : 0;
+  const showModal = location.pathname !== "/auth/complete-patient-profile" && completion < minCompletion;
+
   return (
     <>
       {children}
 
-      {/* Modal for incomplete profile */}
-      {state.showModal && (
+      {showModal && (
         <div className="bg-black fixed inset-0 z-50 flex items-center justify-center bg-opacity-50 p-4">
           <div className="max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-navy-800">
             <div className="mb-4 text-center">
@@ -181,7 +85,7 @@ const ProfileCompletionGuard = ({ children, minCompletion = 50 }) => {
                 Complete Your Profile
               </h3>
               <p className="mb-1 text-sm text-gray-600 dark:text-gray-300">
-                Your profile is {state.completion}% complete
+                Your profile is {completion}% complete
               </p>
               <p className="text-sm text-gray-600 dark:text-gray-300">
                 Please complete your profile to access all features
@@ -195,24 +99,12 @@ const ProfileCompletionGuard = ({ children, minCompletion = 50 }) => {
               >
                 Complete Profile Now
               </button>
-              <button
-                onClick={() =>
-                  setState((prev) => ({ ...prev, showModal: false }))
-                }
-                className="w-full rounded-lg border border-gray-300 px-4 py-3 font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-navy-700"
-              >
-                Remind Me Later
-              </button>
             </div>
           </div>
         </div>
       )}
     </>
   );
-};
-
-export const clearProfileCompletionCache = (userId) => {
-  localStorage.removeItem(`profile_check_${userId}`);
 };
 
 export default ProfileCompletionGuard;
