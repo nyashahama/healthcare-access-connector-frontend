@@ -43,7 +43,6 @@ const FindClinic = () => {
   // Modal states
   const [bookModalOpen, setBookModalOpen] = useState(false);
   const [directionsModalOpen, setDirectionsModalOpen] = useState(false);
-  const [shareModalOpen, setShareModalOpen] = useState(false);
   const [locationModalOpen, setLocationModalOpen] = useState(false);
   const [filterModalOpen, setFilterModalOpen] = useState(false);
   const [smsConfirmModalOpen, setSmsConfirmModalOpen] = useState(false);
@@ -51,17 +50,18 @@ const FindClinic = () => {
 
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
-  const [bookingData, setBookingData] = useState(null);
+  const [, setBookingData] = useState(null);
+  const [, setShareModalOpen] = useState(false);
 
   // Mock clinic data - In production, this would come from an API
-  const { clinics, loading, error, getClinics } = useProvider();
+  const { clinics, getClinics } = useProvider();
 
   useEffect(() => {
     // Only fetch if clinics don't already exist
     if (!clinics || clinics.length === 0) {
       getClinics();
     }
-  }, []);
+  }, [clinics, getClinics]);
 
   const formatClinicData = (clinic) => {
     const getClinicStatus = () => {
@@ -182,7 +182,7 @@ const FindClinic = () => {
       showToast("Geolocation not supported by your browser", "error");
       setUserLocation({ lat: -26.2041, lng: 28.0473 });
     }
-  }, []);
+  }, [showToast]);
 
   const formattedClinics = useMemo(() => {
     return clinics ? clinics.map(formatClinicData) : [];
@@ -217,16 +217,14 @@ const FindClinic = () => {
     setBookModalOpen(true);
   };
 
-  const confirmBooking = () => {
-    setBookModalOpen(false);
-    showToast(`Appointment booked at ${selectedClinic.name}`, "success");
-    // Navigate to booking page
-    window.location.href = `/patient/book-appointment?clinic=${selectedClinic.id}`;
-  };
-
   const handleGetDirections = (clinic) => {
     setSelectedClinic(clinic);
     setDirectionsModalOpen(true);
+  };
+
+  const handleShareClinic = (clinic) => {
+    setSelectedClinic(clinic);
+    setShareModalOpen(true);
   };
 
   const confirmDirections = (transport) => {
@@ -238,16 +236,6 @@ const FindClinic = () => {
 
     const url = `https://www.google.com/maps/dir/?api=1&destination=${selectedClinic.coordinates.lat},${selectedClinic.coordinates.lng}&travelmode=${transport}`;
     window.open(url, "_blank");
-  };
-
-  const handleShareClinic = (clinic) => {
-    setSelectedClinic(clinic);
-    setShareModalOpen(true);
-  };
-
-  const confirmShare = (method) => {
-    setShareModalOpen(false);
-    showToast(`Clinic shared via ${method}`, "success");
   };
 
   const handleUpdateLocation = () => {

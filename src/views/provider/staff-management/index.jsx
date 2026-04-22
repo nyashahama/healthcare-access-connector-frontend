@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { MdPersonAdd } from "react-icons/md";
 import { useToast } from "hooks/useToast";
 import { useStaff } from "hooks/useStaff";
-import { useAuth } from "context/AuthContext";
 import { useProvider } from "hooks/useProvider";
 
 // Component imports
@@ -46,7 +45,6 @@ const StaffManagement = () => {
 
   // Hooks
   const { showToast } = useToast();
-  const { getCurrentUser } = useAuth();
   const {
     loading,
     error,
@@ -61,9 +59,8 @@ const StaffManagement = () => {
     cancelInvitation,
     clearError,
   } = useStaff();
-  const { clinic, getMyClinic } = useProvider();
+  const { getMyClinic } = useProvider();
 
-  const currentUser = getCurrentUser();
   const [clinicLoading, setClinicLoading] = useState(true);
   const [clinicId, setClinicId] = useState(null);
 
@@ -113,12 +110,19 @@ const StaffManagement = () => {
     fetchClinic();
   }, [getMyClinic]);
 
+  // Load staff data
+  const loadStaffData = useCallback(async () => {
+    if (!clinicId) return;
+    await listClinicStaff(clinicId);
+    await getPendingInvitations(clinicId);
+  }, [clinicId, listClinicStaff, getPendingInvitations]);
+
   // Load staff data when clinicId is available
   useEffect(() => {
     if (clinicId) {
       loadStaffData();
     }
-  }, [clinicId]);
+  }, [clinicId, loadStaffData]);
 
   // Show error toast
   useEffect(() => {
@@ -126,14 +130,7 @@ const StaffManagement = () => {
       showToast(error, "error");
       clearError();
     }
-  }, [error]);
-
-  // Load staff data
-  const loadStaffData = async () => {
-    if (!clinicId) return;
-    await listClinicStaff(clinicId);
-    await getPendingInvitations(clinicId);
-  };
+  }, [clearError, error, showToast]);
 
   // Handle invite staff
   const handleInviteStaff = async () => {
@@ -215,12 +212,6 @@ const StaffManagement = () => {
   const handleDeleteClick = (staff) => {
     setSelectedStaff(staff);
     setDeleteModalOpen(true);
-  };
-
-  // Handle suspend click
-  const handleSuspendClick = (staff) => {
-    setSelectedStaff(staff);
-    setSuspendModalOpen(true);
   };
 
   // Confirm edit

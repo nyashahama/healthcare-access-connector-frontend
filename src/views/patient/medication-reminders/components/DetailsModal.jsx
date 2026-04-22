@@ -4,7 +4,6 @@ import {
   MdAccessTime,
   MdCalendarToday,
   MdCheckCircle,
-  MdClose,
 } from "react-icons/md";
 import { MdEmail } from "react-icons/md";
 import Modal from "components/modal/Modal";

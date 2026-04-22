@@ -1,16 +1,11 @@
 import React, { useState } from "react";
 import {
-  MdVerifiedUser,
   MdPeople,
-  MdAnalytics,
-  MdWarning,
 } from "react-icons/md";
 import {
   FaClinicMedical,
-  FaUserCheck,
   FaServer,
   FaDatabase,
-  FaUserMd,
 } from "react-icons/fa";
 import SystemHealth from "../components/SystemHealth";
 import RegistrationQueue from "../components/RegistrationQueue";

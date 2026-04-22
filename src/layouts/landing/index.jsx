@@ -9,7 +9,7 @@ import ToastContainer from "components/toast/ToastContainer";
 import { useToast } from "hooks/useToast";
 
 export default function LandingLayout() {
-  const { showToast } = useToast();
+  useToast();
 
   useEffect(() => {
     // Initialize any landing page specific functionality

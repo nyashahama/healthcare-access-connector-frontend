@@ -1,5 +1,4 @@
 import React from "react";
-import Card from "components/card";
 import PatientBanner from "./components/PatientBanner";
 import ContactInformation from "./components/ContactInformation";
 import MyChildren from "./components/MyChildren";

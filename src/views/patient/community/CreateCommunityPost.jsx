@@ -8,9 +8,7 @@ import {
   MdVisibility,
   MdTag,
   MdHelp,
-  MdWarning,
   MdSend,
-  MdCancel,
 } from "react-icons/md";
 import { FaBaby, FaHeart, FaUserFriends, FaCommentAlt } from "react-icons/fa";
 import Card from "components/card";

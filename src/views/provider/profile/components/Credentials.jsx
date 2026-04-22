@@ -13,7 +13,7 @@ import Modal from "components/modal/Modal";
 import { useToast } from "hooks/useToast";
 
 const Credentials = () => {
-  const [credentials, setCredentials] = useState([
+  const [credentials] = useState([
     {
       id: 1,
       type: "Professional License",

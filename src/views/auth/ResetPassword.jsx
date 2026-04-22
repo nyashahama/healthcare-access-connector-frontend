@@ -34,7 +34,7 @@ const ResetPassword = () => {
     return () => {
       isMounted.current = false;
     };
-  }, [token]);
+  }, [token, showToast]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;

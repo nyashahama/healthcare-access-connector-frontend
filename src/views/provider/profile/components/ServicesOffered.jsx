@@ -6,12 +6,11 @@ import {
   FaFlask,
   FaStethoscope,
   FaUserMd,
-  FaPlus,
   FaEye,
   FaTrash,
   FaFileMedical,
 } from "react-icons/fa";
-import { MdAdd, MdCheckCircle, MdEdit, MdWarning } from "react-icons/md";
+import { MdAdd, MdEdit } from "react-icons/md";
 import { useProvider } from "hooks/useProvider";
 import Card from "components/card";
 import Modal from "components/modal/Modal";

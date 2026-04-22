@@ -8,7 +8,7 @@ import {
   MdBusiness,
   MdMedicalServices,
 } from "react-icons/md";
-import { FaUserMd, FaUserNurse } from "react-icons/fa";
+
 
 const QuickActions = ({ userRole }) => {
   const actions = {

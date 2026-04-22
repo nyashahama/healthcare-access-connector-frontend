@@ -1,5 +1,4 @@
 import React from "react";
-import Card from "components/card";
 import ClinicBanner from "./components/ClinicBanner";
 import ClinicInformation from "./components/ClinicInformation";
 import OperatingHours from "./components/OperatingHours";

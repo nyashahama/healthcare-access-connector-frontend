@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { IoMdPeople, IoMdTime, IoMdCall } from "react-icons/io";
+import { IoMdPeople, IoMdCall } from "react-icons/io";
 import { MdCalendarToday, MdCheckCircle, MdAccessTime } from "react-icons/md";
 import { FaUserCheck } from "react-icons/fa";
 import Widget from "components/widget/Widget";
@@ -21,7 +21,6 @@ const ReceptionistDashboard = ({ clinicId }) => {
     getTodayAppointments,
     getPendingAppointments,
     todayAppointments,
-    pendingAppointments,
     loading: appointmentsLoading,
   } = useAppointment();
 
@@ -108,7 +107,7 @@ const ReceptionistDashboard = ({ clinicId }) => {
     if (clinicId) {
       fetchDashboardData();
     }
-  }, [clinicId]);
+  }, [clinicId, getCurrentUser, getPendingAppointments, getTodayAppointments, showToast]);
 
   if (loading) {
     return (

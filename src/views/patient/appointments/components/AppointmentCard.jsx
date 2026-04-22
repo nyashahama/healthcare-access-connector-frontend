@@ -5,8 +5,6 @@ import {
   MdLocationOn,
   MdEdit,
   MdCancel,
-  MdPhone,
-  MdEmail,
   MdDirections,
   MdVideocam,
   MdInfo,

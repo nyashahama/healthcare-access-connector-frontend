@@ -1,6 +1,5 @@
 import React from "react";
 import { MdEdit, MdDelete } from "react-icons/md";
-import { FaUserMd, FaUserNurse } from "react-icons/fa";
 import Card from "components/card";
 
 const StaffTable = ({

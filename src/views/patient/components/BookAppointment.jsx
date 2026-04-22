@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import {
   MdCalendarToday,
-  MdAccessTime,
   MdLocationOn,
   MdPerson,
   MdNotes,
@@ -52,7 +51,6 @@ const BookAppointment = () => {
     bookAppointment,
     loading,
     error,
-    appointment,
     clearError,
     clearAppointmentState,
   } = useAppointment();
@@ -61,7 +59,6 @@ const BookAppointment = () => {
   const {
     patient,
     getPatientProfileByUserId,
-    loading: patientLoading,
   } = usePatient();
 
   const availableSlots = [

@@ -3,8 +3,6 @@ import { FaPhone, FaUserFriends, FaExclamationTriangle } from "react-icons/fa";
 import {
   MdEdit,
   MdAdd,
-  MdDelete,
-  MdPerson,
   MdCall,
   MdSave,
   MdWarning,

@@ -6,16 +6,12 @@ import {
   MdComment,
   MdShare,
   MdBookmark,
-  MdPerson,
   MdAccessTime,
   MdSend,
   MdWarning,
   MdFlag,
-  MdMoreVert,
-  MdEdit,
-  MdDelete,
 } from "react-icons/md";
-import { FaReply, FaUserCircle } from "react-icons/fa";
+import { FaReply } from "react-icons/fa";
 import Card from "components/card";
 import Modal from "components/modal/Modal";
 import { useToast } from "hooks/useToast";
@@ -143,11 +139,6 @@ const CommunityPost = () => {
 
   const handleSharePost = () => {
     setModalState({ ...modalState, share: true });
-  };
-
-  const confirmShare = (method) => {
-    setModalState({ ...modalState, share: false });
-    showToast(`Post shared via ${method}`, "success");
   };
 
   const CommentItem = ({ comment }) => (

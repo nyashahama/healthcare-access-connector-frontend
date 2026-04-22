@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import InputField from "components/fields/InputField";
 import { useToast } from "hooks/useToast";
 import { useProvider } from "hooks/useProvider";
-import { useAuth } from "context/AuthContext";
 
 // ==================== UPDATED CONSTANTS TO MATCH BACKEND ====================
 const CLINIC_TYPES = [
@@ -109,7 +108,6 @@ const ClinicRegistration = () => {
   const navigate = useNavigate();
   const { showToast } = useToast();
   const { registerClinic } = useProvider();
-  const { getCurrentUser } = useAuth();
 
   const [formData, setFormData] = useState({
     // Basic Information

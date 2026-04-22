@@ -27,7 +27,7 @@ import {
 } from "./components/ChatModals";
 
 const TelemedicineChat = () => {
-  const { user, getToken } = useAuth();
+  const { getToken } = useAuth();
   const { showToast } = useToast();
 
   // ── Hooks ────────────────────────────────────────────────────────────────
@@ -36,7 +36,6 @@ const TelemedicineChat = () => {
     currentConsultation,
     fetchPatientActiveConsultation,
     requestConsultation,
-    cancelConsultation,
     completeConsultation,
     submitPatientRating,
     loading: consultationLoading,
@@ -220,7 +219,7 @@ const TelemedicineChat = () => {
           break;
       }
     },
-    [user?.id, showToast]
+    [showToast]
   );
 
   // Always keep the ref in sync with the latest handler version.

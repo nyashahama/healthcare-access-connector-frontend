@@ -1,14 +1,9 @@
 import React, { useState } from "react";
 import {
   MdScience,
-  MdWarning,
-  MdInfo,
   MdAdd,
-  MdSearch,
-  MdFilterList,
 } from "react-icons/md";
 import Card from "components/card";
-import Modal from "components/modal/Modal";
 import { useToast } from "hooks/useToast";
 import QuickStats from "./components/QuickStats";
 import Controls from "./components/Controls";
@@ -119,11 +114,6 @@ const LabResults = () => {
   const confirmShare = (method) => {
     setModalState({ ...modalState, share: false });
     showToast(`Results shared via ${method}`, "success");
-  };
-
-  const handleFileUpload = (files) => {
-    setModalState({ ...modalState, upload: false });
-    showToast("Lab results uploaded successfully", "success");
   };
 
   const getStatusColor = (status) => {

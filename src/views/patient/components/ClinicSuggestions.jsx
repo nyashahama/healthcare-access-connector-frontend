@@ -9,8 +9,6 @@ import {
   MdStar,
   MdPhone,
   MdEmail,
-  MdDirections,
-  MdClose,
   MdLanguage,
   MdPayment,
 } from "react-icons/md";
@@ -33,7 +31,7 @@ const ClinicSuggestions = () => {
     if (!clinics || clinics.length === 0) {
       getClinics();
     }
-  }, []);
+  }, [clinics, getClinics]);
 
   const formatClinicData = (clinic) => {
     const getClinicStatus = () => {

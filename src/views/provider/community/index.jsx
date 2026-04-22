@@ -11,7 +11,6 @@ import {
   MdPerson,
   MdFilterList,
   MdAccessTime,
-  MdCategory,
   MdVerifiedUser,
   MdScience,
   MdLocalHospital,
@@ -20,7 +19,6 @@ import {
 import {
   FaStethoscope,
   FaUserMd,
-  FaUserNurse,
   FaPills,
   FaFlask,
 } from "react-icons/fa";

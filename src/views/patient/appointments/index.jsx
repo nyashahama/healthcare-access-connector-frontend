@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useToast } from "hooks/useToast";
 import { useAppointment } from "hooks/useAppointment";
-import { usePatient } from "hooks/usePatient";
 
 // Component imports
 import QuickStats from "./components/QuickStats";
@@ -37,8 +36,6 @@ const PatientAppointments = () => {
   });
   const { showToast } = useToast();
 
-  const { patient } = usePatient();
-
   const { user } = useAuth();
   const {
     getAppointmentsByPatient,
@@ -53,9 +50,9 @@ const PatientAppointments = () => {
   // Load appointments on component mount
   useEffect(() => {
     if (user?.id) {
-      loadPatientAppointments();
+      getAppointmentsByPatient(user.id);
     }
-  }, [user?.id]);
+  }, [user?.id, getAppointmentsByPatient]);
 
   // Handle errors
   useEffect(() => {
@@ -63,13 +60,7 @@ const PatientAppointments = () => {
       showToast(error, "error");
       clearError();
     }
-  }, [error]);
-
-  const loadPatientAppointments = async () => {
-    if (user?.id) {
-      await getAppointmentsByPatient(user?.id);
-    }
-  };
+  }, [error, showToast, clearError]);
 
   const categorizedAppointments = categorizeAppointments(appointments);
   const filteredAppointments = filterAppointments(
@@ -109,7 +100,7 @@ const PatientAppointments = () => {
     if (result.success) {
       setModalState({ ...modalState, reschedule: false });
       showToast("Appointment rescheduled successfully", "success");
-      await loadPatientAppointments();
+      await getAppointmentsByPatient(user?.id);
     }
   };
 
@@ -124,7 +115,7 @@ const PatientAppointments = () => {
     if (result.success) {
       setModalState({ ...modalState, cancel: false });
       showToast("Appointment cancelled successfully", "success");
-      await loadPatientAppointments();
+      await getAppointmentsByPatient(user?.id);
     }
   };
 

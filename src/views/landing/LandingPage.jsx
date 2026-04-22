@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import Hero from "./Hero";
 import FeaturesPlanet from "./FeaturesPlanet";
 import HowItWorks from "./HowItWorks";
@@ -46,7 +46,7 @@ const faqs = [
 ];
 
 export default function LandingPage() {
-  const [activeFaq, setActiveFaq] = useState(null);
+  const activeFaq = null;
 
   return (
     <div className="overflow-hidden">

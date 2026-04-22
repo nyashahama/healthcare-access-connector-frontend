@@ -8,12 +8,9 @@ import {
   MdCategory,
   MdVisibility,
   MdTag,
-  MdHelp,
   MdWarning,
   MdSend,
-  MdCancel,
   MdScience,
-  MdAttachFile,
   MdVerifiedUser,
   MdLocalHospital,
 } from "react-icons/md";
@@ -46,7 +43,6 @@ const CreateProviderCommunityPost = () => {
   });
   const [tagInput, setTagInput] = useState("");
   const [conditionInput, setConditionInput] = useState("");
-  const [medicationInput, setMedicationInput] = useState("");
   const [referenceInput, setReferenceInput] = useState("");
   const [modalState, setModalState] = useState({
     cancel: false,

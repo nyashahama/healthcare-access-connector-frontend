@@ -1,12 +1,10 @@
 import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import InputField from "components/fields/InputField";
 import { useToast } from "hooks/useToast";
 import { usePatient } from "hooks/usePatient";
 import {
   FaUser,
-  FaCalendarAlt,
-  FaVenusMars,
   FaMapMarkerAlt,
   FaGlobe,
   FaPhone,
@@ -62,16 +60,6 @@ const CompletePatientProfile = () => {
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
-  };
-
-  const handleArrayChange = (field, value) => {
-    setFormData((prev) => {
-      const current = prev[field] || [];
-      const updated = current.includes(value)
-        ? current.filter((item) => item !== value)
-        : [...current, value];
-      return { ...prev, [field]: updated };
-    });
   };
 
   const validateStep1 = () => {
@@ -181,20 +169,6 @@ const CompletePatientProfile = () => {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const calculateAge = (dateString) => {
-    const today = new Date();
-    const birthDate = new Date(dateString);
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
-    if (
-      monthDiff < 0 ||
-      (monthDiff === 0 && today.getDate() < birthDate.getDate())
-    ) {
-      age--;
-    }
-    return age;
   };
 
   const renderStep = () => {
@@ -480,6 +454,8 @@ const CompletePatientProfile = () => {
             {/* Additional fields like employment, education, etc., can be added here if needed */}
           </div>
         );
+      default:
+        return null;
     }
   };
 

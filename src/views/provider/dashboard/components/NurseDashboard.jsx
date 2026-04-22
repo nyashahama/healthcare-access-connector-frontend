@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { IoMdPeople, IoMdChatbubbles } from "react-icons/io";
+import { IoMdPeople } from "react-icons/io";
 import { MdCalendarToday, MdLocalHospital } from "react-icons/md";
 import { FaUserNurse, FaSyringe, FaStethoscope } from "react-icons/fa";
 import Widget from "components/widget/Widget";
@@ -109,7 +109,7 @@ const NurseDashboard = ({ clinicId }) => {
     if (clinicId) {
       fetchDashboardData();
     }
-  }, [clinicId]);
+  }, [clinicId, getCurrentUser, getTodayAppointments, showToast]);
 
   if (loading) {
     return (

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import Checkbox from "components/checkbox";
 import { useToast } from "hooks/useToast";
@@ -32,15 +32,7 @@ const ConsentSettings = () => {
 
   const isMounted = useRef(true);
 
-  useEffect(() => {
-    fetchConsentSettings();
-
-    return () => {
-      isMounted.current = false;
-    };
-  }, []);
-
-  const fetchConsentSettings = async () => {
+  const fetchConsentSettings = useCallback(async () => {
     if (!user?._id) {
       showToast("User not found", "error");
       navigate("/auth/sign-in");
@@ -69,7 +61,15 @@ const ConsentSettings = () => {
         setIsLoading(false);
       }
     }
-  };
+  }, [user, getConsent, showToast, navigate]);
+
+  useEffect(() => {
+    fetchConsentSettings();
+
+    return () => {
+      isMounted.current = false;
+    };
+  }, [fetchConsentSettings]);
 
   const handleConsentChange = (e) => {
     const { name, checked } = e.target;

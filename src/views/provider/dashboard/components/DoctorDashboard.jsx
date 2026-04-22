@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { IoMdPeople, IoMdTime, IoMdChatbubbles } from "react-icons/io";
+import { IoMdPeople, IoMdTime } from "react-icons/io";
 import { MdCalendarToday, MdCheckCircle } from "react-icons/md";
 import { FaUserMd } from "react-icons/fa";
 import Widget from "components/widget/Widget";
@@ -126,7 +126,7 @@ const DoctorDashboard = ({ clinicId }) => {
     return () => {
       isCurrent = false;
     };
-  }, [clinicId]);
+  }, [clinicId, getAppointmentsByClinic, getCurrentUser, getTodayAppointments, showToast]);
 
   if (loading || appointmentsLoading) {
     return (

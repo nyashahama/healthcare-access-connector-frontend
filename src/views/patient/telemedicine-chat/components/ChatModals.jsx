@@ -4,7 +4,6 @@ import {
   MdWarning,
   MdVideoCall,
   MdAttachFile,
-  MdCameraAlt,
   MdInfo,
 } from "react-icons/md";
 

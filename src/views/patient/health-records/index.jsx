@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { useToast } from "hooks/useToast";
 import Overview from "./components/Overview";
 import ConditionsList from "./components/ConditionsList";
 import AllergiesList from "./components/AllergiesList";
@@ -14,7 +13,6 @@ import Tabs from "./components/Tabs";
 const HealthRecords = () => {
   const [activeTab, setActiveTab] = useState("overview");
   const [searchQuery, setSearchQuery] = useState("");
-  const { showToast } = useToast();
 
   const healthData = {
     conditions: [

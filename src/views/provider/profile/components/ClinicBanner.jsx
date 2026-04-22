@@ -4,10 +4,9 @@ import {
   MdLocationOn,
   MdPhone,
   MdCalendarToday,
-  MdEdit,
   MdCameraAlt,
 } from "react-icons/md";
-import { FaUsers, FaStar, FaClock } from "react-icons/fa";
+import { FaUsers, FaClock } from "react-icons/fa";
 import { useProvider } from "hooks/useProvider";
 import clinicLogo from "assets/img/profile/image1.png";
 import Card from "components/card";

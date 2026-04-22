@@ -1,6 +1,5 @@
 import React from "react";
 import { FaBell } from "react-icons/fa";
-import Card from "components/card";
 import ReminderCard from "./ReminderCard";
 
 const RemindersList = ({
