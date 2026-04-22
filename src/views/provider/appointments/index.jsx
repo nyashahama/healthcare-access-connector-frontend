@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useToast } from "hooks/useToast";
 import { useAppointment } from "hooks/useAppointment";
 import { useAuth } from "context/AuthContext";
+import ErrorBoundaryWrapper from "components/error-boundaries/ErrorBoundaryWrapper";
+import CriticalFeatureFallback from "components/error-boundaries/CriticalFeatureFallback";
 
 // Component imports
 import StatsCards from "./components/StatsCards";
@@ -366,4 +368,18 @@ const Appointments = () => {
   );
 };
 
-export default Appointments;
+const AppointmentsWithBoundary = (props) => (
+  <ErrorBoundaryWrapper
+    fallback={(fallbackProps) => (
+      <CriticalFeatureFallback
+        feature="Appointment Management"
+        {...fallbackProps}
+      />
+    )}
+    context="appointments"
+  >
+    <Appointments {...props} />
+  </ErrorBoundaryWrapper>
+);
+
+export default AppointmentsWithBoundary;

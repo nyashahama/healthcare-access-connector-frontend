@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useToast } from "hooks/useToast";
 import { useAppointment } from "hooks/useAppointment";
+import ErrorBoundaryWrapper from "components/error-boundaries/ErrorBoundaryWrapper";
+import CriticalFeatureFallback from "components/error-boundaries/CriticalFeatureFallback";
 
 // Component imports
 import QuickStats from "./components/QuickStats";
@@ -207,4 +209,15 @@ const PatientAppointments = () => {
   );
 };
 
-export default PatientAppointments;
+const PatientAppointmentsWithBoundary = (props) => (
+  <ErrorBoundaryWrapper
+    fallback={(fallbackProps) => (
+      <CriticalFeatureFallback feature="Appointments" {...fallbackProps} />
+    )}
+    context="appointments"
+  >
+    <PatientAppointments {...props} />
+  </ErrorBoundaryWrapper>
+);
+
+export default PatientAppointmentsWithBoundary;

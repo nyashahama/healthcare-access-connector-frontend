@@ -13,6 +13,10 @@ import ProfileCompletionGuard from "components/guards/ProfileCompletionGuard";
 import ClinicRegistrationGuard from "components/guards/ClinicRegistrationGuard";
 import ProtectedRoute from "components/guards/ProtectedRoute";
 import PublicRoute from "components/guards/PublicRoute";
+import ErrorBoundaryWrapper from "components/error-boundaries/ErrorBoundaryWrapper";
+import GenericErrorFallback from "components/error-boundaries/GenericErrorFallback";
+import AuthErrorFallback from "components/error-boundaries/AuthErrorFallback";
+import CriticalFeatureFallback from "components/error-boundaries/CriticalFeatureFallback";
 
 const App = () => {
   return (
@@ -21,7 +25,17 @@ const App = () => {
         <ToastContainer />
         <Routes>
           {/* Landing Page Route - Publicly accessible */}
-          <Route path="/" element={<LandingLayout />}>
+          <Route
+            path="/"
+            element={
+              <ErrorBoundaryWrapper
+                fallback={GenericErrorFallback}
+                context="landing"
+              >
+                <LandingLayout />
+              </ErrorBoundaryWrapper>
+            }
+          >
             <Route index element={<LandingPage />} />
           </Route>
 
@@ -30,7 +44,12 @@ const App = () => {
             path="auth/*"
             element={
               <PublicRoute>
-                <AuthLayout />
+                <ErrorBoundaryWrapper
+                  fallback={AuthErrorFallback}
+                  context="auth"
+                >
+                  <AuthLayout />
+                </ErrorBoundaryWrapper>
               </PublicRoute>
             }
           />
@@ -41,7 +60,17 @@ const App = () => {
             element={
               <ProtectedRoute allowedRoles={["patient"]}>
                 <ProfileCompletionGuard minCompletion={50}>
-                  <PatientLayout />
+                  <ErrorBoundaryWrapper
+                    fallback={(props) => (
+                      <CriticalFeatureFallback
+                        feature="Patient Portal"
+                        {...props}
+                      />
+                    )}
+                    context="patient"
+                  >
+                    <PatientLayout />
+                  </ErrorBoundaryWrapper>
                 </ProfileCompletionGuard>
               </ProtectedRoute>
             }
@@ -55,7 +84,17 @@ const App = () => {
                 allowedRoles={["clinic_admin", "provider_staff", "caregiver"]}
               >
                 <ClinicRegistrationGuard>
-                  <ProviderLayout />
+                  <ErrorBoundaryWrapper
+                    fallback={(props) => (
+                      <CriticalFeatureFallback
+                        feature="Provider Portal"
+                        {...props}
+                      />
+                    )}
+                    context="provider"
+                  >
+                    <ProviderLayout />
+                  </ErrorBoundaryWrapper>
                 </ClinicRegistrationGuard>
               </ProtectedRoute>
             }
@@ -66,7 +105,17 @@ const App = () => {
             path="admin/*"
             element={
               <ProtectedRoute allowedRoles={["admin", "system_admin"]}>
-                <AdminLayout />
+                <ErrorBoundaryWrapper
+                  fallback={(props) => (
+                    <CriticalFeatureFallback
+                      feature="Admin Portal"
+                      {...props}
+                    />
+                  )}
+                  context="admin"
+                >
+                  <AdminLayout />
+                </ErrorBoundaryWrapper>
               </ProtectedRoute>
             }
           />

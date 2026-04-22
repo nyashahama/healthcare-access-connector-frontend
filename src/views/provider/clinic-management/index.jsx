@@ -9,6 +9,8 @@ import {
 } from "react-icons/md";
 import { useToast } from "hooks/useToast";
 import Card from "components/card";
+import ErrorBoundaryWrapper from "components/error-boundaries/ErrorBoundaryWrapper";
+import CriticalFeatureFallback from "components/error-boundaries/CriticalFeatureFallback";
 import ClinicInformation from "../profile/components/ClinicInformation";
 import ClinicBanner from "../profile/components/ClinicBanner";
 import OperatingHours from "../profile/components/OperatingHours";
@@ -279,4 +281,18 @@ const ClinicManagement = () => {
   );
 };
 
-export default ClinicManagement;
+const ClinicManagementWithBoundary = (props) => (
+  <ErrorBoundaryWrapper
+    fallback={(fallbackProps) => (
+      <CriticalFeatureFallback
+        feature="Clinic Management"
+        {...fallbackProps}
+      />
+    )}
+    context="clinic-management"
+  >
+    <ClinicManagement {...props} />
+  </ErrorBoundaryWrapper>
+);
+
+export default ClinicManagementWithBoundary;
