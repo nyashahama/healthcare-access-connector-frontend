@@ -8,6 +8,7 @@ import React, {
   useRef,
 } from "react";
 import authService from "../api/services/authService";
+import { sessionManager } from "platform/auth/sessionManager";
 
 const AuthContext = createContext();
 
@@ -24,51 +25,28 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // Use ref to track if component is mounted
   const isMounted = useRef(true);
 
-  // Initialize auth state from localStorage on mount
   useEffect(() => {
-    const initializeAuth = () => {
-      try {
-        const authenticated = authService.isAuthenticated();
-        const currentUser = authService.getCurrentUser();
+    const { token, user, expiresAt } = sessionManager.hydrate();
+    const isValid = Boolean(token && expiresAt && new Date(expiresAt) > new Date());
 
-        if (authenticated && currentUser) {
-          if (isMounted.current) {
-            setUser(currentUser);
-            setIsAuthenticated(true);
-          }
-        } else {
-          authService.clearAuthData();
-          if (isMounted.current) {
-            setUser(null);
-            setIsAuthenticated(false);
-          }
-        }
-      } catch (error) {
-        console.error("Error initializing auth:", error);
-        authService.clearAuthData();
-        if (isMounted.current) {
-          setUser(null);
-          setIsAuthenticated(false);
-        }
-      } finally {
-        if (isMounted.current) {
-          setLoading(false);
-        }
-      }
-    };
+    if (isValid && user) {
+      setUser(user);
+      setIsAuthenticated(true);
+    } else {
+      sessionManager.clearSession("hydrate-invalid");
+      setUser(null);
+      setIsAuthenticated(false);
+    }
 
-    initializeAuth();
+    setLoading(false);
 
-    // Cleanup function
     return () => {
       isMounted.current = false;
     };
   }, []);
 
-  // Register a new user
   const register = useCallback(async (data) => {
     try {
       if (!isMounted.current)
@@ -76,7 +54,6 @@ export const AuthProvider = ({ children }) => {
 
       setLoading(true);
       const response = await authService.register(data);
-
       return { success: true, data: response };
     } catch (error) {
       const errorMessage = error.response?.data?.error || "Registration failed";
@@ -89,55 +66,25 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  // Login
   const login = useCallback(async (credentials) => {
+    setLoading(true);
     try {
-      if (!isMounted.current)
-        return { success: false, error: "Component unmounted" };
-
-      setLoading(true);
       const response = await authService.login(credentials);
-
-      // Get the user from the response or from storage
-      const userData = response.user || authService.getCurrentUser();
-
-      if (isMounted.current && userData) {
-        setUser(userData);
-        setIsAuthenticated(true);
-
-        // Force a small delay to ensure state updates propagate
-        await new Promise((resolve) => setTimeout(resolve, 100));
-      }
-
+      sessionManager.saveSession({
+        token: response.token,
+        user: response.user,
+        expiresAt: response.expires_at,
+      });
+      setUser(response.user);
+      setIsAuthenticated(true);
       return { success: true, data: response };
     } catch (error) {
-      const errorMessage = error.response?.data?.error || "Login failed";
-      console.error("Login error:", error);
-
-      // Even on error, check if token was saved (CORS case)
-      if (isMounted.current) {
-        const authenticated = authService.isAuthenticated();
-        const currentUser = authService.getCurrentUser();
-
-        if (authenticated && currentUser) {
-          console.log(
-            "✅ Login succeeded despite CORS error - token found in storage"
-          );
-          setUser(currentUser);
-          setIsAuthenticated(true);
-          return { success: true, data: { user: currentUser } };
-        }
-      }
-
-      return { success: false, error: errorMessage };
+      return { success: false, error: error.message || "Login failed" };
     } finally {
-      if (isMounted.current) {
-        setLoading(false);
-      }
+      setLoading(false);
     }
   }, []);
 
-  // Logout
   const logout = useCallback(async () => {
     try {
       if (!isMounted.current)
@@ -146,6 +93,7 @@ export const AuthProvider = ({ children }) => {
       setLoading(true);
       await authService.logout();
 
+      sessionManager.clearSession("logout");
       if (isMounted.current) {
         setUser(null);
         setIsAuthenticated(false);
@@ -153,10 +101,10 @@ export const AuthProvider = ({ children }) => {
 
       return { success: true };
     } catch (error) {
-      const errorMessage = error.response?.data?.error || "Logout failed";
+      const errorMessage = error.message || "Logout failed";
       console.error("Logout error:", error);
 
-      authService.clearAuthData();
+      sessionManager.clearSession("logout-error");
       if (isMounted.current) {
         setUser(null);
         setIsAuthenticated(false);
@@ -170,7 +118,6 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  // Verify email
   const verifyEmail = useCallback(async (token) => {
     try {
       if (!isMounted.current)
@@ -191,7 +138,6 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  // Request password reset
   const requestPasswordReset = useCallback(async (identifier) => {
     try {
       if (!isMounted.current)
@@ -212,7 +158,6 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  // Reset password
   const resetPassword = useCallback(async (data) => {
     try {
       if (!isMounted.current)
@@ -234,7 +179,6 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  // Generate OTP
   const generateOTP = useCallback(async (data) => {
     try {
       if (!isMounted.current)
@@ -256,7 +200,6 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  // Verify OTP
   const verifyOTP = useCallback(async (data) => {
     try {
       if (!isMounted.current)
@@ -278,7 +221,6 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  // Resend verification email
   const resendVerification = useCallback(async (email) => {
     try {
       if (!isMounted.current)
@@ -300,7 +242,6 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  // Update password
   const updatePassword = useCallback(async (userId, data) => {
     try {
       if (!isMounted.current)
@@ -322,7 +263,6 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  // Get user profile
   const getProfile = useCallback(async (userId) => {
     try {
       if (!isMounted.current)
@@ -344,7 +284,6 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  // Get consent settings
   const getConsent = useCallback(async (userId) => {
     try {
       if (!isMounted.current)
@@ -366,28 +305,24 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  // Update user
   const updateUser = useCallback((userData) => {
     if (isMounted.current) {
       setUser(userData);
-      localStorage.setItem("user", JSON.stringify(userData));
+      const current = sessionManager.hydrate();
+      sessionManager.saveSession({ ...current, user: userData });
     }
   }, []);
 
-  // Refresh auth state
   const refreshAuth = useCallback(() => {
     if (isMounted.current) {
-      const authenticated = authService.isAuthenticated();
-      const currentUser = authService.getCurrentUser();
+      const { token, user, expiresAt } = sessionManager.hydrate();
+      const isValid = Boolean(token && expiresAt && new Date(expiresAt) > new Date());
 
-      console.log("🔄 Refreshing auth state:", { authenticated, currentUser });
-
-      setIsAuthenticated(authenticated);
-      setUser(currentUser);
+      setIsAuthenticated(isValid);
+      setUser(user);
     }
   }, []);
 
-  // Check if user has a specific role
   const hasRole = useCallback(
     (role) => {
       return user?.role === role;
@@ -395,7 +330,6 @@ export const AuthProvider = ({ children }) => {
     [user]
   );
 
-  // Check if user has any of the specified roles
   const hasAnyRole = useCallback(
     (roles) => {
       return roles.includes(user?.role);
@@ -403,11 +337,9 @@ export const AuthProvider = ({ children }) => {
     [user]
   );
 
-  // Listen for storage events (handles login in another tab)
   useEffect(() => {
     const handleStorageChange = (e) => {
       if (e.key === "token" || e.key === "user") {
-        console.log("🔄 Storage changed, refreshing auth");
         refreshAuth();
       }
     };
@@ -416,15 +348,12 @@ export const AuthProvider = ({ children }) => {
     return () => window.removeEventListener("storage", handleStorageChange);
   }, [refreshAuth]);
 
-  // Memoize the context value to prevent unnecessary re-renders
   const value = useMemo(
     () => ({
-      // State
       user,
       loading,
       isAuthenticated,
 
-      // Auth methods
       register,
       login,
       logout,
@@ -440,13 +369,11 @@ export const AuthProvider = ({ children }) => {
       updateUser,
       refreshAuth,
 
-      // Role checking
       hasRole,
       hasAnyRole,
 
-      // Utility methods
-      getToken: authService.getToken,
-      getCurrentUser: authService.getCurrentUser,
+      getToken: () => sessionManager.hydrate().token,
+      getCurrentUser: () => sessionManager.hydrate().user,
     }),
     [
       user,
