@@ -1,5 +1,5 @@
 import React from "react";
-import { MdAccessTime, MdPerson, MdCheckCircle } from "react-icons/md";
+import { MdAccessTime, MdCheckCircle } from "react-icons/md";
 
 const RecentConsultations = () => {
   const consultations = [

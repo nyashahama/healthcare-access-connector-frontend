@@ -1,29 +1,16 @@
 import React, { useState } from "react";
 import {
-  MdSearch,
   MdFilterList,
-  MdEdit,
-  MdDelete,
-  MdVisibility,
   MdPublic,
-  MdLock,
   MdSchedule,
   MdAdd,
   MdBook,
   MdLocalHospital,
   MdRestaurant,
   MdChildCare,
-  MdWarning,
   MdCheckCircle,
-  MdCancel,
-  MdDescription,
-  MdInfo,
-  MdTag,
-  MdTranslate,
-  MdPerson,
-  MdCalendarToday,
 } from "react-icons/md";
-import { FaFileMedical, FaLanguage, FaDownload } from "react-icons/fa";
+import { FaFileMedical, FaLanguage } from "react-icons/fa";
 import { useToast } from "hooks/useToast";
 
 // Component imports

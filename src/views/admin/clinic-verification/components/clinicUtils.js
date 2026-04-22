@@ -3,7 +3,6 @@ import {
   MdVerified,
   MdPendingActions,
   MdCancel,
-  MdCheckCircle,
 } from "react-icons/md";
 
 // Get status badge component

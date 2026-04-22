@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { MdHealthAndSafety, MdCheckCircle, MdError } from "react-icons/md";
 import { useToast } from "hooks/useToast";
@@ -16,20 +16,7 @@ const VerifyEmail = () => {
   const email = searchParams.get("email");
   const isMounted = useRef(true);
 
-  useEffect(() => {
-    if (token) {
-      verifyEmailToken();
-    } else {
-      setStatus("error");
-      showToast("Invalid verification link", "error");
-    }
-
-    return () => {
-      isMounted.current = false;
-    };
-  }, [token]);
-
-  const verifyEmailToken = async () => {
+  const verifyEmailToken = useCallback(async () => {
     setIsLoading(true);
 
     try {
@@ -62,7 +49,20 @@ const VerifyEmail = () => {
         setIsLoading(false);
       }
     }
-  };
+  }, [token, verifyEmail, showToast, navigate]);
+
+  useEffect(() => {
+    if (token) {
+      verifyEmailToken();
+    } else {
+      setStatus("error");
+      showToast("Invalid verification link", "error");
+    }
+
+    return () => {
+      isMounted.current = false;
+    };
+  }, [token, showToast, verifyEmailToken]);
 
   const handleResendVerification = async () => {
     if (!email) {

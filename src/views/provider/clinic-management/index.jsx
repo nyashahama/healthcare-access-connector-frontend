@@ -48,7 +48,6 @@ const ClinicManagement = () => {
 
   // Modal states
   const [addServiceModalOpen, setAddServiceModalOpen] = useState(false);
-  const [editClinicModalOpen, setEditClinicModalOpen] = useState(false);
   const [generateReportModalOpen, setGenerateReportModalOpen] = useState(false);
   const [updateHoursModalOpen, setUpdateHoursModalOpen] = useState(false);
   const [addStaffModalOpen, setAddStaffModalOpen] = useState(false);

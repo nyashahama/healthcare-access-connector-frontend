@@ -1,5 +1,5 @@
 import React from "react";
-import { MdCalendarToday, MdInfo, MdWarning, MdClose } from "react-icons/md";
+import { MdCalendarToday } from "react-icons/md";
 import { FaFileMedical } from "react-icons/fa";
 import Modal from "components/modal/Modal";
 

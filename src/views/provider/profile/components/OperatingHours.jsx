@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { FaClock, FaCalendarAlt, FaSave } from "react-icons/fa";
-import { MdEdit, MdWarning, MdCheckCircle } from "react-icons/md";
+import { MdEdit, MdWarning } from "react-icons/md";
 import { useProvider } from "hooks/useProvider";
 import Card from "components/card";
 import Modal from "components/modal/Modal";
 import { useToast } from "hooks/useToast";
 
 const OperatingHours = ({ clinicId }) => {
-  const { getClinic, updateClinic, clinic, loading } = useProvider();
+  const { getClinic, updateClinic, loading } = useProvider();
   const [clinicData, setClinicData] = useState(null);
   const [hours, setHours] = useState({
     monday: { open: "08:00", close: "17:00", closed: false },

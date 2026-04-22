@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useToast } from "hooks/useToast";
 import { useAuth } from "hooks/useAuth";
 import { useProvider } from "hooks/useProvider";
@@ -35,7 +35,6 @@ const ClinicVerification = () => {
   const [approveModalOpen, setApproveModalOpen] = useState(false);
   const [rejectModalOpen, setRejectModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [createModalOpen, setCreateModalOpen] = useState(false);
   const [selectedClinic, setSelectedClinic] = useState(null);
   const [rejectionReason, setRejectionReason] = useState("");
   const [processingAction, setProcessingAction] = useState(false);
@@ -62,20 +61,26 @@ const ClinicVerification = () => {
     deleteClinic,
     verifyClinic,
     updateVerifyClinic,
-    registerClinic,
     loading,
-    error,
     clinics,
     clearError,
     clearProviderState,
   } = useProvider();
+
+  // Fetch clinics
+  const fetchClinics = useCallback(async () => {
+    const result = await getClinics();
+    if (!result.success) {
+      showToast(result.error || "Failed to load clinics", "error");
+    }
+  }, [getClinics, showToast]);
 
   // Fetch current user and clinics on mount
   useEffect(() => {
     const user = getCurrentUser();
     setCurrentUser(user);
     fetchClinics();
-  }, []);
+  }, [fetchClinics, getCurrentUser]);
 
   // Clear errors on unmount
   useEffect(() => {
@@ -83,22 +88,14 @@ const ClinicVerification = () => {
       clearError();
       clearProviderState();
     };
-  }, []);
+  }, [clearError, clearProviderState]);
 
   // Fetch clinics based on selected tab
   useEffect(() => {
     if (selectedTab === "all") {
       fetchClinics();
     }
-  }, [selectedTab]);
-
-  // Fetch clinics
-  const fetchClinics = async () => {
-    const result = await getClinics();
-    if (!result.success) {
-      showToast(result.error || "Failed to load clinics", "error");
-    }
-  };
+  }, [selectedTab, fetchClinics]);
 
   // View details handler
   const handleViewDetails = async (clinic) => {
@@ -200,16 +197,6 @@ const ClinicVerification = () => {
   };
 
   // Reject handlers
-  const handleRejectClick = (clinic) => {
-    if (!currentUser || !currentUser.id) {
-      showToast("You must be logged in to reject clinics", "error");
-      return;
-    }
-    setSelectedClinic(clinic);
-    setRejectionReason("");
-    setRejectModalOpen(true);
-  };
-
   const confirmReject = async () => {
     if (!selectedClinic || !currentUser || !rejectionReason.trim()) return;
 
@@ -242,7 +229,6 @@ const ClinicVerification = () => {
       services: [],
       operating_hours: "",
     });
-    setCreateModalOpen(true);
   };
 
   return (

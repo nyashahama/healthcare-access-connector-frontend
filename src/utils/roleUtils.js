@@ -147,7 +147,7 @@ export const getSpecificProviderRole = (
   return fallbackRole;
 };
 
-export default {
+const roleUtils = {
   ROLE_GROUPS,
   ALL_ROLES,
   isProviderRole,
@@ -159,3 +159,5 @@ export default {
   getRoleGreeting,
   getSpecificProviderRole,
 };
+
+export default roleUtils;

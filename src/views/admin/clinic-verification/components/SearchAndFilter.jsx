@@ -1,5 +1,5 @@
 import React from "react";
-import { MdSearch, MdFilterList, MdRefresh, MdAdd } from "react-icons/md";
+import { MdSearch, MdRefresh, MdAdd } from "react-icons/md";
 
 const SearchAndFilter = ({
   searchQuery,

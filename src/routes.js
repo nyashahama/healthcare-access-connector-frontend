@@ -54,7 +54,6 @@ import LandingPage from "views/landing";
 import {
   MdHome,
   MdLocationOn,
-  MdLocalHospital,
   MdChat,
   MdRestaurant,
   MdPerson,

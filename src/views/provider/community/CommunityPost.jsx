@@ -11,14 +11,11 @@ import {
   MdSend,
   MdWarning,
   MdFlag,
-  MdMoreVert,
-  MdEdit,
-  MdDelete,
   MdVerifiedUser,
   MdScience,
   MdAttachFile,
 } from "react-icons/md";
-import { FaReply, FaUserMd, FaStethoscope } from "react-icons/fa";
+import { FaReply, FaStethoscope } from "react-icons/fa";
 import Card from "components/card";
 import Modal from "components/modal/Modal";
 import { useToast } from "hooks/useToast";

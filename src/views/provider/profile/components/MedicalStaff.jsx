@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from "react";
 import {
   FaUserMd,
-  FaUserNurse,
-  FaStethoscope,
   FaUserPlus,
   FaEye,
   FaTrash,
 } from "react-icons/fa";
-import { MdEdit, MdVerified, MdWarning, MdCheckCircle } from "react-icons/md";
+import { MdEdit } from "react-icons/md";
 import { useProvider } from "hooks/useProvider";
 import Card from "components/card";
 import Modal from "components/modal/Modal";

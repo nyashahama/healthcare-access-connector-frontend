@@ -5,7 +5,6 @@ import {
   MdLocationOn,
   MdPerson,
   MdNotes,
-  MdPhone,
   MdInfo,
   MdWarning,
 } from "react-icons/md";

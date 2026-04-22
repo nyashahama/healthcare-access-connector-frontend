@@ -8,7 +8,7 @@ import {
   MdVerified,
   MdWarning,
 } from "react-icons/md";
-import { FaUserMd, FaUserInjured, FaShieldAlt } from "react-icons/fa";
+import { FaUserMd, FaUserInjured } from "react-icons/fa";
 import { useToast } from "hooks/useToast";
 import UserStats from "./components/UserStats";
 import UserSearchHeader from "./components/UserSearchHeader";

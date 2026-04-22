@@ -1,6 +1,5 @@
-import { FaBaby, FaUser, FaHeartbeat, FaBrain, FaLungs } from "react-icons/fa";
+import { FaBaby, FaUser, FaBrain, FaLungs } from "react-icons/fa";
 import {
-  MdCheckCircle,
   MdWarning,
   MdLocalHospital,
   MdHome,

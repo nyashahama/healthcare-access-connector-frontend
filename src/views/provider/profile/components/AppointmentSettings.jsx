@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import {
   FaClock,
   FaCalendarAlt,
-  FaUserClock,
   FaBell,
   FaSave,
 } from "react-icons/fa";
@@ -10,7 +9,6 @@ import {
   MdAccessTime,
   MdEventAvailable,
   MdBlock,
-  MdCheckCircle,
   MdWarning,
 } from "react-icons/md";
 import Card from "components/card";
@@ -34,7 +32,6 @@ const AppointmentSettings = () => {
   });
 
   // Modal states
-  const [timeSlotModalOpen, setTimeSlotModalOpen] = useState(false);
   const [blockSlotModalOpen, setBlockSlotModalOpen] = useState(false);
   const [saveConfirmModalOpen, setSaveConfirmModalOpen] = useState(false);
   const [weeklyScheduleModalOpen, setWeeklyScheduleModalOpen] = useState(false);
@@ -443,13 +440,6 @@ const AppointmentSettings = () => {
             ))}
           </div>
           <div className="flex items-center space-x-2">
-            <button
-              onClick={() => setTimeSlotModalOpen(true)}
-              className="flex items-center rounded-lg bg-brand-50 px-3 py-2 text-sm font-medium text-brand-600 hover:bg-brand-100 dark:bg-brand-900/30 dark:text-brand-300"
-            >
-              <MdBlock className="mr-1" />
-              Block Time Slot
-            </button>
             <button
               onClick={() => setWeeklyScheduleModalOpen(true)}
               className="rounded-lg border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50 dark:border-navy-600 dark:hover:bg-navy-700"

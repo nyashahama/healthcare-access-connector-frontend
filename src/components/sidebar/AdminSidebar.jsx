@@ -1,6 +1,5 @@
 import { HiX } from "react-icons/hi";
 import Links from "./components/Links";
-import SidebarCard from "components/sidebar/components/SidebarCard";
 import { adminRoutes } from "routes.js";
 import { useAuth } from "context/AuthContext";
 

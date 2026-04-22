@@ -30,7 +30,6 @@ const ManagerDashboard = ({ clinicId }) => {
     getTodayAppointments,
     getPendingAppointments,
     todayAppointments,
-    pendingAppointments,
     loading: appointmentsLoading,
   } = useAppointment();
 
@@ -140,7 +139,7 @@ const ManagerDashboard = ({ clinicId }) => {
     if (clinicId) {
       fetchDashboardData();
     }
-  }, [clinicId]);
+  }, [clinicId, getClinic, getCurrentUser, getPendingAppointments, getTodayAppointments, listActiveClinicStaff, showToast]);
 
   if (loading) {
     return (

@@ -11,7 +11,6 @@ import {
   MdEmail,
   MdDirections,
   MdPrint,
-  MdDownload,
   MdVideocam,
 } from "react-icons/md";
 

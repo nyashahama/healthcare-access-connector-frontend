@@ -4,7 +4,6 @@ import {
   MdDescription,
   MdAccessible,
   MdLanguage,
-  MdLocalHospital,
   MdPayment,
   MdEdit,
   MdSave,
@@ -16,7 +15,7 @@ import Modal from "components/modal/Modal";
 import { useToast } from "hooks/useToast";
 
 const ClinicInformation = ({ clinicId }) => {
-  const { getClinic, updateClinic, clinic, loading } = useProvider();
+  const { getClinic, updateClinic, loading } = useProvider();
   const [clinicData, setClinicData] = useState(null);
   const [clinicInfo, setClinicInfo] = useState({
     clinic_type: "",

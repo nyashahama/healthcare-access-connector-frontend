@@ -4,7 +4,6 @@ import {
   MdLocationOn,
   MdPhone,
   MdEmail,
-  MdCalendarToday,
 } from "react-icons/md";
 import { FaClinicMedical } from "react-icons/fa";
 import {

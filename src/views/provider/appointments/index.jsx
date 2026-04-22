@@ -26,11 +26,9 @@ const Appointments = () => {
   const { showToast } = useToast();
   const { getCurrentUser } = useAuth();
   const {
-    loading,
     error,
     appointments,
     todayAppointments,
-    pendingAppointments,
     bookAppointment,
     getAppointmentsByClinic,
     getTodayAppointments,
@@ -162,7 +160,7 @@ const Appointments = () => {
     };
 
     fetchClinicAndAppointments();
-  }, []);
+  }, [getAppointmentsByClinic, getClinics, getPendingAppointments, getTodayAppointments, showToast]);
 
   console.log("do i have a clinic id?", clinic);
 
@@ -171,7 +169,7 @@ const Appointments = () => {
     if (error) {
       showToast(error, "error");
     }
-  }, [error]);
+  }, [error, showToast]);
 
   const refreshAppointments = async () => {
     if (clinicId) {

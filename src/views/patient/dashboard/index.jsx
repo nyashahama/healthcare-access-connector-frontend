@@ -57,16 +57,16 @@ const PatientDashboard = () => {
   // Load patient data on component mount
   useEffect(() => {
     if (user?.id) {
-      loadPatientData();
+      getPatientProfileByUserId(user.id);
     }
-  }, [user?.id]);
+  }, [user?.id, getPatientProfileByUserId]);
 
   // Load appointments when patient is available
   useEffect(() => {
     if (patientId) {
-      loadAppointments();
+      getAppointmentsByPatient(patientId);
     }
-  }, [patientId]);
+  }, [patientId, getAppointmentsByPatient]);
 
   // Calculate upcoming appointments and next appointment
   useEffect(() => {
@@ -79,18 +79,6 @@ const PatientDashboard = () => {
       setNextAppointment(null);
     }
   }, [appointments]);
-
-  const loadPatientData = async () => {
-    if (user?.id) {
-      await getPatientProfileByUserId(user.id);
-    }
-  };
-
-  const loadAppointments = async () => {
-    if (patientId) {
-      await getAppointmentsByPatient(patientId);
-    }
-  };
 
   // Modal handlers
   const handleAppointmentClick = () => {

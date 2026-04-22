@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { MdAdd } from "react-icons/md";
 import { useToast } from "hooks/useToast";
-import Card from "components/card";
 
 // Components
 import PrescriptionCard from "./components/PrescriptionCard";
@@ -67,11 +66,6 @@ const Prescriptions = () => {
   const handleDownload = (prescription) => {
     setSelectedPrescription(prescription);
     setModalState((prev) => ({ ...prev, download: true }));
-  };
-
-  const handlePrint = (prescription) => {
-    setSelectedPrescription(prescription);
-    setModalState((prev) => ({ ...prev, print: true }));
   };
 
   const handleNewRequest = () => {

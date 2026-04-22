@@ -2,14 +2,8 @@ import React, { useMemo, useState } from "react";
 import {
   MdCalendarToday,
   MdAccessTime,
-  MdLocationOn,
-  MdPerson,
-  MdPhone,
-  MdDirections,
   MdNotifications,
-  MdEmail,
   MdCheckCircle,
-  MdInfo,
 } from "react-icons/md";
 import Card from "components/card";
 import Modal from "components/modal/Modal";
@@ -22,6 +16,85 @@ import Modal from "components/modal/Modal";
  * related data. Instead, clinic/staff data should be passed in via props
  * or fetched when the user clicks "View Details"
  */
+// Date-only strings (YYYY-MM-DD) are parsed as UTC midnight by the JS spec,
+// which shifts the displayed date by one day in UTC- timezones. Appending
+// T00:00:00 forces the engine to treat it as local time instead.
+function parseLocalDate(str) {
+  if (!str) return null;
+  const normalized = /^\d{4}-\d{2}-\d{2}$/.test(str)
+    ? `${str}T00:00:00`
+    : str;
+  const d = new Date(normalized);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+function formatDate(isoString) {
+  if (!isoString) return "N/A";
+  const date = parseLocalDate(isoString);
+  if (!date) return "N/A";
+  return date.toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function formatTime(timeString) {
+  if (!timeString) return "N/A";
+  // appointment_time is a time-only string (HH:MM:SS); prefix a dummy date
+  // so the Date constructor produces a valid object in all browsers.
+  const d = new Date(`1970-01-01T${timeString}`);
+  if (isNaN(d.getTime())) return "N/A";
+  return d.toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  });
+}
+
+function formatDateTime(isoString) {
+  if (!isoString) return "N/A";
+  const date = new Date(isoString);
+  if (isNaN(date.getTime())) return "N/A";
+  return date.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  });
+}
+
+function getDaysUntil(isoString) {
+  const appointmentDate = parseLocalDate(isoString);
+  if (!appointmentDate) return null;
+  const today = new Date();
+  appointmentDate.setHours(0, 0, 0, 0);
+  today.setHours(0, 0, 0, 0);
+  const diffTime = appointmentDate - today;
+  return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+}
+
+function isTodayDate(isoString) {
+  const appointmentDate = parseLocalDate(isoString);
+  if (!appointmentDate) return false;
+  const today = new Date();
+  appointmentDate.setHours(0, 0, 0, 0);
+  today.setHours(0, 0, 0, 0);
+  return appointmentDate.getTime() === today.getTime();
+}
+
+function isTomorrowDate(isoString) {
+  const appointmentDate = parseLocalDate(isoString);
+  if (!appointmentDate) return false;
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  appointmentDate.setHours(0, 0, 0, 0);
+  tomorrow.setHours(0, 0, 0, 0);
+  return appointmentDate.getTime() === tomorrow.getTime();
+}
+
 const UpcomingAppointments = ({
   appointments = [],
   onViewDetails, // Callback to fetch full details when needed
@@ -56,89 +129,10 @@ const UpcomingAppointments = ({
         formattedDate: formatDate(apt.appointment_date),
         formattedTime: formatTime(apt.appointment_time),
         daysUntil: getDaysUntil(apt.appointment_date),
-        isToday: isToday(apt.appointment_date),
-        isTomorrow: isTomorrow(apt.appointment_date),
+        isToday: isTodayDate(apt.appointment_date),
+        isTomorrow: isTomorrowDate(apt.appointment_date),
       }));
   }, [appointments]);
-
-  // Date-only strings (YYYY-MM-DD) are parsed as UTC midnight by the JS spec,
-  // which shifts the displayed date by one day in UTC- timezones. Appending
-  // T00:00:00 forces the engine to treat it as local time instead.
-  function parseLocalDate(str) {
-    if (!str) return null;
-    const normalized = /^\d{4}-\d{2}-\d{2}$/.test(str)
-      ? `${str}T00:00:00`
-      : str;
-    const d = new Date(normalized);
-    return isNaN(d.getTime()) ? null : d;
-  }
-
-  function formatDate(isoString) {
-    if (!isoString) return "N/A";
-    const date = parseLocalDate(isoString);
-    if (!date) return "N/A";
-    return date.toLocaleDateString("en-US", {
-      weekday: "long",
-      month: "long",
-      day: "numeric",
-      year: "numeric",
-    });
-  }
-
-  function formatTime(timeString) {
-    if (!timeString) return "N/A";
-    // appointment_time is a time-only string (HH:MM:SS); prefix a dummy date
-    // so the Date constructor produces a valid object in all browsers.
-    const d = new Date(`1970-01-01T${timeString}`);
-    if (isNaN(d.getTime())) return "N/A";
-    return d.toLocaleTimeString("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: true,
-    });
-  }
-
-  function formatDateTime(isoString) {
-    if (!isoString) return "N/A";
-    const date = new Date(isoString);
-    if (isNaN(date.getTime())) return "N/A";
-    return date.toLocaleString("en-US", {
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: true,
-    });
-  }
-
-  function getDaysUntil(isoString) {
-    const appointmentDate = parseLocalDate(isoString);
-    if (!appointmentDate) return null;
-    const today = new Date();
-    appointmentDate.setHours(0, 0, 0, 0);
-    today.setHours(0, 0, 0, 0);
-    const diffTime = appointmentDate - today;
-    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  }
-
-  function isToday(isoString) {
-    const appointmentDate = parseLocalDate(isoString);
-    if (!appointmentDate) return false;
-    const today = new Date();
-    appointmentDate.setHours(0, 0, 0, 0);
-    today.setHours(0, 0, 0, 0);
-    return appointmentDate.getTime() === today.getTime();
-  }
-
-  function isTomorrow(isoString) {
-    const appointmentDate = parseLocalDate(isoString);
-    if (!appointmentDate) return false;
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    appointmentDate.setHours(0, 0, 0, 0);
-    tomorrow.setHours(0, 0, 0, 0);
-    return appointmentDate.getTime() === tomorrow.getTime();
-  }
 
   const handleViewDetails = (apt) => {
     setSelectedAppointment(apt);

@@ -46,7 +46,7 @@ const faqs = [
 ];
 
 export default function LandingPage() {
-  const [activeFaq, setActiveFaq] = useState(null);
+  const [activeFaq] = useState(null);
 
   return (
     <div className="overflow-hidden">

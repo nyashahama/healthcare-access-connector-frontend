@@ -120,6 +120,8 @@ const HealthTipsCarousel = () => {
       case "Set Reminder":
         showToast("Reminder set for daily hydration!", "success");
         break;
+      default:
+        break;
     }
   };
 

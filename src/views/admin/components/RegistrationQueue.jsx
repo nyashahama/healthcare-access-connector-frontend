@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   MdPendingActions,
   MdCheckCircle,
@@ -28,12 +28,7 @@ const RegistrationQueue = ({ onApprove, onReject, onViewAll }) => {
     setCurrentUser(user);
   }, [getCurrentUser]);
 
-  // Fetch pending clinics on component mount
-  useEffect(() => {
-    fetchPendingClinics();
-  }, []);
-
-  const fetchPendingClinics = async () => {
+  const fetchPendingClinics = useCallback(async () => {
     const result = await getClinics();
 
     if (result.success) {
@@ -47,7 +42,12 @@ const RegistrationQueue = ({ onApprove, onReject, onViewAll }) => {
     } else {
       toast.error("Failed to load pending clinics");
     }
-  };
+  }, [getClinics]);
+
+  // Fetch pending clinics on component mount
+  useEffect(() => {
+    fetchPendingClinics();
+  }, [fetchPendingClinics]);
 
   const handleApproveClick = (clinic) => {
     if (!currentUser || !currentUser.id) {
@@ -256,7 +256,6 @@ const RegistrationQueue = ({ onApprove, onReject, onViewAll }) => {
               <tbody>
                 {pendingClinics.slice(0, 4).map((clinic) => {
                   const documents = getDocumentCompletion(clinic);
-                  const isProcessing = processingClinicId === clinic.id;
 
                   return (
                     <tr

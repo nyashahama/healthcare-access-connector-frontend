@@ -7,7 +7,6 @@ import {
   MdWarning,
   MdInfo,
   MdDownload,
-  MdVisibility,
 } from "react-icons/md";
 import Card from "components/card";
 import Modal from "components/modal/Modal";

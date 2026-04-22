@@ -118,7 +118,6 @@ const SymptomChecker = () => {
     const result = await submitSession(payload);
 
     if (result.success) {
-      const action = result.data.recommended_action;
       const triageLevel = result.data.triage_level;
 
       if (triageLevel === "emergency") {

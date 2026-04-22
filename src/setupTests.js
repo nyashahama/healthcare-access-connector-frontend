@@ -1,4 +1,6 @@
 import { TextEncoder, TextDecoder } from "util";
+import "@testing-library/jest-dom";
+import { server } from "./test/server";
 
 if (typeof global.TextEncoder === "undefined") {
   global.TextEncoder = TextEncoder;
@@ -6,9 +8,6 @@ if (typeof global.TextEncoder === "undefined") {
 if (typeof global.TextDecoder === "undefined") {
   global.TextDecoder = TextDecoder;
 }
-
-import "@testing-library/jest-dom";
-import { server } from "./test/server";
 
 beforeAll(() => server.listen({ onUnhandledRequest: "error" }));
 afterEach(() => server.resetHandlers());

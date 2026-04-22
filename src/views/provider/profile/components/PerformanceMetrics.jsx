@@ -11,7 +11,6 @@ import {
 import {
   MdTrendingUp,
   MdTrendingDown,
-  MdWarning,
   MdInfo,
 } from "react-icons/md";
 import Card from "components/card";

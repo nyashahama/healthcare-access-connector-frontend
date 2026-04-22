@@ -6,7 +6,6 @@ import { useToast } from "hooks/useToast";
 import {
   MdEdit,
   MdAdd,
-  MdDelete,
   MdSave,
   MdWarning,
   MdVisibility,
