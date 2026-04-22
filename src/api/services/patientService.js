@@ -144,17 +144,8 @@ const patientService = {
    * @returns {Promise<Object>} Patient profile
    */
   getCurrentPatientProfile: async () => {
-    const userStr = localStorage.getItem("user");
-    if (!userStr) {
-      throw new Error("No user found in localStorage");
-    }
-
-    const user = JSON.parse(userStr);
-    if (!user.id) {
-      throw new Error("User ID not found");
-    }
-
-    return patientService.getPatientProfileByUserId(user.id);
+    const response = await apiClient.get("/api/v1/patients/patients/me");
+    return response.data;
   },
 
   /**
@@ -163,37 +154,8 @@ const patientService = {
    * @returns {Promise<Object>} Created/updated patient profile
    */
   upsertPatientProfile: async (data) => {
-    const userStr = localStorage.getItem("user");
-    if (!userStr) {
-      throw new Error("No user found in localStorage");
-    }
-
-    const user = JSON.parse(userStr);
-    if (!user.id) {
-      throw new Error("User ID not found");
-    }
-
-    // Try to get existing profile
-    try {
-      const existing = await patientService.getPatientProfileByUserId(user.id);
-
-      // If exists, update it
-      const updated = await patientService.updatePatientProfile(existing.id, {
-        ...data,
-        user_id: user.id,
-      });
-      return updated;
-    } catch (error) {
-      // If not found, create new
-      if (error.response?.status === 404) {
-        const created = await patientService.createPatientProfile({
-          ...data,
-          user_id: user.id,
-        });
-        return created;
-      }
-      throw error;
-    }
+    const response = await apiClient.put("/api/v1/patients/patients/me", data);
+    return response.data;
   },
 
   /**

@@ -181,6 +181,19 @@ REACT_APP_WS_URL=ws://localhost:8080
 REACT_APP_ENVIRONMENT=development
 ```
 
+## 🚀 Release Verification
+
+Run the full verification gate before deployment:
+
+`npm run verify`
+
+## 📋 Backend Contract Rules
+
+- The frontend never treats network failures as login success.
+- Unauthorized responses are handled through the session manager.
+- Service modules do not read browser storage directly.
+- Telemedicine WebSocket behavior is owned by `src/platform/realtime`.
+
 ## 📱 SMS Integration (Planned)
 
 For users without smartphones:
