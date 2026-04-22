@@ -7,6 +7,8 @@ import { useConsultationMessages } from "hooks/useConsultationMessages";
 import { useConsultationNotes } from "hooks/useConsultationNotes";
 import { useProviderAvailability } from "hooks/useProviderAvailability";
 import { useSymptomChecker } from "hooks/useSymptomChecker";
+import { createConsultationSocket } from "platform/realtime/consultationSocket";
+import { getRuntimeConfig } from "platform/config/runtime";
 
 import ChatHeader from "./components/ChatHeader";
 import MessagesContainer from "./components/MessagesContainer";
@@ -23,8 +25,6 @@ import {
   AttachFileModal,
   RatingModal,
 } from "./components/ChatModals";
-
-const WS_BASE_URL = process.env.REACT_APP_WS_URL || "ws://localhost:8080";
 
 const TelemedicineChat = () => {
   const { user, getToken } = useAuth();
@@ -70,7 +70,6 @@ const TelemedicineChat = () => {
   const messagesEndRef = useRef(null);
   const wsRef = useRef(null);
   const typingTimeoutRef = useRef(null);
-  const heartbeatIntervalRef = useRef(null);
   // Stable ref so ws.onmessage always calls the *latest* handleWsEvent without
   // needing to re-run connectWebSocket every time user/showToast changes.
   const wsEventHandlerRef = useRef(null);
@@ -229,11 +228,9 @@ const TelemedicineChat = () => {
     wsEventHandlerRef.current = handleWsEvent;
   }, [handleWsEvent]);
 
-  const reconnectTimeoutRef = useRef(null);
   const isMountedRef = useRef(true);
 
-  // Mark unmounted so the WS onclose handler never schedules a reconnect
-  // for a component that is no longer in the tree.
+  // Mark unmounted so cleanup runs correctly
   useEffect(() => {
     return () => {
       isMountedRef.current = false;
@@ -242,74 +239,32 @@ const TelemedicineChat = () => {
 
   const connectWebSocket = useCallback(
     (id) => {
-      if (wsRef.current?.readyState === WebSocket.OPEN) return;
+      if (wsRef.current) return;
 
       const token = getToken();
       if (!token) return;
 
-      const url = `${WS_BASE_URL}/ws/consultations/${id}?token=${token}`;
-      const ws = new WebSocket(url);
-      wsRef.current = ws;
+      const { wsUrl } = getRuntimeConfig();
+      const url = `${wsUrl}/ws/consultations/${id}?token=${token}`;
 
-      ws.onopen = () => {
-        showToast("Real-time connection established", "success");
-        // Clear any pending reconnect timer
-        clearTimeout(reconnectTimeoutRef.current);
-        // Clear any existing heartbeat before starting a new one
-        clearInterval(heartbeatIntervalRef.current);
-        // Heartbeat to keep connection alive through NAT/proxies
-        heartbeatIntervalRef.current = setInterval(() => {
-          if (ws.readyState === WebSocket.OPEN) {
-            ws.send(JSON.stringify({ type: "ping" }));
-          }
-        }, 25000);
-      };
+      wsRef.current = createConsultationSocket({
+        url,
+        onEvent: (envelope) => wsEventHandlerRef.current?.(envelope),
+      });
 
-      ws.onmessage = (event) => {
-        try {
-          const envelope = JSON.parse(event.data);
-          // Always dispatch through the ref so we always call the latest
-          // version of handleWsEvent — never a stale closure.
-          wsEventHandlerRef.current?.(envelope);
-        } catch (e) {
-          console.error("WS parse error", e);
-        }
-      };
-
-      ws.onerror = (err) => {
-        console.error("WebSocket error", err);
-      };
-
-      ws.onclose = (event) => {
-        clearInterval(heartbeatIntervalRef.current);
-        // Auto-reconnect unless the close was intentional (code 1000 = normal),
-        // the consultation is no longer active, or the component has unmounted.
-        if (
-          event.code !== 1000 &&
-          consultationIdRef.current &&
-          isMountedRef.current
-        ) {
-          reconnectTimeoutRef.current = setTimeout(() => {
-            connectWebSocket(consultationIdRef.current);
-          }, 3000);
-        }
-      };
+      wsRef.current.connect();
     },
-    [getToken, showToast] // eslint-disable-line react-hooks/exhaustive-deps
+    [getToken] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   const disconnectWebSocket = useCallback(() => {
-    clearTimeout(reconnectTimeoutRef.current);
-    clearInterval(heartbeatIntervalRef.current);
-    if (wsRef.current) {
-      wsRef.current.close(1000, "intentional");
-      wsRef.current = null;
-    }
+    wsRef.current?.disconnect();
+    wsRef.current = null;
   }, []);
 
   const sendTypingIndicator = useCallback(() => {
-    if (wsRef.current?.readyState === WebSocket.OPEN && consultationId) {
-      wsRef.current.send(
+    if (consultationId) {
+      wsRef.current?.send(
         JSON.stringify({ type: "typing", consultation_id: consultationId })
       );
     }
@@ -370,7 +325,7 @@ const TelemedicineChat = () => {
     const text = newMessage;
     setNewMessage(""); // Clear input immediately for responsiveness
 
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
+    if (wsRef.current?.isOpen?.()) {
       // Show the message immediately (optimistic). The server will broadcast it
       // back and handleWsEvent will replace this bubble with the real one.
       const now = new Date().toISOString();

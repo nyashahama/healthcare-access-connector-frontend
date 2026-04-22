@@ -159,12 +159,13 @@ This project extends Horizon UI with healthcare-specific components:
 
 ## 📊 Technology Stack
 
-- **Frontend Framework**: React 18.2
+- **Frontend Framework**: React 19
+- **Build Tool**: react-scripts (Create React App)
+- **HTTP Client**: Axios
+- **Routing**: React Router 6
 - **Styling**: Tailwind CSS 3.3
-- **Routing**: React Router DOM 6
 - **Charts**: ApexCharts (for data visualization)
 - **Icons**: React Icons
-- **Build Tool**: Vite
 - **Package Manager**: npm/yarn
 - **Deployment**: Vercel
 
@@ -172,22 +173,26 @@ This project extends Horizon UI with healthcare-specific components:
 
 ### Environment Variables
 
-Create a `.env` file in the root directory:
+Copy `.env.example` and set:
 
 ```env
-REACT_APP_API_URL=http://localhost:5000/api
-REACT_APP_GOOGLE_MAPS_API_KEY=your_google_maps_api_key
-REACT_APP_TWILIO_SMS_ENABLED=true
+REACT_APP_API_URL=http://localhost:8080
+REACT_APP_WS_URL=ws://localhost:8080
 REACT_APP_ENVIRONMENT=development
 ```
 
-### Role-Based Authentication
+## 🚀 Release Verification
 
-The application uses a simulated authentication system:
+Run the full verification gate before deployment:
 
-- Default login redirects to role selection
-- No backend authentication required for development
-- Role persistence in local storage
+`npm run verify`
+
+## 📋 Backend Contract Rules
+
+- The frontend never treats network failures as login success.
+- Unauthorized responses are handled through the session manager.
+- Service modules do not read browser storage directly.
+- Telemedicine WebSocket behavior is owned by `src/platform/realtime`.
 
 ## 📱 SMS Integration (Planned)
 

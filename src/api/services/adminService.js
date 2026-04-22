@@ -121,21 +121,8 @@ const adminService = {
    * @returns {Promise<Object>} System admin profile
    */
   getCurrentSystemAdminProfile: async () => {
-    const userStr = localStorage.getItem("user");
-    if (!userStr) {
-      throw new Error("No user found in localStorage");
-    }
-
-    const user = JSON.parse(userStr);
-    if (!user.id) {
-      throw new Error("User ID not found");
-    }
-
-    if (user.role !== "system_admin") {
-      throw new Error("User does not have system_admin role");
-    }
-
-    return adminService.getSystemAdminByUserId(user.id);
+    const response = await apiClient.get("/api/v1/admin/system-admins/me");
+    return response.data;
   },
 
   /**
@@ -144,41 +131,8 @@ const adminService = {
    * @returns {Promise<Object>} Created/updated system admin profile
    */
   upsertSystemAdminProfile: async (data) => {
-    const userStr = localStorage.getItem("user");
-    if (!userStr) {
-      throw new Error("No user found in localStorage");
-    }
-
-    const user = JSON.parse(userStr);
-    if (!user.id) {
-      throw new Error("User ID not found");
-    }
-
-    if (user.role !== "system_admin") {
-      throw new Error("User does not have system_admin role");
-    }
-
-    // Try to get existing profile
-    try {
-      const existing = await adminService.getSystemAdminByUserId(user.id);
-
-      // If exists, update it
-      const updated = await adminService.updateSystemAdmin(existing.id, {
-        ...data,
-        user_id: user.id,
-      });
-      return updated;
-    } catch (error) {
-      // If not found, create new
-      if (error.response?.status === 404) {
-        const created = await adminService.createSystemAdmin({
-          ...data,
-          user_id: user.id,
-        });
-        return created;
-      }
-      throw error;
-    }
+    const response = await apiClient.put("/api/v1/admin/system-admins/me", data);
+    return response.data;
   },
 
   /**
@@ -186,31 +140,10 @@ const adminService = {
    * @returns {Promise<Object>} Admin permissions
    */
   getAdminPermissions: async () => {
-    try {
-      const adminProfile = await adminService.getCurrentSystemAdminProfile();
-      return {
-        canManageUsers: adminProfile.can_manage_users || false,
-        canManageClinics: adminProfile.can_manage_clinics || false,
-        canManageContent: adminProfile.can_manage_content || false,
-        canViewAnalytics: adminProfile.can_view_analytics || false,
-        canManageSystem: adminProfile.can_manage_system || false,
-        permissions: adminProfile.permissions || {},
-        adminLevel: adminProfile.admin_level,
-        assignedRegions: adminProfile.assigned_regions || [],
-      };
-    } catch (error) {
-      // If admin profile not found or user is not admin, return minimal permissions
-      return {
-        canManageUsers: false,
-        canManageClinics: false,
-        canManageContent: false,
-        canViewAnalytics: false,
-        canManageSystem: false,
-        permissions: {},
-        adminLevel: null,
-        assignedRegions: [],
-      };
-    }
+    const response = await apiClient.get(
+      "/api/v1/admin/system-admins/me/permissions"
+    );
+    return response.data;
   },
 
   /**
