@@ -1,4 +1,6 @@
 import { renderHook, waitFor, act } from "@testing-library/react";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClient } from "platform/query/queryClient";
 import { useConsultationMessages } from "../useConsultationMessages";
 
 jest.mock("api/services/consultationMessagesService", () => ({
@@ -12,7 +14,11 @@ jest.mock("api/services/consultationMessagesService", () => ({
 
 describe("useConsultationMessages", () => {
   it("fetches messages for a consultation", async () => {
-    const { result } = renderHook(() => useConsultationMessages());
+    const wrapper = ({ children }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+
+    const { result } = renderHook(() => useConsultationMessages(), { wrapper });
 
     await act(async () => {
       await result.current.fetchMessages("c1", { limit: 10 });
