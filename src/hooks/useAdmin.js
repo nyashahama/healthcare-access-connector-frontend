@@ -146,8 +146,16 @@ export const useAdmin = () => {
         setAdminState(response);
         return response;
       }, "Failed to load system admin"),
-    [queryClient, run, setAdminState]
+      [queryClient, run, setAdminState]
   );
+
+  const clearAdmin = useCallback(() => {
+    setAdmin(null);
+    setPermissions(emptyPermissions);
+    setError(null);
+    queryClient.removeQueries({ queryKey: queryKeys.admin.current });
+    queryClient.removeQueries({ queryKey: queryKeys.admin.permissions });
+  }, [queryClient]);
 
   const updateSystemAdmin = useCallback(
     async (adminId, data) =>
@@ -161,7 +169,7 @@ export const useAdmin = () => {
         });
         return response;
       }, "Failed to update system admin"),
-    [queryClient, run, setAdminState]
+      [queryClient, run, setAdminState]
   );
 
   const deleteSystemAdmin = useCallback(
@@ -237,14 +245,6 @@ export const useAdmin = () => {
     () => adminService.getAllAdminLevels(),
     []
   );
-
-  const clearAdmin = useCallback(() => {
-    setAdmin(null);
-    setPermissions(emptyPermissions);
-    setError(null);
-    queryClient.removeQueries({ queryKey: queryKeys.admin.current });
-    queryClient.removeQueries({ queryKey: queryKeys.admin.permissions });
-  }, [queryClient]);
 
   const clearError = useCallback(() => setError(null), []);
 
