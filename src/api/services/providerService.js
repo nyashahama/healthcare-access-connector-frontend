@@ -269,7 +269,7 @@ const providerService = {
   // Credential routes
   registerCredential: async (data) => {
     const response = await apiClient.post(
-      "/api/v1/providers/credentials/",
+      "/api/v1/providers/credentials",
       data
     );
     return response.data;
