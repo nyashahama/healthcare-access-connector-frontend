@@ -17,6 +17,7 @@ export const queryKeys = {
     profile: ["admin", "profile"],
     permissions: ["admin", "permissions"],
     users: ["admin", "users"],
+    search: (params) => ["admin", "search", params],
   },
   staff: {
     list: ["staff", "list"],
