@@ -47,6 +47,39 @@ export const AuthProvider = ({ children }) => {
     };
   }, []);
 
+  const registerInvitedStaff = useCallback(async (data) => {
+    try {
+      if (!isMounted.current)
+        return { success: false, error: "Component unmounted" };
+
+      setLoading(true);
+      const response = await authService.registerInvitedStaff(data);
+
+      if (response?.token && response?.user) {
+        sessionManager.saveSession({
+          token: response.token,
+          user: response.user,
+          expiresAt: response.expires_at,
+        });
+        setUser(response.user);
+        setIsAuthenticated(true);
+      } else if (response?.user) {
+        setUser(response.user);
+      }
+
+      return { success: true, data: response };
+    } catch (error) {
+      const errorMessage =
+        error.response?.data?.error || "Staff registration failed";
+      console.error("Staff registration error:", error);
+      return { success: false, error: errorMessage };
+    } finally {
+      if (isMounted.current) {
+        setLoading(false);
+      }
+    }
+  }, []);
+
   const register = useCallback(async (data) => {
     try {
       if (!isMounted.current)
@@ -360,6 +393,7 @@ export const AuthProvider = ({ children }) => {
       verifyEmail,
       requestPasswordReset,
       resetPassword,
+      registerInvitedStaff,
       generateOTP,
       verifyOTP,
       resendVerification,
@@ -385,6 +419,7 @@ export const AuthProvider = ({ children }) => {
       verifyEmail,
       requestPasswordReset,
       resetPassword,
+      registerInvitedStaff,
       generateOTP,
       verifyOTP,
       resendVerification,
