@@ -177,11 +177,12 @@ const ClinicVerification = () => {
     if (!selectedClinic || !currentUser) return;
 
     setProcessingAction(true);
-    const result = await verifyClinic(
-      selectedClinic.id,
-      currentUser.id,
-      "verified"
-    );
+    const result = await verifyClinic(selectedClinic.id, {
+      verified_by: currentUser.id,
+      notes: `Clinic approved by ${currentUser.first_name || ""} ${
+        currentUser.last_name || ""
+      } on ${new Date().toLocaleDateString()}`,
+    });
 
     if (result.success) {
       showToast(

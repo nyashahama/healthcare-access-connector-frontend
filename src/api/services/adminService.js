@@ -1,4 +1,17 @@
 import apiClient from "api/apiClient";
+import { sessionManager } from "platform/auth/sessionManager";
+
+const getCurrentUserId = () => {
+  const userId = sessionManager.hydrate()?.user?.id;
+  if (!userId) {
+    throw new Error("Current user is not available");
+  }
+  return userId;
+};
+
+const unsupportedAdminOperation = (operation) => {
+  throw new Error(`${operation} is not supported by the backend admin API`);
+};
 
 /**
  * Admin Service
@@ -45,10 +58,9 @@ const adminService = {
    * @returns {Promise<Object>} System admin profile
    */
   getSystemAdmin: async (adminId) => {
-    const response = await apiClient.get(
-      `/api/v1/admin/system-admins/${adminId}`
+    return unsupportedAdminOperation(
+      `Loading system admin by profile ID ${adminId}`
     );
-    return response.data;
   },
 
   /**
@@ -58,11 +70,9 @@ const adminService = {
    * @returns {Promise<Object>} Updated system admin profile
    */
   updateSystemAdmin: async (adminId, data) => {
-    const response = await apiClient.put(
-      `/api/v1/admin/system-admins/${adminId}`,
-      data
+    return unsupportedAdminOperation(
+      `Updating system admin by profile ID ${adminId}`
     );
-    return response.data;
   },
 
   /**
@@ -71,10 +81,9 @@ const adminService = {
    * @returns {Promise<Object>} Success message
    */
   deleteSystemAdmin: async (adminId) => {
-    const response = await apiClient.delete(
-      `/api/v1/admin/system-admins/${adminId}`
+    return unsupportedAdminOperation(
+      `Deleting system admin by profile ID ${adminId}`
     );
-    return response.data;
   },
 
   /**
@@ -83,10 +92,9 @@ const adminService = {
    * @returns {Promise<Object>} Success message
    */
   deleteSystemAdminByUserId: async (userId) => {
-    const response = await apiClient.delete(
-      `/api/v1/admin/system-admins/user/${userId}`
+    return unsupportedAdminOperation(
+      `Deleting system admin by user ID ${userId}`
     );
-    return response.data;
   },
 
   /**
@@ -100,20 +108,8 @@ const adminService = {
    * @param {number} params.offset - Results offset
    * @returns {Promise<Object>} Search results
    */
-  searchSystemAdmins: async (params) => {
-    const queryParams = new URLSearchParams();
-
-    // Add all defined parameters
-    Object.keys(params).forEach((key) => {
-      if (params[key] !== undefined && params[key] !== null) {
-        queryParams.append(key, params[key]);
-      }
-    });
-
-    const response = await apiClient.get(
-      `/api/v1/admin/system-admins/search?${queryParams.toString()}`
-    );
-    return response.data;
+  searchSystemAdmins: async () => {
+    return unsupportedAdminOperation("Searching system admins");
   },
 
   /**
@@ -121,8 +117,7 @@ const adminService = {
    * @returns {Promise<Object>} System admin profile
    */
   getCurrentSystemAdminProfile: async () => {
-    const response = await apiClient.get("/api/v1/admin/system-admins/me");
-    return response.data;
+    return adminService.getSystemAdminByUserId(getCurrentUserId());
   },
 
   /**
@@ -131,8 +126,7 @@ const adminService = {
    * @returns {Promise<Object>} Created/updated system admin profile
    */
   upsertSystemAdminProfile: async (data) => {
-    const response = await apiClient.put("/api/v1/admin/system-admins/me", data);
-    return response.data;
+    return adminService.createSystemAdmin(data);
   },
 
   /**
@@ -140,10 +134,49 @@ const adminService = {
    * @returns {Promise<Object>} Admin permissions
    */
   getAdminPermissions: async () => {
-    const response = await apiClient.get(
-      "/api/v1/admin/system-admins/me/permissions"
-    );
-    return response.data;
+    const admin = await adminService.getCurrentSystemAdminProfile();
+    return adminService.normalizePermissionPayload(admin);
+  },
+
+  normalizePermissionPayload: (payload) => {
+    const source = payload ?? {};
+    const directPermissions =
+      source.permissions && typeof source.permissions === "object"
+        ? source.permissions
+        : {};
+
+    const getBool = (obj, snakeKey, camelKey) => {
+      const raw =
+        obj?.[snakeKey] ?? obj?.[camelKey] ?? directPermissions?.[snakeKey];
+      if (typeof raw === "boolean") return raw;
+      return raw === 1 || raw === "1" || raw === "true";
+    };
+
+    return {
+      adminLevel:
+        source.adminLevel ??
+        source.admin_level ??
+        null,
+      assignedRegions:
+        source.assignedRegions ??
+        source.assigned_regions ??
+        [],
+      canManageUsers:
+        getBool(source, "can_manage_users", "canManageUsers") ||
+        getBool(directPermissions, "can_manage_users", "canManageUsers"),
+      canManageClinics:
+        getBool(source, "can_manage_clinics", "canManageClinics") ||
+        getBool(directPermissions, "can_manage_clinics", "canManageClinics"),
+      canManageContent:
+        getBool(source, "can_manage_content", "canManageContent") ||
+        getBool(directPermissions, "can_manage_content", "canManageContent"),
+      canViewAnalytics:
+        getBool(source, "can_view_analytics", "canViewAnalytics") ||
+        getBool(directPermissions, "can_view_analytics", "canViewAnalytics"),
+      canManageSystem:
+        getBool(source, "can_manage_system", "canManageSystem") ||
+        getBool(directPermissions, "can_manage_system", "canManageSystem"),
+    };
   },
 
   /**
@@ -153,14 +186,15 @@ const adminService = {
    */
   hasPermission: async (permission) => {
     const permissions = await adminService.getAdminPermissions();
+    const permissionsMap = adminService.normalizePermissionPayload(permissions);
 
     // Map permission strings to properties
     const permissionMap = {
-      manage_users: permissions.canManageUsers,
-      manage_clinics: permissions.canManageClinics,
-      manage_content: permissions.canManageContent,
-      view_analytics: permissions.canViewAnalytics,
-      manage_system: permissions.canManageSystem,
+      manage_users: permissionsMap.canManageUsers,
+      manage_clinics: permissionsMap.canManageClinics,
+      manage_content: permissionsMap.canManageContent,
+      view_analytics: permissionsMap.canViewAnalytics,
+      manage_system: permissionsMap.canManageSystem,
     };
 
     return permissionMap[permission] || false;

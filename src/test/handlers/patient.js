@@ -6,7 +6,7 @@ export const createPatientHandlers = () => {
 
   return {
     handlers: [
-      rest.get("*/api/v1/patients/patients/me", (req, res, ctx) => {
+      rest.get("*/api/v1/patients/user/:userId", (req, res, ctx) => {
         if (shouldReturn401) {
           return res(
             ctx.status(401),

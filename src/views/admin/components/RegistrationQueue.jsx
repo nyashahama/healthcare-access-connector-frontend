@@ -92,7 +92,6 @@ const RegistrationQueue = ({ onApprove, onReject, onViewAll }) => {
   };
 
   const processApproval = async () => {
-    // Call verifyClinic to mark as verified
     const result = await verifyClinic(selectedClinic.id, {
       verified_by: currentUser.id,
       notes: `Clinic approved by ${currentUser.first_name || ""} ${
@@ -101,29 +100,16 @@ const RegistrationQueue = ({ onApprove, onReject, onViewAll }) => {
     });
 
     if (result.success) {
-      // Update verification status to "verified"
-      const statusResult = await updateVerifyClinic(selectedClinic.id, {
-        status: "verified",
-      });
+      toast.success(
+        `${selectedClinic.clinic_name} has been approved successfully`
+      );
 
-      if (statusResult.success) {
-        toast.success(
-          `${selectedClinic.clinic_name} has been approved successfully`
-        );
+      setPendingClinics((prev) =>
+        prev.filter((c) => c.id !== selectedClinic.id)
+      );
 
-        // Remove clinic from pending list
-        setPendingClinics((prev) =>
-          prev.filter((c) => c.id !== selectedClinic.id)
-        );
-
-        // Call parent callback if provided
-        if (onApprove) {
-          onApprove(selectedClinic);
-        }
-      } else {
-        toast.error(
-          statusResult.error || "Failed to update verification status"
-        );
+      if (onApprove) {
+        onApprove(selectedClinic);
       }
     } else {
       toast.error(result.error || "Failed to verify clinic");
@@ -131,8 +117,8 @@ const RegistrationQueue = ({ onApprove, onReject, onViewAll }) => {
   };
 
   const processRejection = async () => {
-    // First verify the clinic with rejection notes
-    const result = await verifyClinic(selectedClinic.id, {
+    const statusResult = await updateVerifyClinic(selectedClinic.id, {
+      status: "rejected",
       verified_by: currentUser.id,
       notes:
         rejectionReason ||
@@ -141,29 +127,17 @@ const RegistrationQueue = ({ onApprove, onReject, onViewAll }) => {
         } on ${new Date().toLocaleDateString()}`,
     });
 
-    if (result.success) {
-      // Update verification status to "rejected"
-      const statusResult = await updateVerifyClinic(selectedClinic.id, {
-        status: "rejected",
-      });
+    if (statusResult.success) {
+      toast.warning(`${selectedClinic.clinic_name} has been rejected`);
+      setPendingClinics((prev) =>
+        prev.filter((c) => c.id !== selectedClinic.id)
+      );
 
-      if (statusResult.success) {
-        toast.warning(`${selectedClinic.clinic_name} has been rejected`);
-
-        // Remove clinic from pending list
-        setPendingClinics((prev) =>
-          prev.filter((c) => c.id !== selectedClinic.id)
-        );
-
-        // Call parent callback if provided
-        if (onReject) {
-          onReject(selectedClinic);
-        }
-      } else {
-        toast.error(statusResult.error || "Failed to update rejection status");
+      if (onReject) {
+        onReject(selectedClinic);
       }
     } else {
-      toast.error(result.error || "Failed to process rejection");
+      toast.error(statusResult.error || "Failed to update rejection status");
     }
   };
 

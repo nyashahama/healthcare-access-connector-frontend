@@ -3,25 +3,20 @@ import apiClient from "../apiClient";
 const appointmentService = {
   // Create appointment (already exists)
   bookAppointment: async (data) => {
-    const response = await apiClient.post(
-      "/api/v1/appointments/appointments",
-      data
-    );
+    const response = await apiClient.post("/api/v1/appointments", data);
     return response.data;
   },
 
   // Get appointment by ID
   getAppointmentById: async (id) => {
-    const response = await apiClient.get(
-      `/api/v1/appointments/appointments/${id}`
-    );
+    const response = await apiClient.get(`/api/v1/appointments/${id}`);
     return response.data;
   },
 
   // Get appointments by patient
   getAppointmentsByPatient: async (patientId) => {
     const response = await apiClient.get(
-      `/api/v1/appointments/appointments/patient/${patientId}`
+      `/api/v1/appointments/patient/${patientId}`
     );
     return response.data;
   },
@@ -29,7 +24,7 @@ const appointmentService = {
   // Get appointments by clinic
   getAppointmentsByClinic: async (clinicId) => {
     const response = await apiClient.get(
-      `/api/v1/appointments/appointments/clinic/${clinicId}`
+      `/api/v1/appointments/clinic/${clinicId}`
     );
     return response.data;
   },
@@ -37,7 +32,7 @@ const appointmentService = {
   // Get appointments by clinic and date
   getAppointmentsByClinicAndDate: async (clinicId, date) => {
     const response = await apiClient.get(
-      `/api/v1/appointments/appointments/clinic/${clinicId}/date/${date}`
+      `/api/v1/appointments/clinic/${clinicId}/date/${date}`
     );
     return response.data;
   },
@@ -45,7 +40,7 @@ const appointmentService = {
   // Get today's appointments
   getTodayAppointments: async (clinicId) => {
     const response = await apiClient.get(
-      `/api/v1/appointments/appointments/clinic/${clinicId}/today`
+      `/api/v1/appointments/clinic/${clinicId}/today`
     );
     return response.data;
   },
@@ -53,7 +48,7 @@ const appointmentService = {
   // Get pending appointments
   getPendingAppointments: async (clinicId) => {
     const response = await apiClient.get(
-      `/api/v1/appointments/appointments/clinic/${clinicId}/pending`
+      `/api/v1/appointments/clinic/${clinicId}/pending`
     );
     return response.data;
   },
@@ -61,7 +56,7 @@ const appointmentService = {
   // Reschedule appointment
   rescheduleAppointment: async (id, data) => {
     const response = await apiClient.put(
-      `/api/v1/appointments/appointments/${id}/reschedule`,
+      `/api/v1/appointments/${id}/reschedule`,
       data
     );
     return response.data;
@@ -70,7 +65,7 @@ const appointmentService = {
   // Confirm appointment
   confirmAppointment: async (id, data) => {
     const response = await apiClient.put(
-      `/api/v1/appointments/appointments/${id}/confirm`,
+      `/api/v1/appointments/${id}/confirm`,
       data
     );
     return response.data;
@@ -79,7 +74,7 @@ const appointmentService = {
   // Update appointment notes
   updateAppointmentNotes: async (id, data) => {
     const response = await apiClient.put(
-      `/api/v1/appointments/appointments/${id}/notes`,
+      `/api/v1/appointments/${id}/notes`,
       data
     );
     return response.data;
@@ -87,16 +82,14 @@ const appointmentService = {
 
   // Complete appointment
   completeAppointment: async (id) => {
-    const response = await apiClient.put(
-      `/api/v1/appointments/appointments/${id}/complete`
-    );
+    const response = await apiClient.put(`/api/v1/appointments/${id}/complete`);
     return response.data;
   },
 
   // Cancel appointment
   cancelAppointment: async (id, data) => {
     const response = await apiClient.put(
-      `/api/v1/appointments/appointments/${id}/cancel`,
+      `/api/v1/appointments/${id}/cancel`,
       data
     );
     return response.data;
@@ -104,17 +97,14 @@ const appointmentService = {
 
   // Update appointment status
   updateAppointmentStatus: async (id, data) => {
-    const response = await apiClient.put(
-      `/api/v1/appointments/appointments/${id}/status`,
-      data
-    );
+    const response = await apiClient.put(`/api/v1/appointments/${id}/status`, data);
     return response.data;
   },
 
   // Delete appointment
   deleteAppointment: async (id) => {
     const response = await apiClient.delete(
-      `/api/v1/appointments/appointments/${id}`
+      `/api/v1/appointments/${id}`
     );
     return response.data;
   },
@@ -122,7 +112,7 @@ const appointmentService = {
   // Get appointment count for patient
   getAppointmentCount: async (patientId) => {
     const response = await apiClient.get(
-      `/api/v1/appointments/appointments/patient/${patientId}/count`
+      `/api/v1/appointments/patient/${patientId}/count`
     );
     return response.data;
   },
