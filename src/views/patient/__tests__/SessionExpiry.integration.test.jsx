@@ -34,7 +34,7 @@ describe("Session expiry integration", () => {
 
     // Make a request that will trigger the 401 interceptor
     try {
-      await apiClient.get("/api/v1/patients/patients/me");
+      await apiClient.get("/api/v1/patients/user/u1");
     } catch {
       // Expected to fail
     }
