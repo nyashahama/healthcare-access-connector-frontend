@@ -136,12 +136,99 @@ export const useAdmin = () => {
     [admin]
   );
 
-  const unsupported = useCallback(
-    async (operation) => ({
-      success: false,
-      error: `${operation} is not supported by the backend admin API`,
-    }),
-    []
+  const getSystemAdmin = useCallback(
+    async (adminId) =>
+      run(async () => {
+        const response = await queryClient.fetchQuery({
+          queryKey: [...queryKeys.admin.profile, "id", adminId],
+          queryFn: () => adminService.getSystemAdmin(adminId),
+        });
+        setAdminState(response);
+        return response;
+      }, "Failed to load system admin"),
+      [queryClient, run, setAdminState]
+  );
+
+  const clearAdmin = useCallback(() => {
+    setAdmin(null);
+    setPermissions(emptyPermissions);
+    setError(null);
+    queryClient.removeQueries({ queryKey: queryKeys.admin.current });
+    queryClient.removeQueries({ queryKey: queryKeys.admin.permissions });
+  }, [queryClient]);
+
+  const updateSystemAdmin = useCallback(
+    async (adminId, data) =>
+      run(async () => {
+        const response = await adminService.updateSystemAdmin(adminId, data);
+        setAdminState(response);
+        queryClient.invalidateQueries({ queryKey: queryKeys.admin.current });
+        queryClient.invalidateQueries({ queryKey: queryKeys.admin.users });
+        queryClient.removeQueries({
+          queryKey: [...queryKeys.admin.profile, "id", adminId],
+        });
+        return response;
+      }, "Failed to update system admin"),
+      [queryClient, run, setAdminState]
+  );
+
+  const deleteSystemAdmin = useCallback(
+    async (adminId) =>
+      run(async () => {
+        const response = await adminService.deleteSystemAdmin(adminId);
+
+        queryClient.removeQueries({
+          queryKey: queryKeys.admin.current,
+        });
+        queryClient.removeQueries({
+          queryKey: [...queryKeys.admin.profile, "id", adminId],
+        });
+        queryClient.invalidateQueries({ queryKey: queryKeys.admin.users });
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.admin.permissions,
+        });
+
+        if (admin?.id === adminId) {
+          clearAdmin();
+        }
+
+        return response;
+      }, "Failed to delete system admin"),
+    [admin, clearAdmin, queryClient, run]
+  );
+
+  const deleteSystemAdminByUserId = useCallback(
+    async (userId) =>
+      run(async () => {
+        const response = await adminService.deleteSystemAdminByUserId(userId);
+        queryClient.removeQueries({
+          queryKey: [...queryKeys.admin.profile, "user", userId],
+        });
+        queryClient.removeQueries({
+          queryKey: queryKeys.admin.current,
+        });
+        queryClient.invalidateQueries({ queryKey: queryKeys.admin.users });
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.admin.permissions,
+        });
+
+        if (admin?.user_id === userId) {
+          clearAdmin();
+        }
+
+        return response;
+      }, "Failed to delete system admin"),
+    [admin, clearAdmin, queryClient, run]
+  );
+
+  const searchSystemAdmins = useCallback(
+    async (params = {}) =>
+      run(async () => {
+        const response = await adminService.searchSystemAdmins(params);
+        queryClient.setQueryData(queryKeys.admin.search(params), response);
+        return response;
+      }, "Failed to search system admins"),
+    [queryClient, run]
   );
 
   const validateAdminData = useCallback(
@@ -159,27 +246,17 @@ export const useAdmin = () => {
     []
   );
 
-  const clearAdmin = useCallback(() => {
-    setAdmin(null);
-    setPermissions(emptyPermissions);
-    setError(null);
-    queryClient.removeQueries({ queryKey: queryKeys.admin.current });
-    queryClient.removeQueries({ queryKey: queryKeys.admin.permissions });
-  }, [queryClient]);
-
   const clearError = useCallback(() => setError(null), []);
 
   return {
     createSystemAdmin,
-    getSystemAdmin: (adminId) =>
-      unsupported(`Loading system admin by profile ID ${adminId}`),
+    getSystemAdmin,
     getSystemAdminByUserId,
     getCurrentSystemAdminProfile,
-    updateSystemAdmin: (adminId) =>
-      unsupported(`Updating system admin by profile ID ${adminId}`),
-    deleteSystemAdmin: (adminId) =>
-      unsupported(`Deleting system admin by profile ID ${adminId}`),
-    searchSystemAdmins: () => unsupported("Searching system admins"),
+    updateSystemAdmin,
+    deleteSystemAdmin,
+    deleteSystemAdminByUserId,
+    searchSystemAdmins,
     upsertSystemAdminProfile: createSystemAdmin,
     getPermissions,
     hasPermission,

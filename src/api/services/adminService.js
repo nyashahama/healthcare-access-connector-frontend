@@ -9,10 +9,6 @@ const getCurrentUserId = () => {
   return userId;
 };
 
-const unsupportedAdminOperation = (operation) => {
-  throw new Error(`${operation} is not supported by the backend admin API`);
-};
-
 /**
  * Admin Service
  * Handles all API calls related to system admin operations
@@ -58,9 +54,8 @@ const adminService = {
    * @returns {Promise<Object>} System admin profile
    */
   getSystemAdmin: async (adminId) => {
-    return unsupportedAdminOperation(
-      `Loading system admin by profile ID ${adminId}`
-    );
+    const response = await apiClient.get(`/api/v1/admin/system-admins/${adminId}`);
+    return response.data;
   },
 
   /**
@@ -70,9 +65,11 @@ const adminService = {
    * @returns {Promise<Object>} Updated system admin profile
    */
   updateSystemAdmin: async (adminId, data) => {
-    return unsupportedAdminOperation(
-      `Updating system admin by profile ID ${adminId}`
+    const response = await apiClient.put(
+      `/api/v1/admin/system-admins/${adminId}`,
+      data
     );
+    return response.data;
   },
 
   /**
@@ -81,9 +78,10 @@ const adminService = {
    * @returns {Promise<Object>} Success message
    */
   deleteSystemAdmin: async (adminId) => {
-    return unsupportedAdminOperation(
-      `Deleting system admin by profile ID ${adminId}`
+    const response = await apiClient.delete(
+      `/api/v1/admin/system-admins/${adminId}`
     );
+    return response.data;
   },
 
   /**
@@ -92,9 +90,10 @@ const adminService = {
    * @returns {Promise<Object>} Success message
    */
   deleteSystemAdminByUserId: async (userId) => {
-    return unsupportedAdminOperation(
-      `Deleting system admin by user ID ${userId}`
+    const response = await apiClient.delete(
+      `/api/v1/admin/system-admins/user/${userId}`
     );
+    return response.data;
   },
 
   /**
@@ -108,8 +107,38 @@ const adminService = {
    * @param {number} params.offset - Results offset
    * @returns {Promise<Object>} Search results
    */
-  searchSystemAdmins: async () => {
-    return unsupportedAdminOperation("Searching system admins");
+  searchSystemAdmins: async (params = {}) => {
+    const queryParams = new URLSearchParams();
+
+    if (params.admin_level?.trim()) {
+      queryParams.append("admin_level", params.admin_level);
+    }
+
+    if (params.region?.trim()) {
+      queryParams.append("region", params.region);
+    }
+
+    if (params.department?.trim()) {
+      queryParams.append("department", params.department);
+    }
+
+    if (params.query?.trim()) {
+      queryParams.append("query", params.query);
+    }
+
+    if (typeof params.limit === "number" && Number.isFinite(params.limit)) {
+      queryParams.append("limit", String(params.limit));
+    }
+
+    if (typeof params.offset === "number" && Number.isFinite(params.offset)) {
+      queryParams.append("offset", String(params.offset));
+    }
+
+    const query = queryParams.toString();
+    const response = await apiClient.get(
+      `/api/v1/admin/system-admins/search${query ? `?${query}` : ""}`
+    );
+    return response.data;
   },
 
   /**

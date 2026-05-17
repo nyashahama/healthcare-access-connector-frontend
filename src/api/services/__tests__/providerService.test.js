@@ -40,4 +40,19 @@ describe("providerService", () => {
 
     expect(apiClient.put).not.toHaveBeenCalled();
   });
+
+  it("registers provider credentials with backend-compatible endpoint", async () => {
+    apiClient.post.mockResolvedValue({
+      data: { id: "cred1", credential_type: "licence" },
+    });
+
+    const payload = { credential_type: "licence", number: "ABC123" };
+    const result = await providerService.registerCredential(payload);
+
+    expect(apiClient.post).toHaveBeenCalledWith(
+      "/api/v1/providers/credentials",
+      payload
+    );
+    expect(result).toEqual({ id: "cred1", credential_type: "licence" });
+  });
 });

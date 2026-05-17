@@ -1,6 +1,7 @@
 import authService from "api/services/authService";
 import { useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { sessionManager } from "platform/auth/sessionManager";
 
 /**
  * Custom hook for authentication operations
@@ -22,6 +23,24 @@ export const useAuth = () => {
       return { success: true, data: response };
     } catch (err) {
       const errorMessage = err.response?.data?.error || "Registration failed";
+      setError(errorMessage);
+      setLoading(false);
+      return { success: false, error: errorMessage };
+    }
+  }, []);
+
+  // register staff via invitation token
+  const registerInvitedStaff = useCallback(async (data) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await authService.registerInvitedStaff(data);
+      setLoading(false);
+      return { success: true, data: response };
+    } catch (err) {
+      const errorMessage =
+        err.response?.data?.error || "Staff registration failed";
       setError(errorMessage);
       setLoading(false);
       return { success: false, error: errorMessage };
@@ -51,7 +70,7 @@ export const useAuth = () => {
     setError(null);
     try {
       await authService.logout();
-      navigate("/signin");
+      navigate("/auth/sign-in");
       setLoading(false);
       return { success: true };
     } catch (err) {
@@ -141,8 +160,7 @@ export const useAuth = () => {
       setLoading(false);
       return { success: true, data: response };
     } catch (err) {
-      const errorMessage =
-        err.response?.data?.error || "Failed to generate OTP";
+      const errorMessage = err.response?.data?.error || "Failed to generate OTP";
       setError(errorMessage);
       setLoading(false);
       return { success: false, error: errorMessage };
@@ -221,6 +239,19 @@ export const useAuth = () => {
     }
   }, []);
 
+  const getCurrentUser = useCallback(() => {
+    return sessionManager.hydrate().user;
+  }, []);
+
+  const getToken = useCallback(() => {
+    return sessionManager.hydrate().token;
+  }, []);
+
+  const isAuthenticated = () => {
+    const { token, expiresAt } = sessionManager.hydrate();
+    return Boolean(token && expiresAt && new Date(expiresAt) > new Date());
+  };
+
   /**
    * Clear error
    */
@@ -231,6 +262,7 @@ export const useAuth = () => {
   return {
     // Methods
     register,
+    registerInvitedStaff,
     login,
     logout,
     verifyEmail,
@@ -249,8 +281,8 @@ export const useAuth = () => {
     error,
 
     // Utility methods
-    isAuthenticated: authService.isAuthenticated,
-    getCurrentUser: authService.getCurrentUser,
-    getToken: authService.getToken,
+    isAuthenticated: isAuthenticated(),
+    getCurrentUser,
+    getToken,
   };
 };

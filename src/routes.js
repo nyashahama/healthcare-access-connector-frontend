@@ -46,6 +46,7 @@ import ResetPassword from "views/auth/ResetPassword";
 import VerifyEmail from "views/auth/VerifyEmail";
 import ChangePassword from "views/auth/ChangePassword";
 import ConsentSettings from "views/auth/ConsentSettings";
+import StaffRegistration from "views/auth/StaffRegistration";
 
 // Landing Page View
 import LandingPage from "views/landing";
@@ -406,5 +407,13 @@ export const authRoutes = [
     path: "verify-email",
     icon: <MdLock className="h-6 w-6" />,
     component: <VerifyEmail />,
+  },
+  {
+    name: "Staff Registration",
+    layout: "/auth",
+    path: "register/staff",
+    icon: <MdLock className="h-6 w-6" />,
+    component: <StaffRegistration />,
+    sidebar: false,
   },
 ];

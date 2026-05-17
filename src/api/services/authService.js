@@ -10,6 +10,11 @@ const authService = {
     return response.data;
   },
 
+  registerInvitedStaff: async (data) => {
+    const response = await apiClient.post("/api/v1/auth/register/staff", data);
+    return response.data;
+  },
+
   login: async (credentials) => {
     const response = await apiClient.post("/api/v1/auth/login", credentials);
     return response.data;
