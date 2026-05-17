@@ -11,9 +11,17 @@ jest.mock("context/AuthContext", () => ({
 }));
 
 describe("ProtectedRoute", () => {
+  const routerFuture = {
+    v7_startTransition: true,
+    v7_relativeSplatPath: true,
+  };
+
   it("renders the sign-in recovery UI for anonymous users", () => {
     render(
-      <MemoryRouter initialEntries={["/patient/dashboard"]}>
+      <MemoryRouter
+        future={routerFuture}
+        initialEntries={["/patient/dashboard"]}
+      >
         <Routes>
           <Route
             path="/patient/dashboard"

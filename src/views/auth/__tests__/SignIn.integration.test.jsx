@@ -11,6 +11,11 @@ import { authHandlers } from "test/handlers";
 import { sessionManager } from "platform/auth/sessionManager";
 
 describe("SignIn integration", () => {
+  const routerFuture = {
+    v7_startTransition: true,
+    v7_relativeSplatPath: true,
+  };
+
   beforeEach(() => {
     sessionManager.clearSession("test-setup");
     authHandlers.setLoginSuccess(true);
@@ -21,7 +26,7 @@ describe("SignIn integration", () => {
   });
 
   const Wrapper = ({ children, initialEntries = ["/auth/sign-in"] }) => (
-    <MemoryRouter initialEntries={initialEntries}>
+    <MemoryRouter future={routerFuture} initialEntries={initialEntries}>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <ToastProvider>

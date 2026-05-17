@@ -6,7 +6,6 @@ import {
   FaEyeSlash,
   FaUserInjured,
   FaUserMd,
-  FaUserShield,
 } from "react-icons/fa";
 import { MdHealthAndSafety, MdArrowBack } from "react-icons/md";
 import Checkbox from "components/checkbox";
@@ -248,8 +247,12 @@ const SignUp = () => {
             <div className="grid grid-cols-3 gap-2">
               {[
                 { id: "patient", label: "Patient", icon: <FaUserInjured /> },
-                { id: "provider", label: "Provider", icon: <FaUserMd /> },
-                { id: "admin", label: "Admin", icon: <FaUserShield /> },
+                {
+                  id: "provider_staff",
+                  label: "Provider Staff",
+                  icon: <FaUserMd />,
+                },
+                { id: "clinic_admin", label: "Clinic Admin", icon: <FaUserMd /> },
               ].map((role) => (
                 <button
                   key={role.id}

@@ -12,6 +12,11 @@ import patientService from "api/services/patientService";
 const DummyPage = () => <div data-testid="patient-dashboard">Dashboard</div>;
 
 describe("ProfileCompletionGuard integration", () => {
+  const routerFuture = {
+    v7_startTransition: true,
+    v7_relativeSplatPath: true,
+  };
+
   beforeEach(() => {
     sessionManager.clearSession("test-setup");
     patientHandlers.setReturn401(false);
@@ -24,7 +29,10 @@ describe("ProfileCompletionGuard integration", () => {
   });
 
   const Wrapper = ({ children }) => (
-    <MemoryRouter initialEntries={["/patient/dashboard"]}>
+    <MemoryRouter
+      future={routerFuture}
+      initialEntries={["/patient/dashboard"]}
+    >
       <QueryClientProvider client={queryClient}>
         <AuthProvider>{children}</AuthProvider>
       </QueryClientProvider>

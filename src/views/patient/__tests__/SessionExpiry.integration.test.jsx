@@ -12,6 +12,11 @@ import apiClient from "api/apiClient";
 const DummyPatientPage = () => <div data-testid="patient-page">Patient Page</div>;
 
 describe("Session expiry integration", () => {
+  const routerFuture = {
+    v7_startTransition: true,
+    v7_relativeSplatPath: true,
+  };
+
   beforeEach(() => {
     sessionManager.clearSession("test-setup");
   });
@@ -46,7 +51,10 @@ describe("Session expiry integration", () => {
 
   it("shows recovery UI when the auth context detects an empty session", async () => {
     render(
-      <MemoryRouter initialEntries={["/patient/dashboard"]}>
+      <MemoryRouter
+        future={routerFuture}
+        initialEntries={["/patient/dashboard"]}
+      >
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
             <Routes>

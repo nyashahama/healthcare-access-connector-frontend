@@ -1,6 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "context/AuthContext";
+import {
+  getDashboardPath,
+  isAdminRole,
+  isPatientRole,
+  isProviderRole,
+} from "utils/roleUtils";
 
 /**
  * RoleBasedRoute component to guard routes based on user roles
@@ -79,23 +85,20 @@ const RoleBasedRoute = ({ children, allowedRoles = [] }) => {
  * @returns {string} Dashboard path
  */
 const getRoleBasedDashboard = (role) => {
-  switch (role) {
-    case "patient":
-      return "/patient/dashboard";
-    case "clinic_admin":
-    case "doctor":
-    case "nurse":
-    case "caregiver":
-    case "provider_staff":
-    case "clinic_manager":
-      return "/provider/dashboard";
-    case "admin":
-    case "system_admin":
-    case "ngo_partner":
-      return "/admin/dashboard";
-    default:
-      return "/auth/sign-in";
+  if (isPatientRole(role)) {
+    return "/patient/dashboard";
   }
+
+  if (isProviderRole(role)) {
+    return "/provider/dashboard";
+  }
+
+  if (isAdminRole(role)) {
+    return "/admin/dashboard";
+  }
+
+  const fallbackPath = getDashboardPath(role);
+  return fallbackPath === "/" ? "/auth/sign-in" : fallbackPath;
 };
 
 export default RoleBasedRoute;

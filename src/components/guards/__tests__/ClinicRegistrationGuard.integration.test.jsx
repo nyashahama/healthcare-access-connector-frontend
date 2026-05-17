@@ -11,6 +11,11 @@ import { sessionManager } from "platform/auth/sessionManager";
 const DummyPage = () => <div data-testid="provider-dashboard">Dashboard</div>;
 
 describe("ClinicRegistrationGuard integration", () => {
+  const routerFuture = {
+    v7_startTransition: true,
+    v7_relativeSplatPath: true,
+  };
+
   beforeEach(() => {
     sessionManager.clearSession("test-setup");
     providerHandlers.setHasClinic(false);
@@ -22,7 +27,10 @@ describe("ClinicRegistrationGuard integration", () => {
   });
 
   const Wrapper = ({ children }) => (
-    <MemoryRouter initialEntries={["/provider/dashboard"]}>
+    <MemoryRouter
+      future={routerFuture}
+      initialEntries={["/provider/dashboard"]}
+    >
       <QueryClientProvider client={queryClient}>
         <AuthProvider>{children}</AuthProvider>
       </QueryClientProvider>

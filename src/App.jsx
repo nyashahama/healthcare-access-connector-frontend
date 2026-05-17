@@ -17,6 +17,7 @@ import ErrorBoundaryWrapper from "components/error-boundaries/ErrorBoundaryWrapp
 import GenericErrorFallback from "components/error-boundaries/GenericErrorFallback";
 import AuthErrorFallback from "components/error-boundaries/AuthErrorFallback";
 import CriticalFeatureFallback from "components/error-boundaries/CriticalFeatureFallback";
+import { ROLE_GROUPS } from "utils/roleUtils";
 
 const App = () => {
   return (
@@ -58,7 +59,7 @@ const App = () => {
           <Route
             path="patient/*"
             element={
-              <ProtectedRoute allowedRoles={["patient"]}>
+              <ProtectedRoute allowedRoles={ROLE_GROUPS.PATIENT}>
                 <ProfileCompletionGuard minCompletion={50}>
                   <ErrorBoundaryWrapper
                     fallback={(props) => (
@@ -81,7 +82,7 @@ const App = () => {
             path="provider/*"
             element={
               <ProtectedRoute
-                allowedRoles={["clinic_admin", "provider_staff", "caregiver"]}
+                allowedRoles={ROLE_GROUPS.PROVIDER}
               >
                 <ClinicRegistrationGuard>
                   <ErrorBoundaryWrapper
@@ -104,7 +105,7 @@ const App = () => {
           <Route
             path="admin/*"
             element={
-              <ProtectedRoute allowedRoles={["admin", "system_admin"]}>
+              <ProtectedRoute allowedRoles={ROLE_GROUPS.ADMIN}>
                 <ErrorBoundaryWrapper
                   fallback={(props) => (
                     <CriticalFeatureFallback

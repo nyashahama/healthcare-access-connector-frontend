@@ -5,8 +5,8 @@
 // Define role groups
 export const ROLE_GROUPS = {
   PATIENT: ["patient"],
-  PROVIDER: ["provider_staff", "doctor", "nurse", "caregiver", "clinic_admin"],
-  ADMIN: ["system_admin", "admin"],
+  PROVIDER: ["provider_staff", "caregiver", "clinic_admin"],
+  ADMIN: ["system_admin"],
 };
 
 // All valid roles in the system
