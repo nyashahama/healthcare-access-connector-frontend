@@ -84,7 +84,9 @@ const ForgotPassword = () => {
       if (result.success) {
         setTimer(60);
         setStep(2);
-        showToast(`OTP sent to ${formData.identifier}`, "success");
+        const sentVia =
+          result?.data?.channel === "email" ? "Email" : "SMS";
+        showToast(`OTP sent via ${sentVia}`, "success");
       } else {
         showToast(result.error || "Failed to send OTP", "error");
       }
@@ -123,7 +125,9 @@ const ForgotPassword = () => {
 
       if (result.success) {
         setTimer(60);
-        showToast("OTP resent successfully", "success");
+        const sentVia =
+          result?.data?.channel === "email" ? "Email" : "SMS";
+        showToast(`OTP resent via ${sentVia}`, "success");
       } else {
         showToast(result.error || "Failed to resend OTP", "error");
       }
