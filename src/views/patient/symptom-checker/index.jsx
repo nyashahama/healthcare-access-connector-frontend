@@ -60,7 +60,7 @@ const SymptomChecker = () => {
 
   // ─── Response handler ────────────────────────────────────────────────────────
 
-  const handleResponse = (questionId, value, isMultiple = false) => {
+  const handleResponse = (questionId, value, isMultiple = false, questionType = "single") => {
     if (isMultiple) {
       setResponses((prev) => ({
         ...prev,
@@ -69,6 +69,10 @@ const SymptomChecker = () => {
           : [...(prev[questionId] || []), value],
       }));
       // Multi-select does NOT auto-advance — user clicks Next/Skip
+    } else if (questionType === "textarea") {
+      // Textarea — update responses but do NOT auto-advance.
+      // User clicks "Next" or "Submit" when ready.
+      setResponses((prev) => ({ ...prev, [questionId]: value }));
     } else {
       const updated = { ...responses, [questionId]: value };
       setResponses(updated);

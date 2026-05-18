@@ -43,7 +43,7 @@ const QuestionCard = ({
             rows={4}
             placeholder={question.placeholder || "Type your answer here..."}
             value={currentValue || ""}
-            onChange={(e) => onResponse(question.id, e.target.value)}
+            onChange={(e) => onResponse(question.id, e.target.value, false, "textarea")}
           />
           {question.minLength && (
             <p className="mt-1 text-xs text-gray-400">
