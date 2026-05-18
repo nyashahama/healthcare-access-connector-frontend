@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   MdSearch,
   MdFilterList,
@@ -29,7 +30,7 @@ import { useProvider } from "hooks/useProvider";
 const FindClinic = () => {
   const [viewMode, setViewMode] = useState("map");
   const [selectedFilters, setSelectedFilters] = useState({
-    freeServices: true,
+    freeServices: false,
     childHealth: false,
     openNow: false,
     vaccinations: false,
@@ -38,6 +39,7 @@ const FindClinic = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [userLocation, setUserLocation] = useState(null);
   const [selectedClinic, setSelectedClinic] = useState(null);
+  const navigate = useNavigate();
   const { showToast } = useToast();
 
   // Modal states
@@ -144,6 +146,10 @@ const FindClinic = () => {
       isVerified: clinic.is_verified || false,
       latitude: clinic.latitude,
       longitude: clinic.longitude,
+      freeServices: clinic.accepts_medical_aid === false || (clinic.services || []).some(s => s.cost === 0 || s.cost === "0" || s.is_free),
+      childHealth: (clinic.specialties || []).some(s => /pediatric|child|paediatric/i.test(s)),
+      emergency: (clinic.facilities || []).some(f => /emergency/i.test(f)),
+      vaccinations: (clinic.services || []).some(s => /vaccin|immuniz/i.test(s.name || s)),
 
       coordinates: {
         lat: clinic.latitude,
@@ -199,15 +205,11 @@ const FindClinic = () => {
     }
 
     // Service filters
-    if (selectedFilters.freeServices && !clinic.freeServices) return false;
-    if (selectedFilters.childHealth && !clinic.childHealth) return false;
+    if (selectedFilters.freeServices && clinic.freeServices === false) return false;
+    if (selectedFilters.childHealth && clinic.childHealth === false) return false;
     if (selectedFilters.openNow && clinic.status === "Closed") return false;
-    if (
-      selectedFilters.vaccinations &&
-      !clinic.services.includes("Vaccinations")
-    )
-      return false;
-    if (selectedFilters.emergency && !clinic.emergency) return false;
+    if (selectedFilters.vaccinations && clinic.vaccinations === false) return false;
+    if (selectedFilters.emergency && clinic.emergency === false) return false;
 
     return true;
   });
@@ -451,7 +453,7 @@ const FindClinic = () => {
                 onClick={() => {
                   setSuccessModalOpen(false);
                   showToast("Added to your appointments", "info");
-                  window.location.href = "/patient/appointments";
+                  navigate("/patient/appointments");
                 }}
                 className="rounded-lg bg-brand-500 px-6 py-2 font-medium text-white hover:bg-brand-600"
               >
@@ -490,24 +492,26 @@ const FindClinic = () => {
                   <FaWalking className="mr-3 h-5 w-5 text-blue-500" />
                   <div className="flex-1 text-left">
                     <div className="font-medium">Walking</div>
-                    <div className="text-sm text-gray-500">
-                      ~{Math.round(parseFloat(selectedClinic.distance) * 15)}{" "}
-                      minutes
-                    </div>
+                  <div className="text-sm text-gray-500">
+                    {isNaN(parseFloat(selectedClinic.distance))
+                      ? "Time unavailable"
+                      : `~${Math.round(parseFloat(selectedClinic.distance) * 15)} minutes`}
                   </div>
-                  <span>→</span>
-                </button>
+                </div>
+                <span>→</span>
+              </button>
 
-                <button
-                  onClick={() => confirmDirections("driving")}
-                  className="flex w-full items-center rounded-lg border border-gray-200 p-3 hover:border-brand-500 hover:bg-brand-50 dark:border-gray-700"
-                >
-                  <FaCar className="mr-3 h-5 w-5 text-green-500" />
-                  <div className="flex-1 text-left">
-                    <div className="font-medium">Driving</div>
-                    <div className="text-sm text-gray-500">
-                      ~{Math.round(parseFloat(selectedClinic.distance) * 3)}{" "}
-                      minutes
+              <button
+                onClick={() => confirmDirections("driving")}
+                className="flex w-full items-center rounded-lg border border-gray-200 p-3 hover:border-brand-500 hover:bg-brand-50 dark:border-gray-700"
+              >
+                <FaCar className="mr-3 h-5 w-5 text-green-500" />
+                <div className="flex-1 text-left">
+                  <div className="font-medium">Driving</div>
+                  <div className="text-sm text-gray-500">
+                    {isNaN(parseFloat(selectedClinic.distance))
+                      ? "Time unavailable"
+                      : `~${Math.round(parseFloat(selectedClinic.distance) * 3)} minutes`}
                     </div>
                   </div>
                   <span>→</span>

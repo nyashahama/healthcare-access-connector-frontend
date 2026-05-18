@@ -6,8 +6,13 @@ export const useLogoutHandler = () => {
   const navigate = useNavigate();
 
   const handleLogout = async () => {
-    await logout();
-    navigate("/auth/sign-in", { replace: true });
+    try {
+      await logout();
+    } catch {
+      // Session cleared even if server call fails
+    } finally {
+      navigate("/auth/sign-in", { replace: true });
+    }
   };
 
   return { handleLogout };

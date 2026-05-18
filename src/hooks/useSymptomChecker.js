@@ -1,3 +1,4 @@
+import { getErrorMessage } from "utils/errorUtils";
 import { useCallback, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import symptomCheckerService from "api/services/symptomCheckerService";
@@ -118,7 +119,7 @@ export const useSymptomChecker = () => {
         return { success: true, data: response };
       } catch (err) {
         const errorMessage =
-          err.response?.data?.error || "Failed to load session";
+          getErrorMessage(err, "Failed to load session");
         setError(errorMessage);
         setLoading(false);
         return { success: false, error: errorMessage };
@@ -140,7 +141,7 @@ export const useSymptomChecker = () => {
         return { success: true, data: response };
       } catch (err) {
         const errorMessage =
-          err.response?.data?.error || "Failed to abandon session";
+          getErrorMessage(err, "Failed to abandon session");
         setError(errorMessage);
         setLoading(false);
         return { success: false, error: errorMessage };
@@ -167,7 +168,7 @@ export const useSymptomChecker = () => {
         return { success: true, data: response };
       } catch (err) {
         const errorMessage =
-          err.response?.data?.error || "Failed to load sessions";
+          getErrorMessage(err, "Failed to load sessions");
         setError(errorMessage);
         setLoading(false);
         return { success: false, error: errorMessage };
@@ -193,7 +194,7 @@ export const useSymptomChecker = () => {
         return { success: true, data: response };
       } catch (err) {
         const errorMessage =
-          err.response?.data?.error || "Failed to load eligible session";
+          getErrorMessage(err, "Failed to load eligible session");
         setError(errorMessage);
         setLoading(false);
         return { success: false, error: errorMessage };
@@ -219,7 +220,7 @@ export const useSymptomChecker = () => {
         return { success: true, data: response };
       } catch (err) {
         const errorMessage =
-          err.response?.data?.error || "Failed to load dependent sessions";
+          getErrorMessage(err, "Failed to load dependent sessions");
         setError(errorMessage);
         setLoading(false);
         return { success: false, error: errorMessage };
@@ -246,7 +247,7 @@ export const useSymptomChecker = () => {
         return { success: true, data: response };
       } catch (err) {
         const errorMessage =
-          err.response?.data?.error || "Failed to load sessions by triage";
+          getErrorMessage(err, "Failed to load sessions by triage");
         setError(errorMessage);
         setLoading(false);
         return { success: false, error: errorMessage };
@@ -271,7 +272,7 @@ export const useSymptomChecker = () => {
         return { success: true, data: response };
       } catch (err) {
         const errorMessage =
-          err.response?.data?.error || "Failed to load outcome counts";
+          getErrorMessage(err, "Failed to load outcome counts");
         setError(errorMessage);
         setLoading(false);
         return { success: false, error: errorMessage };

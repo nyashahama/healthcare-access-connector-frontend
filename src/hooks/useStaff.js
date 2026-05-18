@@ -1,3 +1,4 @@
+import { getErrorMessage } from "utils/errorUtils";
 import { useCallback, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import staffService from "api/services/staffService";
@@ -157,7 +158,7 @@ export const useStaff = () => {
         return { success: true, data: response };
       } catch (err) {
         const errorMessage =
-          err.response?.data?.error || "Failed to load staff";
+          getErrorMessage(err, "Failed to load staff");
         setError(errorMessage);
         setLoading(false);
         return { success: false, error: errorMessage };
@@ -181,7 +182,7 @@ export const useStaff = () => {
         return { success: true, data: response };
       } catch (err) {
         const errorMessage =
-          err.response?.data?.error || "Failed to load staff by user ID";
+          getErrorMessage(err, "Failed to load staff by user ID");
         setError(errorMessage);
         setLoading(false);
         return { success: false, error: errorMessage };
@@ -204,7 +205,7 @@ export const useStaff = () => {
         return { success: true, data: response };
       } catch (err) {
         const errorMessage =
-          err.response?.data?.error || "Failed to update staff";
+          getErrorMessage(err, "Failed to update staff");
         setError(errorMessage);
         setLoading(false);
         return { success: false, error: errorMessage };
@@ -224,7 +225,7 @@ export const useStaff = () => {
         return { success: true };
       } catch (err) {
         const errorMessage =
-          err.response?.data?.error || "Failed to delete staff";
+          getErrorMessage(err, "Failed to delete staff");
         setError(errorMessage);
         setLoading(false);
         return { success: false, error: errorMessage };
@@ -246,7 +247,7 @@ export const useStaff = () => {
         return { success: true, data: response };
       } catch (err) {
         const errorMessage =
-          err.response?.data?.error || "Failed to check staff existence";
+          getErrorMessage(err, "Failed to check staff existence");
         setError(errorMessage);
         setLoading(false);
         return { success: false, error: errorMessage };
@@ -271,7 +272,7 @@ export const useStaff = () => {
         return { success: true, data: response };
       } catch (err) {
         const errorMessage =
-          err.response?.data?.error || "Failed to list clinic staff";
+          getErrorMessage(err, "Failed to list clinic staff");
         setError(errorMessage);
         setLoading(false);
         return { success: false, error: errorMessage };
@@ -295,7 +296,7 @@ export const useStaff = () => {
         return { success: true, data: response };
       } catch (err) {
         const errorMessage =
-          err.response?.data?.error || "Failed to list all clinic staff";
+          getErrorMessage(err, "Failed to list all clinic staff");
         setError(errorMessage);
         setLoading(false);
         return { success: false, error: errorMessage };
@@ -319,7 +320,7 @@ export const useStaff = () => {
         return { success: true, data: response };
       } catch (err) {
         const errorMessage =
-          err.response?.data?.error || "Failed to list active clinic staff";
+          getErrorMessage(err, "Failed to list active clinic staff");
         setError(errorMessage);
         setLoading(false);
         return { success: false, error: errorMessage };
@@ -367,7 +368,7 @@ export const useStaff = () => {
         return { success: true, data: response };
       } catch (err) {
         const errorMessage =
-          err.response?.data?.error || "Failed to get invitation details";
+          getErrorMessage(err, "Failed to get invitation details");
         setError(errorMessage);
         setLoading(false);
         return { success: false, error: errorMessage };
@@ -390,7 +391,7 @@ export const useStaff = () => {
         return { success: true, data: response };
       } catch (err) {
         const errorMessage =
-          err.response?.data?.error || "Failed to accept invitation";
+          getErrorMessage(err, "Failed to accept invitation");
         setError(errorMessage);
         setLoading(false);
         return { success: false, error: errorMessage };
@@ -410,7 +411,7 @@ export const useStaff = () => {
         return { success: true, data: response };
       } catch (err) {
         const errorMessage =
-          err.response?.data?.error || "Failed to decline invitation";
+          getErrorMessage(err, "Failed to decline invitation");
         setError(errorMessage);
         setLoading(false);
         return { success: false, error: errorMessage };
@@ -434,7 +435,7 @@ export const useStaff = () => {
         return { success: true, data: response };
       } catch (err) {
         const errorMessage =
-          err.response?.data?.error || "Failed to get pending invitations";
+          getErrorMessage(err, "Failed to get pending invitations");
         setError(errorMessage);
         setLoading(false);
         return { success: false, error: errorMessage };
@@ -458,7 +459,7 @@ export const useStaff = () => {
         return { success: true, data: response };
       } catch (err) {
         const errorMessage =
-          err.response?.data?.error || "Failed to get your invitations";
+          getErrorMessage(err, "Failed to get your invitations");
         setError(errorMessage);
         setLoading(false);
         return { success: false, error: errorMessage };
@@ -480,7 +481,7 @@ export const useStaff = () => {
         return { success: true, data: response };
       } catch (err) {
         const errorMessage =
-          err.response?.data?.error || "Failed to cancel invitation";
+          getErrorMessage(err, "Failed to cancel invitation");
         setError(errorMessage);
         setLoading(false);
         return { success: false, error: errorMessage };
@@ -502,7 +503,7 @@ export const useStaff = () => {
         return { success: true, data: response };
       } catch (err) {
         const errorMessage =
-          err.response?.data?.error || "Failed to resend invitation";
+          getErrorMessage(err, "Failed to resend invitation");
         setError(errorMessage);
         setLoading(false);
         return { success: false, error: errorMessage };

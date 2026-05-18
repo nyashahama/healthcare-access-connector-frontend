@@ -1,3 +1,4 @@
+import { getErrorMessage } from "utils/errorUtils";
 import consultationService from "api/services/consultationService";
 import { useCallback, useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -201,7 +202,7 @@ export const useConsultation = () => {
       stopLoading();
       return { success: true, data: response };
     } catch (err) {
-      const msg = err.response?.data?.error || "Failed to request consultation";
+      const msg = getErrorMessage(err, "Failed to request consultation");
       setError(msg);
       stopLoading();
       return { success: false, error: msg };
@@ -228,7 +229,7 @@ export const useConsultation = () => {
       return { success: true, data: response };
     } catch (err) {
       const msg =
-        err.response?.data?.error || "Failed to fetch active consultation";
+        getErrorMessage(err, "Failed to fetch active consultation");
       setError(msg);
       stopLoading();
       return { success: false, error: msg };
@@ -254,7 +255,7 @@ export const useConsultation = () => {
       return { success: true, data: response };
     } catch (err) {
       const msg =
-        err.response?.data?.error || "Failed to load patient consultations";
+        getErrorMessage(err, "Failed to load patient consultations");
       setError(msg);
       stopLoading();
       return { success: false, error: msg };
@@ -276,7 +277,7 @@ export const useConsultation = () => {
       return { success: true, data: response };
     } catch (err) {
       const msg =
-        err.response?.data?.error || "Failed to cancel consultation";
+        getErrorMessage(err, "Failed to cancel consultation");
       setError(msg);
       stopLoading();
       return { success: false, error: msg };
@@ -291,7 +292,7 @@ export const useConsultation = () => {
       stopLoading();
       return { success: true, data: response };
     } catch (err) {
-      const msg = err.response?.data?.error || "Failed to submit rating";
+      const msg = getErrorMessage(err, "Failed to submit rating");
       setError(msg);
       stopLoading();
       return { success: false, error: msg };
@@ -313,7 +314,7 @@ export const useConsultation = () => {
       stopLoading();
       return { success: true, data: response };
     } catch (err) {
-      const msg = err.response?.data?.error || "Failed to fetch consultation";
+      const msg = getErrorMessage(err, "Failed to fetch consultation");
       setError(msg);
       stopLoading();
       return { success: false, error: msg };
@@ -335,7 +336,7 @@ export const useConsultation = () => {
       return { success: true, data: response };
     } catch (err) {
       const msg =
-        err.response?.data?.error || "Failed to fetch consultation details";
+        getErrorMessage(err, "Failed to fetch consultation details");
       setError(msg);
       stopLoading();
       return { success: false, error: msg };
@@ -350,7 +351,7 @@ export const useConsultation = () => {
       stopLoading();
       return { success: true, data: response };
     } catch (err) {
-      const msg = err.response?.data?.error || "Failed to update channel";
+      const msg = getErrorMessage(err, "Failed to update channel");
       setError(msg);
       stopLoading();
       return { success: false, error: msg };
@@ -369,7 +370,7 @@ export const useConsultation = () => {
       stopLoading();
       return { success: true, data: response };
     } catch (err) {
-      const msg = err.response?.data?.error || "Failed to accept consultation";
+      const msg = getErrorMessage(err, "Failed to accept consultation");
       setError(msg);
       stopLoading();
       return { success: false, error: msg };
@@ -387,7 +388,7 @@ export const useConsultation = () => {
       stopLoading();
       return { success: true, data: response };
     } catch (err) {
-      const msg = err.response?.data?.error || "Failed to start consultation";
+      const msg = getErrorMessage(err, "Failed to start consultation");
       setError(msg);
       stopLoading();
       return { success: false, error: msg };
@@ -406,7 +407,7 @@ export const useConsultation = () => {
       return { success: true, data: response };
     } catch (err) {
       const msg =
-        err.response?.data?.error || "Failed to complete consultation";
+        getErrorMessage(err, "Failed to complete consultation");
       setError(msg);
       stopLoading();
       return { success: false, error: msg };
@@ -425,7 +426,7 @@ export const useConsultation = () => {
       return { success: true, data: response };
     } catch (err) {
       const msg =
-        err.response?.data?.error || "Failed to escalate consultation";
+        getErrorMessage(err, "Failed to escalate consultation");
       setError(msg);
       stopLoading();
       return { success: false, error: msg };
@@ -441,7 +442,7 @@ export const useConsultation = () => {
       stopLoading();
       return { success: true, data: response };
     } catch (err) {
-      const msg = err.response?.data?.error || "Failed to decline consultation";
+      const msg = getErrorMessage(err, "Failed to decline consultation");
       setError(msg);
       stopLoading();
       return { success: false, error: msg };
@@ -459,7 +460,7 @@ export const useConsultation = () => {
       stopLoading();
       return { success: true, data: response };
     } catch (err) {
-      const msg = err.response?.data?.error || "Failed to mark no-show";
+      const msg = getErrorMessage(err, "Failed to mark no-show");
       setError(msg);
       stopLoading();
       return { success: false, error: msg };
@@ -506,7 +507,7 @@ export const useConsultation = () => {
       return { success: true, data: response };
     } catch (err) {
       const msg =
-        err.response?.data?.error || "Failed to fetch provider history";
+        getErrorMessage(err, "Failed to fetch provider history");
       setError(msg);
       stopLoading();
       return { success: false, error: msg };
@@ -525,7 +526,7 @@ export const useConsultation = () => {
       stopLoading();
       return { success: true, data: response };
     } catch (err) {
-      const msg = err.response?.data?.error || "Failed to fetch waiting room";
+      const msg = getErrorMessage(err, "Failed to fetch waiting room");
       setError(msg);
       stopLoading();
       return { success: false, error: msg };
@@ -543,7 +544,7 @@ export const useConsultation = () => {
       return { success: true, data: response };
     } catch (err) {
       const msg =
-        err.response?.data?.error || "Failed to update payment status";
+        getErrorMessage(err, "Failed to update payment status");
       setError(msg);
       stopLoading();
       return { success: false, error: msg };
@@ -558,7 +559,7 @@ export const useConsultation = () => {
       stopLoading();
       return { success: true, data: response };
     } catch (err) {
-      const msg = err.response?.data?.error || "Failed to link follow-up";
+      const msg = getErrorMessage(err, "Failed to link follow-up");
       setError(msg);
       stopLoading();
       return { success: false, error: msg };

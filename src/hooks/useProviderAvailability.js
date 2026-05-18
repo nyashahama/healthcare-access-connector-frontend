@@ -1,3 +1,4 @@
+import { getErrorMessage } from "utils/errorUtils";
 import providerAvailabilityService from "api/services/providerAvailabilityService";
 import { useCallback, useState } from "react";
 
@@ -27,7 +28,7 @@ export const useProviderAvailability = () => {
       return { success: true, data: response };
     } catch (err) {
       const msg =
-        err.response?.data?.error || "Failed to fetch available providers";
+        getErrorMessage(err, "Failed to fetch available providers");
       setError(msg);
       setLoading(false);
       return { success: false, error: msg };
@@ -69,7 +70,7 @@ export const useProviderAvailability = () => {
       setLoading(false);
       return { success: true, data: response };
     } catch (err) {
-      const msg = err.response?.data?.error || "Failed to go online";
+      const msg = getErrorMessage(err, "Failed to go online");
       setError(msg);
       setLoading(false);
       return { success: false, error: msg };
@@ -85,7 +86,7 @@ export const useProviderAvailability = () => {
       setLoading(false);
       return { success: true, data: response };
     } catch (err) {
-      const msg = err.response?.data?.error || "Failed to go offline";
+      const msg = getErrorMessage(err, "Failed to go offline");
       setError(msg);
       setLoading(false);
       return { success: false, error: msg };
@@ -102,7 +103,7 @@ export const useProviderAvailability = () => {
       return { success: true, data: response };
     } catch (err) {
       const msg =
-        err.response?.data?.error || "Failed to update accepting state";
+        getErrorMessage(err, "Failed to update accepting state");
       setError(msg);
       setLoading(false);
       return { success: false, error: msg };
@@ -122,7 +123,7 @@ export const useProviderAvailability = () => {
         setLoading(false);
         return { success: true, data: response };
       } catch (err) {
-        const msg = err.response?.data?.error || "Failed to update status";
+        const msg = getErrorMessage(err, "Failed to update status");
         setError(msg);
         setLoading(false);
         return { success: false, error: msg };
@@ -148,7 +149,7 @@ export const useProviderAvailability = () => {
         setLoading(false);
         return { success: true, data: response };
       } catch (err) {
-        const msg = err.response?.data?.error || "Failed to update wait time";
+        const msg = getErrorMessage(err, "Failed to update wait time");
         setError(msg);
         setLoading(false);
         return { success: false, error: msg };
@@ -178,7 +179,7 @@ export const useProviderAvailability = () => {
       return { success: true, data: response };
     } catch (err) {
       const msg =
-        err.response?.data?.error || "Failed to fetch your availability";
+        getErrorMessage(err, "Failed to fetch your availability");
       setError(msg);
       setLoading(false);
       return { success: false, error: msg };
@@ -197,7 +198,7 @@ export const useProviderAvailability = () => {
       return { success: true, data: response };
     } catch (err) {
       const msg =
-        err.response?.data?.error || "Failed to fetch stale providers";
+        getErrorMessage(err, "Failed to fetch stale providers");
       setError(msg);
       setLoading(false);
       return { success: false, error: msg };
@@ -215,7 +216,7 @@ export const useProviderAvailability = () => {
       return { success: true, data: response };
     } catch (err) {
       const msg =
-        err.response?.data?.error || "Failed to set stale providers offline";
+        getErrorMessage(err, "Failed to set stale providers offline");
       setError(msg);
       setLoading(false);
       return { success: false, error: msg };
