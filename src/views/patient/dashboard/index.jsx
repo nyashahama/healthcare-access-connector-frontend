@@ -132,9 +132,11 @@ const PatientDashboard = () => {
   const patientName = getPatientName(patient, user);
   const modalAppointments = getUpcomingForModal(appointments);
 
-  if (patientError) {
-    showToast("Failed to load patient profile", "error");
-  }
+  useEffect(() => {
+    if (patientError) {
+      showToast("Failed to load patient profile", "error");
+    }
+  }, [patientError, showToast]);
 
   return (
     <div>
