@@ -49,7 +49,7 @@ describe("Session expiry integration", () => {
     expect(session.token).toBeNull();
   });
 
-  it("shows recovery UI when the auth context detects an empty session", async () => {
+  it("redirects to sign-in when the auth context detects an empty session", async () => {
     render(
       <MemoryRouter
         future={routerFuture}
@@ -66,6 +66,10 @@ describe("Session expiry integration", () => {
                   </ProtectedRoute>
                 }
               />
+              <Route
+                path="/auth/sign-in"
+                element={<div>Sign In Page</div>}
+              />
             </Routes>
           </AuthProvider>
         </QueryClientProvider>
@@ -73,7 +77,7 @@ describe("Session expiry integration", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText(/access denied/i)).toBeInTheDocument();
+      expect(screen.getByText(/Sign In Page/i)).toBeInTheDocument();
     });
   });
 });

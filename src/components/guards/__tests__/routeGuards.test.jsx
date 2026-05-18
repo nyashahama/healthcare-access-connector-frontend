@@ -16,7 +16,7 @@ describe("ProtectedRoute", () => {
     v7_relativeSplatPath: true,
   };
 
-  it("renders the sign-in recovery UI for anonymous users", () => {
+  it("redirects anonymous users to sign-in", () => {
     render(
       <MemoryRouter
         future={routerFuture}
@@ -31,10 +31,14 @@ describe("ProtectedRoute", () => {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/auth/sign-in"
+            element={<div>Sign In Page</div>}
+          />
         </Routes>
       </MemoryRouter>
     );
 
-    expect(screen.getByText(/Access Denied/i)).toBeInTheDocument();
+    expect(screen.getByText(/Sign In Page/i)).toBeInTheDocument();
   });
 });
