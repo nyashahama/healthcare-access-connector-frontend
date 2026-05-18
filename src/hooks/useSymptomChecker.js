@@ -21,20 +21,23 @@ export const useSymptomChecker = () => {
   const [activeSessionsKey, setActiveSessionsKey] = useState(null);
   const [activeEligibleKey, setActiveEligibleKey] = useState(null);
 
-  // Query observers
+  // Query observers (read from cache, never fetch directly)
   const sessionQuery = useQuery({
     queryKey: activeSessionKey || queryKeys.symptom.data,
     enabled: false,
+    queryFn: () => Promise.resolve(null),
   });
 
   const sessionsQuery = useQuery({
     queryKey: activeSessionsKey || queryKeys.symptom.history,
     enabled: false,
+    queryFn: () => Promise.resolve(null),
   });
 
   const eligibleQuery = useQuery({
     queryKey: activeEligibleKey || ["symptoms", "eligible"],
     enabled: false,
+    queryFn: () => Promise.resolve(null),
   });
 
   // Derived state from queries

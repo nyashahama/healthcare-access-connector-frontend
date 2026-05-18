@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { IoMdPeople, IoMdCall } from "react-icons/io";
 import { MdCalendarToday, MdCheckCircle, MdAccessTime } from "react-icons/md";
 import { FaUserCheck } from "react-icons/fa";
@@ -15,6 +16,7 @@ import { useToast } from "hooks/useToast";
  * Displays patient check-ins, appointments, and scheduling
  */
 const ReceptionistDashboard = ({ clinicId }) => {
+  const navigate = useNavigate();
   const { showToast } = useToast();
   const { getCurrentUser } = useAuth();
   const {
@@ -186,7 +188,7 @@ const ReceptionistDashboard = ({ clinicId }) => {
             </div>
             <button
               onClick={() =>
-                (window.location.href = "/provider/appointments?status=pending")
+                navigate("/provider/appointments?status=pending")
               }
               className="ml-auto rounded-lg bg-blue-500 px-4 py-2 text-sm font-medium text-white hover:bg-blue-600"
             >
@@ -293,7 +295,7 @@ const ReceptionistDashboard = ({ clinicId }) => {
                     {appointment.status !== "checked_in" && (
                       <button
                         onClick={() =>
-                          (window.location.href = `/provider/appointments/${appointment.id}/checkin`)
+                          navigate(`/provider/appointments/${appointment.id}/checkin`)
                         }
                         className="rounded-lg bg-brand-500 px-3 py-1 text-sm text-white hover:bg-brand-600"
                       >

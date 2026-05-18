@@ -11,7 +11,7 @@ import ManagerDashboard from "./components/ManagerDashboard";
  */
 const ProviderDashboard = () => {
   const { user } = useAuth();
-  const { getClinics, loading: clinicsLoading } = useProvider();
+  const { getMyClinic, loading: providerLoading } = useProvider();
 
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState(null);
@@ -29,22 +29,17 @@ const ProviderDashboard = () => {
           return;
         }
 
-        // Get user's clinics to determine role
-        const { success, data, error: clinicsError } = await getClinics();
+        setUserRole(user.role);
 
-        if (!success || !data?.clinics || data.clinics.length === 0) {
-          setError(clinicsError || "No clinic found for this user");
+        const { success, data, error: clinicError } = await getMyClinic();
+
+        if (!success || !data?.clinic) {
+          setError(clinicError || "No clinic found for this user");
           setLoading(false);
           return;
         }
 
-        // Get the first clinic (users typically belong to one clinic)
-        const clinic = data.clinics[0];
-        setClinicId(clinic.id);
-
-        // Use the user's actual role from auth context
-        setUserRole(user.role);
-
+        setClinicId(data.clinic.id);
         setLoading(false);
       } catch (err) {
         console.error("Error initializing dashboard:", err);
@@ -54,9 +49,9 @@ const ProviderDashboard = () => {
     };
 
     initializeDashboard();
-  }, [user, getClinics]);
+  }, [user, getMyClinic]);
 
-  if (loading || clinicsLoading) {
+  if (loading || providerLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="text-center">

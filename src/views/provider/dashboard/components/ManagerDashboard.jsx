@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { IoMdPeople, IoMdTime } from "react-icons/io";
 import { MdCalendarToday, MdTrendingUp, MdAssignment } from "react-icons/md";
 import { FaBriefcase } from "react-icons/fa";
@@ -18,6 +19,7 @@ import { useToast } from "hooks/useToast";
  * Displays operational metrics, staff management, and scheduling
  */
 const ManagerDashboard = ({ clinicId }) => {
+  const navigate = useNavigate();
   const { showToast } = useToast();
   const { getCurrentUser } = useAuth();
   const { getClinic, clinic } = useProvider();
@@ -220,7 +222,7 @@ const ManagerDashboard = ({ clinicId }) => {
             </div>
             <button
               onClick={() =>
-                (window.location.href = "/provider/appointments?status=pending")
+                navigate("/provider/appointments?status=pending")
               }
               className="ml-auto rounded-lg bg-yellow-500 px-4 py-2 text-sm font-medium text-white hover:bg-yellow-600"
             >
