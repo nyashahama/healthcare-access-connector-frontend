@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import Card from "components/card";
 import { useToast } from "hooks/useToast";
 import { useAuth } from "context/AuthContext";
@@ -29,6 +30,7 @@ import {
 } from "./components/ChatModals";
 
 const TelemedicineChat = () => {
+  const navigate = useNavigate();
   const { getToken } = useAuth();
   const { showToast } = useToast();
 
@@ -458,7 +460,7 @@ const TelemedicineChat = () => {
   const handleBookFollowUp = () => {
     showToast("Redirecting to appointment booking…", "info");
     setTimeout(() => {
-      window.location.href = "/patient/find-clinic";
+      navigate("/patient/find-clinic");
     }, 1000);
   };
 
@@ -518,7 +520,7 @@ const TelemedicineChat = () => {
               onBookFollowUp={handleBookFollowUp}
               onEndChat={handleEndChat}
               onStartConsultation={() =>
-                availableProviders[0] &&
+                availableProviders?.[0] &&
                 handleConnectToProvider(availableProviders[0])
               }
             />

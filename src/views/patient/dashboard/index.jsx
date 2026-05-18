@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useToast } from "hooks/useToast";
 import { usePatient } from "hooks/usePatient";
 import { useAppointment } from "hooks/useAppointment";
@@ -42,17 +43,22 @@ const PatientDashboard = () => {
   const [selectedTip, setSelectedTip] = useState(null);
   const [upcomingCount, setUpcomingCount] = useState(0);
   const [nextAppointment, setNextAppointment] = useState(null);
+  const navigate = useNavigate();
   const { showToast } = useToast();
-  const { patient, getPatientProfileByUserId } = usePatient();
+  const {
+    patient,
+    loading: patientLoading,
+    error: patientError,
+    getPatientProfileByUserId,
+  } = usePatient();
   const {
     appointments,
     getAppointmentsByPatient,
     loading: appointmentsLoading,
   } = useAppointment();
-  const { getCurrentUser } = useAuth();
+  const { user } = useAuth();
 
-  const user = getCurrentUser();
-  const patientId = patient?.user_id;
+  const patientId = patient?.id;
 
   // Load patient data on component mount
   useEffect(() => {
@@ -86,7 +92,7 @@ const PatientDashboard = () => {
       setModalState((prev) => ({ ...prev, appointmentReminder: true }));
     } else {
       showToast("No upcoming appointments", "info");
-      window.location.href = "/patient/find-clinic";
+      navigate("/patient/find-clinic");
     }
   };
 
@@ -108,26 +114,27 @@ const PatientDashboard = () => {
   };
 
   const handleMessagesClick = () => {
-    showToast("Opening messages...", "info");
-    window.location.href = "/patient/telemedicine";
+    navigate("/patient/telemedicine");
   };
 
   const handleSymptomCheckerClick = () => {
     showToast("Redirecting to Symptom Checker...", "info");
     setTimeout(() => {
-      window.location.href = "/patient/symptom-checker";
+      navigate("/patient/symptom-checker");
     }, 1000);
   };
 
   const handleViewProfile = () => {
-    window.location.href = "/patient/health-profile";
     showToast("Opening health profile...", "info");
+    navigate("/patient/profile");
   };
 
   const patientName = getPatientName(patient, user);
   const modalAppointments = getUpcomingForModal(appointments);
 
-  console.log("appointments:", appointments);
+  if (patientError) {
+    showToast("Failed to load patient profile", "error");
+  }
 
   return (
     <div>
@@ -182,8 +189,8 @@ const PatientDashboard = () => {
         onNutritionClick={handleNutritionClick}
       />
 
-      {/* Loading State for Appointments */}
-      {appointmentsLoading && <LoadingState />}
+      {/* Loading State for Appointments or Patient Profile */}
+      {(appointmentsLoading || patientLoading) && <LoadingState />}
 
       {/* Quick Actions */}
       {!appointmentsLoading && (

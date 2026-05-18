@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useToast } from "hooks/useToast";
 import { useAppointment } from "hooks/useAppointment";
 import ErrorBoundaryWrapper from "components/error-boundaries/ErrorBoundaryWrapper";
@@ -36,6 +37,7 @@ const PatientAppointments = () => {
     cancel: false,
     reschedule: false,
   });
+  const navigate = useNavigate();
   const { showToast } = useToast();
 
   const { user } = useAuth();
@@ -122,7 +124,7 @@ const PatientAppointments = () => {
   };
 
   const handleBookNew = () => {
-    window.location.href = "/patient/find-clinic";
+    navigate("/patient/find-clinic");
   };
 
   return (
