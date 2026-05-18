@@ -1,18 +1,16 @@
 import React, { useState, useEffect } from "react";
-import { useAuth } from "hooks/useAuth";
+import { useAuth } from "context/AuthContext";
 import { useProvider } from "hooks/useProvider";
-import ClinicAdminDashboard from "./components/ClinicAdminDashboard";
 import DoctorDashboard from "./components/DoctorDashboard";
 import NurseDashboard from "./components/NurseDashboard";
 import ManagerDashboard from "./components/ManagerDashboard";
-import ReceptionistDashboard from "./components/ReceptionistDashboard";
 
 /**
  * Main Provider Dashboard - Routes to role-specific dashboards
  * Determines user's staff role and renders appropriate dashboard
  */
 const ProviderDashboard = () => {
-  const { getCurrentUser } = useAuth();
+  const { user } = useAuth();
   const { getClinics, loading: clinicsLoading } = useProvider();
 
   const [loading, setLoading] = useState(true);
@@ -25,9 +23,7 @@ const ProviderDashboard = () => {
       try {
         setLoading(true);
 
-        // Get current user
-        const currentUser = getCurrentUser();
-        if (!currentUser) {
+        if (!user) {
           setError("User not authenticated");
           setLoading(false);
           return;
@@ -46,10 +42,8 @@ const ProviderDashboard = () => {
         const clinic = data.clinics[0];
         setClinicId(clinic.id);
 
-        // Determine staff role from clinic data or user role
-        // The clinic response should include the user's staff role
-        const staffRole = currentUser?.role || "doctor";
-        setUserRole(staffRole);
+        // Use the user's actual role from auth context
+        setUserRole(user.role);
 
         setLoading(false);
       } catch (err) {
@@ -60,7 +54,7 @@ const ProviderDashboard = () => {
     };
 
     initializeDashboard();
-  }, [getCurrentUser, getClinics]);
+  }, [user, getClinics]);
 
   if (loading || clinicsLoading) {
     return (
@@ -99,7 +93,7 @@ const ProviderDashboard = () => {
           </h3>
           <p className="mt-2 text-gray-600 dark:text-gray-300">{error}</p>
           <button
-            onClick={() => window.location.reload()}
+            onClick={() => { setError(null); setLoading(true); }}
             className="mt-4 rounded-lg bg-brand-500 px-6 py-2 text-white hover:bg-brand-600"
           >
             Retry
@@ -112,23 +106,14 @@ const ProviderDashboard = () => {
   // Route to appropriate dashboard based on role
   const renderDashboard = () => {
     switch (userRole) {
-      case "owner":
-      case "admin":
-        return <ClinicAdminDashboard clinicId={clinicId} />;
-
-      case "manager":
       case "clinic_admin":
         return <ManagerDashboard clinicId={clinicId} />;
 
-      case "doctor":
       case "provider_staff":
         return <DoctorDashboard clinicId={clinicId} />;
 
-      case "nurse":
+      case "caregiver":
         return <NurseDashboard clinicId={clinicId} />;
-
-      case "receptionist":
-        return <ReceptionistDashboard clinicId={clinicId} />;
 
       default:
         return (
