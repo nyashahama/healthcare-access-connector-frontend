@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   MdLocationOn,
   MdAccessTime,
@@ -26,9 +26,11 @@ const ClinicSuggestions = () => {
 
   const { clinics, loading, error, getClinics } = useProvider();
 
+  const hasFetchedClinics = useRef(false);
+
   useEffect(() => {
-    // Only fetch if clinics don't already exist
-    if (!clinics || clinics.length === 0) {
+    if (!hasFetchedClinics.current && (!clinics || clinics.length === 0)) {
+      hasFetchedClinics.current = true;
       getClinics();
     }
   }, [clinics, getClinics]);

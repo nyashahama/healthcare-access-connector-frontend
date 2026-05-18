@@ -4,24 +4,42 @@ import avatar from "assets/img/avatars/avatar11.png";
 import Card from "components/card";
 import Modal from "components/modal/Modal";
 import { useToast } from "hooks/useToast";
+import { useAuth } from "context/AuthContext";
+import { usePatient } from "hooks/usePatient";
 import { MdEdit, MdSave, MdCameraAlt } from "react-icons/md";
 
 const PatientBanner = () => {
   const { showToast } = useToast();
+  const { user } = useAuth();
+  const { patient } = usePatient();
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [avatarModalOpen, setAvatarModalOpen] = useState(false);
 
+  const displayName = patient?.first_name
+    ? `${patient.first_name} ${patient.last_name || ""}`.trim()
+    : user?.first_name || "Patient";
+
   const [profile, setProfile] = useState({
-    name: "Sarah Johnson",
-    title: "Patient & Mother of 2 • Johannesburg, Gauteng",
+    name: displayName,
+    title: "Patient • Johannesburg, Gauteng",
     stats: {
-      children: 2,
-      upcoming: 2,
-      consultations: 12,
+      children: 0,
+      upcoming: 0,
+      consultations: 0,
       healthScore: "Good",
     },
     avatar: avatar,
   });
+
+  // Update profile when patient data loads
+  React.useEffect(() => {
+    if (patient) {
+      setProfile((prev) => ({
+        ...prev,
+        name: displayName,
+      }));
+    }
+  }, [patient, displayName]);
 
   const [profileForm, setProfileForm] = useState({
     name: profile.name,
