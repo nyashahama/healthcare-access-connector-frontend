@@ -94,15 +94,15 @@ const TelemedicineChat = () => {
   }, [consultationId]);
 
   // ── On mount: check for active consultation + load providers ─────────────
+  const hasInitialFetched = useRef(false);
   useEffect(() => {
+    if (hasInitialFetched.current) return;
+    hasInitialFetched.current = true;
     fetchPatientActiveConsultation();
     fetchAvailableProviders();
     fetchEligibleSession();
-  }, [
-    fetchPatientActiveConsultation,
-    fetchAvailableProviders,
-    fetchEligibleSession,
-  ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ── When active consultation is found, load messages + note ─────────────
   useEffect(() => {
