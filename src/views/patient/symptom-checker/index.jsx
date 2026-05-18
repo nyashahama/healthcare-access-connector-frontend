@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { useToast } from "hooks/useToast";
 import { useAuth } from "context/AuthContext";
 import { useSymptomChecker } from "hooks/useSymptomChecker";
@@ -41,6 +41,10 @@ const SymptomChecker = () => {
   // session holds the raw API response on success
   const [session, setSession] = useState(null);
 
+  // Refs for timeout management
+  const advanceTimeoutRef = useRef(null);
+  const handleSubmitRef = useRef(null);
+
   // Modal states
   const [emergencyModalOpen, setEmergencyModalOpen] = useState(false);
   const [saveResultModalOpen, setSaveResultModalOpen] = useState(false);
@@ -69,14 +73,20 @@ const SymptomChecker = () => {
       const updated = { ...responses, [questionId]: value };
       setResponses(updated);
 
-      // For single-select non-last questions auto-advance after a brief delay
-      // so the user can see their selection register before moving on.
-      if (!isLastQuestion) {
-        setTimeout(() => setStepIndex((i) => i + 1), 280);
+      // Clear any pending advance timeout
+      if (advanceTimeoutRef.current) {
+        clearTimeout(advanceTimeoutRef.current);
       }
-      // If it IS the last question auto-submit
-      else {
-        setTimeout(() => handleSubmit(updated), 280);
+
+      // Recalculate isLastQuestion with the UPDATED responses so conditional
+      // questions that just became visible are accounted for.
+      const updatedVisible = getVisibleQuestions(updated);
+      const updatedIsLast = stepIndex === updatedVisible.length - 1;
+
+      if (!updatedIsLast) {
+        advanceTimeoutRef.current = setTimeout(() => setStepIndex((i) => i + 1), 280);
+      } else {
+        advanceTimeoutRef.current = setTimeout(() => handleSubmitRef.current(updated), 280);
       }
     }
   };
@@ -143,6 +153,9 @@ const SymptomChecker = () => {
       );
     }
   };
+
+  // Keep the ref in sync so timeouts always call the latest handleSubmit
+  handleSubmitRef.current = handleSubmit;
 
   // ─── Restart ────────────────────────────────────────────────────────────────
 
