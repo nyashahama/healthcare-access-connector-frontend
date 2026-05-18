@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   MdSearch,
@@ -57,10 +57,11 @@ const FindClinic = () => {
 
   // Mock clinic data - In production, this would come from an API
   const { clinics, getClinics } = useProvider();
+  const hasFetchedClinics = useRef(false);
 
   useEffect(() => {
-    // Only fetch if clinics don't already exist
-    if (!clinics || clinics.length === 0) {
+    if (!hasFetchedClinics.current && (!clinics || clinics.length === 0)) {
+      hasFetchedClinics.current = true;
       getClinics();
     }
   }, [clinics, getClinics]);
@@ -188,7 +189,8 @@ const FindClinic = () => {
       showToast("Geolocation not supported by your browser", "error");
       setUserLocation({ lat: -26.2041, lng: 28.0473 });
     }
-  }, [showToast]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run once on mount
 
   const formattedClinics = useMemo(() => {
     return clinics ? clinics.map(formatClinicData) : [];
