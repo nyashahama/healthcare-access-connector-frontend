@@ -209,7 +209,7 @@ export const useConsultation = () => {
     }
   };
 
-  const fetchPatientActiveConsultation = async () => {
+  const fetchPatientActiveConsultation = useCallback(async () => {
     startLoading();
     setError(null);
     try {
@@ -234,7 +234,7 @@ export const useConsultation = () => {
       stopLoading();
       return { success: false, error: msg };
     }
-  };
+  }, [queryClient, startLoading, stopLoading]);
 
   const fetchPatientConsultations = async (params = {}) => {
     startLoading();
