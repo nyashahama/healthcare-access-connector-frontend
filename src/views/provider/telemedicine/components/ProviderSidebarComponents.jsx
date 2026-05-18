@@ -1,9 +1,11 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import Card from "components/card";
 import { FaStethoscope, FaFileMedical } from "react-icons/fa";
 import { MdSchedule, MdAssignment } from "react-icons/md";
 
 export const ProviderQuickActionsCard = () => {
+  const navigate = useNavigate();
   return (
     <Card extra="p-6">
       <h4 className="mb-4 text-lg font-bold text-navy-700 dark:text-white">
@@ -11,7 +13,7 @@ export const ProviderQuickActionsCard = () => {
       </h4>
       <div className="space-y-3">
         <button
-          onClick={() => (window.location.href = "/provider/patient-records")}
+          onClick={() => navigate("/provider/patient-records")}
           className="flex w-full items-center justify-between rounded-lg border border-gray-200 p-3 hover:bg-gray-50 dark:border-gray-700"
         >
           <div className="flex items-center">
@@ -21,7 +23,7 @@ export const ProviderQuickActionsCard = () => {
           <span>→</span>
         </button>
         <button
-          onClick={() => (window.location.href = "/provider/schedule")}
+          onClick={() => navigate("/provider/schedule")}
           className="flex w-full items-center justify-between rounded-lg border border-gray-200 p-3 hover:bg-gray-50 dark:border-gray-700"
         >
           <div className="flex items-center">
@@ -31,7 +33,7 @@ export const ProviderQuickActionsCard = () => {
           <span>→</span>
         </button>
         <button
-          onClick={() => (window.location.href = "/provider/prescriptions")}
+          onClick={() => navigate("/provider/prescriptions")}
           className="flex w-full items-center justify-between rounded-lg border border-gray-200 p-3 hover:bg-gray-50 dark:border-gray-700"
         >
           <div className="flex items-center">

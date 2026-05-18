@@ -19,25 +19,29 @@ export const useStaff = () => {
   const [activeInvitationKey, setActiveInvitationKey] = useState(null);
   const [activeInvitationsKey, setActiveInvitationsKey] = useState(null);
 
-  // Query observers
+  // Query observers (read from cache, never fetch directly)
   const staffQuery = useQuery({
     queryKey: activeStaffKey || ["staff", "detail"],
     enabled: false,
+    queryFn: () => Promise.resolve(null),
   });
 
   const staffListQuery = useQuery({
     queryKey: activeStaffListKey || queryKeys.staff.list,
     enabled: false,
+    queryFn: () => Promise.resolve(null),
   });
 
   const invitationQuery = useQuery({
     queryKey: activeInvitationKey || ["staff", "invitation"],
     enabled: false,
+    queryFn: () => Promise.resolve(null),
   });
 
   const invitationsQuery = useQuery({
     queryKey: activeInvitationsKey || ["staff", "invitations"],
     enabled: false,
+    queryFn: () => Promise.resolve(null),
   });
 
   // Derived state from queries

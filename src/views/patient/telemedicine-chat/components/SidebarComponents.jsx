@@ -1,9 +1,11 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import Card from "components/card";
 import { FaStethoscope } from "react-icons/fa";
 import { MdSchedule, MdPhone } from "react-icons/md";
 
 export const QuickActionsCard = () => {
+  const navigate = useNavigate();
   return (
     <Card extra="p-6">
       <h4 className="mb-4 text-lg font-bold text-navy-700 dark:text-white">
@@ -11,7 +13,7 @@ export const QuickActionsCard = () => {
       </h4>
       <div className="space-y-3">
         <button
-          onClick={() => (window.location.href = "/patient/symptom-checker")}
+          onClick={() => navigate("/patient/symptom-checker")}
           className="flex w-full items-center justify-between rounded-lg border border-gray-200 p-3 hover:bg-gray-50 dark:border-gray-700"
         >
           <div className="flex items-center">
@@ -21,7 +23,7 @@ export const QuickActionsCard = () => {
           <span>→</span>
         </button>
         <button
-          onClick={() => (window.location.href = "/patient/find-clinic")}
+          onClick={() => navigate("/patient/find-clinic")}
           className="flex w-full items-center justify-between rounded-lg border border-gray-200 p-3 hover:bg-gray-50 dark:border-gray-700"
         >
           <div className="flex items-center">

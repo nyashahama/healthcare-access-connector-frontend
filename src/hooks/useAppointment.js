@@ -217,7 +217,7 @@ export const useAppointment = () => {
     }
   };
 
-  const getAppointmentsByPatient = async (patientId) => {
+  const getAppointmentsByPatient = useCallback(async (patientId) => {
     startLoading();
     setError(null);
     try {
@@ -238,7 +238,7 @@ export const useAppointment = () => {
       stopLoading();
       return { success: false, error: errorMessage };
     }
-  };
+  }, [queryClient, startLoading, stopLoading]);
 
   const getAppointmentsByClinic = async (clinicId) => {
     startLoading();
@@ -286,7 +286,7 @@ export const useAppointment = () => {
     }
   };
 
-  const getTodayAppointments = async (clinicId) => {
+  const getTodayAppointments = useCallback(async (clinicId) => {
     startLoading();
     setError(null);
     try {
@@ -307,9 +307,9 @@ export const useAppointment = () => {
       stopLoading();
       return { success: false, error: errorMessage };
     }
-  };
+  }, [queryClient, startLoading, stopLoading]);
 
-  const getPendingAppointments = async (clinicId) => {
+  const getPendingAppointments = useCallback(async (clinicId) => {
     startLoading();
     setError(null);
     try {
@@ -330,7 +330,7 @@ export const useAppointment = () => {
       stopLoading();
       return { success: false, error: errorMessage };
     }
-  };
+  }, [queryClient, startLoading, stopLoading]);
 
   const rescheduleAppointment = async (id, data) => {
     startLoading();

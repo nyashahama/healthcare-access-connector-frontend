@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { IoMdPeople } from "react-icons/io";
 import { MdCalendarToday, MdLocalHospital } from "react-icons/md";
 import { FaUserNurse, FaSyringe, FaStethoscope } from "react-icons/fa";
@@ -14,6 +15,7 @@ import { useToast } from "hooks/useToast";
  * Displays patient queue, vitals monitoring, and nursing tasks
  */
 const NurseDashboard = ({ clinicId }) => {
+  const navigate = useNavigate();
   const { showToast } = useToast();
   const { getCurrentUser } = useAuth();
   const {
@@ -187,7 +189,7 @@ const NurseDashboard = ({ clinicId }) => {
               </p>
             </div>
             <button
-              onClick={() => (window.location.href = "/provider/queue")}
+              onClick={() => navigate("/provider/queue")}
               className="ml-auto rounded-lg bg-purple-500 px-4 py-2 text-sm font-medium text-white hover:bg-purple-600"
             >
               Record Vitals
@@ -262,7 +264,7 @@ const NurseDashboard = ({ clinicId }) => {
                       )}
                       <button
                         onClick={() =>
-                          (window.location.href = `/provider/appointments/${appointment.id}`)
+                          navigate(`/provider/appointments/${appointment.id}`)
                         }
                         className="rounded-lg bg-brand-500 px-3 py-1 text-sm text-white hover:bg-brand-600"
                       >

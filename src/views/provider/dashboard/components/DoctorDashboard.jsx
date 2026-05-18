@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { IoMdPeople, IoMdTime } from "react-icons/io";
 import { MdCalendarToday, MdCheckCircle } from "react-icons/md";
 import { FaUserMd } from "react-icons/fa";
@@ -16,6 +17,7 @@ import { useToast } from "hooks/useToast";
  * Displays appointments, patient queue, and consultation history
  */
 const DoctorDashboard = ({ clinicId }) => {
+  const navigate = useNavigate();
   const { showToast } = useToast();
   const { getCurrentUser } = useAuth();
   const {
@@ -205,7 +207,7 @@ const DoctorDashboard = ({ clinicId }) => {
               </p>
             </div>
             <button
-              onClick={() => (window.location.href = "/provider/queue")}
+              onClick={() => navigate("/provider/queue")}
               className="ml-auto rounded-lg bg-blue-500 px-4 py-2 text-sm font-medium text-white hover:bg-blue-600"
             >
               View Queue

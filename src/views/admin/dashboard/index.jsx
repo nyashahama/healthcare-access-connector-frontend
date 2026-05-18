@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   MdPeople,
 } from "react-icons/md";
@@ -11,6 +11,7 @@ import SystemHealth from "../components/SystemHealth";
 import RegistrationQueue from "../components/RegistrationQueue";
 import AnalyticsChart from "../components/AnalyticsChart";
 import { useToast } from "hooks/useToast";
+import apiClient from "api/apiClient";
 
 // Component imports
 import StatsWidgets from "./components/StatsWidgets";
@@ -50,59 +51,96 @@ const SystemDashboard = () => {
   const [notificationAudience, setNotificationAudience] = useState("All Users");
   const [rejectReason, setRejectReason] = useState("");
 
-  // System alerts data
-  const systemAlerts = [
-    {
-      id: 1,
-      system: "Database Server",
-      status: "warning",
-      message: "High CPU usage detected",
-      timestamp: "2 hours ago",
-      severity: "medium",
-    },
-    {
-      id: 2,
-      system: "SMS Gateway",
-      status: "error",
-      message: "Credit balance low",
-      timestamp: "1 hour ago",
-      severity: "high",
-    },
-    {
-      id: 3,
-      system: "API Service",
-      status: "success",
-      message: "All systems operational",
-      timestamp: "5 minutes ago",
-      severity: "low",
-    },
-  ];
+  // Live stats state
+  const [liveStats, setLiveStats] = useState({
+    totalClinics: 0,
+    activeUsers: 0,
+    systemStatus: "loading",
+    systemHealthy: true,
+    statsLoading: true,
+  });
 
-  // Stats widget data
+  const [systemAlerts, setSystemAlerts] = useState([]);
+
+  // Fetch live stats from backend
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const [clinicsRes, usersRes, healthRes] = await Promise.all([
+          apiClient.get("/api/v1/providers/clinics?limit=1"),
+          apiClient.get("/api/v1/users/count"),
+          fetch("http://localhost:8080/health").then(r => r.json()),
+        ]);
+
+        const clinicCount = clinicsRes.data?.count || 0;
+        const userCount = usersRes.data?.count || 0;
+        const healthStatus = healthRes?.status === "healthy";
+        const services = healthRes?.services || {};
+
+        const healthyServices = Object.values(services).filter(s => s === "healthy").length;
+        const totalServices = Object.values(services).length;
+        const healthPercent = totalServices > 0 ? Math.round((healthyServices / totalServices) * 100) : 0;
+
+        setLiveStats({
+          totalClinics: clinicCount,
+          activeUsers: userCount,
+          systemStatus: healthStatus ? "healthy" : "degraded",
+          systemHealthy: healthStatus,
+          healthyServices,
+          totalServices,
+          healthPercent,
+          statsLoading: false,
+        });
+
+        // Build alerts from health data
+        const alerts = [];
+        Object.entries(services).forEach(([name, status]) => {
+          if (status !== "healthy" && status !== "disabled") {
+            alerts.push({
+              id: name,
+              system: name.charAt(0).toUpperCase() + name.slice(1),
+              status: status === "healthy" ? "success" : "error",
+              message: `Service status: ${status}`,
+              timestamp: "Now",
+              severity: "high",
+            });
+          }
+        });
+        setSystemAlerts(alerts);
+      } catch (err) {
+        console.error("Failed to fetch dashboard stats:", err);
+        setLiveStats(prev => ({ ...prev, statsLoading: false, systemStatus: "unknown" }));
+      }
+    };
+
+    fetchStats();
+  }, []);
+
+  // Stats widget data from live API
   const statsData = {
     totalClinics: {
       icon: <FaClinicMedical className="h-7 w-7" />,
       title: "Total Clinics",
-      value: "1,247",
-      trend: "+12% from last month",
+      value: liveStats.statsLoading ? "..." : String(liveStats.totalClinics),
+      trend: "Registered clinics",
     },
     activeUsers: {
       icon: <MdPeople className="h-7 w-7" />,
       title: "Active Users",
-      value: "45,823",
-      trend: "+8.2% this week",
+      value: liveStats.statsLoading ? "..." : String(liveStats.activeUsers),
+      trend: "Total users",
     },
     systemHealth: {
       icon: <FaServer className="h-7 w-7" />,
       title: "System Health",
-      value: "98.5%",
-      trend: "All services operational",
+      value: liveStats.statsLoading ? "..." : `${liveStats.healthPercent}%`,
+      trend: liveStats.statsLoading ? "Loading..." : `${liveStats.healthyServices}/${liveStats.totalServices} services healthy`,
     },
     smsBalance: {
       icon: <FaDatabase className="h-7 w-7" />,
-      title: "SMS Balance",
-      value: "12,458",
-      trend: "Credits remaining",
+      title: "System Status",
+      value: liveStats.systemStatus === "healthy" ? "Healthy" : liveStats.systemStatus === "loading" ? "..." : "Degraded",
+      trend: liveStats.systemStatus === "healthy" ? "All systems operational" : "Check alerts",
     },
   };
 

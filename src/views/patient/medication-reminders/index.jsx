@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useToast } from "hooks/useToast";
 import StatsCards from "./components/StatsCards";
 import Controls from "./components/Controls";
@@ -11,6 +12,7 @@ import SettingsModal from "./components/SettingsModal";
 import DetailsModal from "./components/DetailsModal";
 
 const MedicationReminders = () => {
+  const navigate = useNavigate();
   const [reminders, setReminders] = useState([
     {
       id: 1,
@@ -148,7 +150,7 @@ const MedicationReminders = () => {
   };
 
   const handleViewAll = () => {
-    window.location.href = "/patient/medication-reminders";
+    navigate("/patient/medication-reminders");
   };
 
   const getMethodIcon = (method) => {

@@ -19,7 +19,6 @@ const TodaySchedule = ({
 
   // Map database appointments to schedule format
   const schedule = React.useMemo(() => {
-    console.log("TodaySchedule - appointments prop:", appointments);
     return (appointments || []).map((apt) => ({
       id: apt.id,
       time: formatTime(apt.appointment_time),
@@ -110,8 +109,6 @@ const TodaySchedule = ({
         return "bg-gray-100 text-gray-800";
     }
   };
-
-  console.log("TodaySchedule - schedule:", schedule);
 
   return (
     <div className="rounded-[20px] bg-white p-6 dark:bg-navy-800">
