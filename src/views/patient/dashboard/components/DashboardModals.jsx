@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import Modal from "components/modal/Modal";
 import { IoMdCalendar, IoMdMedical } from "react-icons/io";
 import { MdWarning, MdInfo } from "react-icons/md";
@@ -8,7 +9,9 @@ export const AppointmentReminderModal = ({
   onClose,
   upcomingCount,
   appointments,
-}) => (
+}) => {
+  const navigate = useNavigate();
+  return (
   <Modal
     isOpen={isOpen}
     onClose={onClose}
@@ -76,14 +79,15 @@ export const AppointmentReminderModal = ({
       )}
 
       <button
-        onClick={() => (window.location.href = "/patient/appointments")}
+        onClick={() => navigate("/patient/appointments")}
         className="w-full rounded-lg bg-brand-500 py-2 text-sm font-medium text-white hover:bg-brand-600"
       >
         View All Appointments
       </button>
     </div>
   </Modal>
-);
+  );
+};
 
 export const HealthScoreModal = ({ isOpen, onClose }) => (
   <Modal
@@ -219,7 +223,9 @@ export const EmergencyContactsModal = ({ isOpen, onClose }) => (
   </Modal>
 );
 
-export const NutritionTipModal = ({ isOpen, onClose, tip, showToast }) => (
+export const NutritionTipModal = ({ isOpen, onClose, tip, showToast }) => {
+  const navigate = useNavigate();
+  return (
   <Modal
     isOpen={isOpen}
     onClose={onClose}
@@ -265,7 +271,7 @@ export const NutritionTipModal = ({ isOpen, onClose, tip, showToast }) => (
 
       <button
         onClick={() => {
-          window.location.href = "/patient/nutrition";
+          navigate("/patient/nutrition-library");
           showToast("Opening nutrition guide...", "info");
         }}
         className="w-full rounded-lg bg-orange-500 py-2 text-sm font-medium text-white hover:bg-orange-600"
@@ -274,4 +280,5 @@ export const NutritionTipModal = ({ isOpen, onClose, tip, showToast }) => (
       </button>
     </div>
   </Modal>
-);
+  );
+};

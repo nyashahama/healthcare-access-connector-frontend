@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   MdChevronLeft,
   MdChevronRight,
@@ -16,6 +17,7 @@ const HealthTipsCarousel = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [selectedTip, setSelectedTip] = useState(null);
   const [tipModalOpen, setTipModalOpen] = useState(false);
+  const navigate = useNavigate();
   const { showToast } = useToast();
 
   const tips = [
@@ -102,19 +104,19 @@ const HealthTipsCarousel = () => {
       case "View Schedule":
         showToast("Opening vaccination schedule...", "info");
         setTimeout(() => {
-          window.location.href = "/patient/vaccinations";
+                    navigate("/patient/find-clinic");
         }, 1000);
         break;
       case "Learn More":
         showToast("Opening nutrition guide...", "info");
         setTimeout(() => {
-          window.location.href = "/patient/nutrition";
+                    navigate("/patient/nutrition-library");
         }, 1000);
         break;
       case "Check Milestones":
         showToast("Opening developmental checklist...", "info");
         setTimeout(() => {
-          window.location.href = "/patient/development";
+                    navigate("/patient/health-records");
         }, 1000);
         break;
       case "Set Reminder":

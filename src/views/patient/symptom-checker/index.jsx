@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import React, { useState } from "react";
 import { useToast } from "hooks/useToast";
 import { useAuth } from "context/AuthContext";
@@ -30,6 +31,7 @@ const SymptomChecker = () => {
     loading: submitting,
     error: submitError,
   } = useSymptomChecker();
+  const navigate = useNavigate();
   const { showToast } = useToast();
 
   // step is an index into the visible questions array
@@ -164,19 +166,19 @@ const SymptomChecker = () => {
       case "book":
         showToast("Redirecting to appointment booking...", "info");
         setTimeout(() => {
-          window.location.href = "/patient/find-clinic";
+          navigate("/patient/find-clinic");
         }, 1000);
         break;
       case "chat":
         showToast("Connecting to telemedicine...", "info");
         setTimeout(() => {
-          window.location.href = "/patient/telemedicine";
+          navigate("/patient/telemedicine");
         }, 1000);
         break;
       case "clinic":
         showToast("Finding nearby clinics...", "info");
         setTimeout(() => {
-          window.location.href = "/patient/find-clinic";
+          navigate("/patient/find-clinic");
         }, 1000);
         break;
       default:

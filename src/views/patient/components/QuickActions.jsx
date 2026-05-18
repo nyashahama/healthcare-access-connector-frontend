@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   FaMapMarkerAlt,
   FaStethoscope,
@@ -16,6 +17,7 @@ const QuickActions = () => {
     chatDoctor: false,
     nutritionTips: false,
   });
+  const navigate = useNavigate();
   const { showToast } = useToast();
 
   const actions = [
@@ -55,7 +57,7 @@ const QuickActions = () => {
     setModalState((prev) => ({ ...prev, findClinic: false }));
     showToast("Opening clinic finder...", "info");
     setTimeout(() => {
-      window.location.href = "/patient/find-clinic";
+      navigate("/patient/find-clinic");
     }, 1000);
   };
 
@@ -63,7 +65,7 @@ const QuickActions = () => {
     setModalState((prev) => ({ ...prev, checkSymptoms: false }));
     showToast("Starting symptom checker...", "info");
     setTimeout(() => {
-      window.location.href = "/patient/symptom-checker";
+      navigate("/patient/symptom-checker");
     }, 1000);
   };
 
@@ -71,7 +73,7 @@ const QuickActions = () => {
     setModalState((prev) => ({ ...prev, chatDoctor: false }));
     showToast("Connecting to doctor...", "info");
     setTimeout(() => {
-      window.location.href = "/patient/telemedicine";
+      navigate("/patient/telemedicine");
     }, 1000);
   };
 
@@ -79,7 +81,7 @@ const QuickActions = () => {
     setModalState((prev) => ({ ...prev, nutritionTips: false }));
     showToast("Opening nutrition guide...", "info");
     setTimeout(() => {
-      window.location.href = "/patient/nutrition";
+      navigate("/patient/nutrition");
     }, 1000);
   };
 
