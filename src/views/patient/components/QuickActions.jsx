@@ -81,7 +81,7 @@ const QuickActions = () => {
     setModalState((prev) => ({ ...prev, nutritionTips: false }));
     showToast("Opening nutrition guide...", "info");
     setTimeout(() => {
-      navigate("/patient/nutrition");
+      navigate("/patient/nutrition-library");
     }, 1000);
   };
 

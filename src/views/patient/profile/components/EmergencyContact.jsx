@@ -147,7 +147,9 @@ const EmergencyContact = () => {
       }))
     );
     const contact = emergencyContacts.find((c) => c.id === id);
-    showToast(`${contact.name} set as primary emergency contact`, "success");
+    if (contact) {
+      showToast(`${contact.name} set as primary emergency contact`, "success");
+    }
   };
 
   return (

@@ -42,7 +42,6 @@ const BookAppointment = () => {
 
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
   const [patientId, setPatientId] = useState(null);
-  const [userId, setUserId] = useState(null);
   const [isLoadingPatient, setIsLoadingPatient] = useState(true);
   const [isLoadingClinic, setIsLoadingClinic] = useState(true);
 
@@ -133,8 +132,6 @@ const BookAppointment = () => {
           return;
         }
 
-        setUserId(user.id);
-
         const result = await getPatientProfileByUserId(user.id);
 
         if (result.success && result.data) {
@@ -211,13 +208,13 @@ const BookAppointment = () => {
       throw new Error("Clinic ID is required for booking");
     }
 
-    if (!userId) {
+    if (!patientId) {
       throw new Error("Patient ID is required for booking");
     }
 
     return {
       clinic_id: clinicId,
-      patient_id: userId,
+      patient_id: patientId,
       appointment_date: `${selectedDate}T00:00:00Z`,
       appointment_time: appointmentDatetime,
       appointment_datetime: appointmentDatetime,
@@ -316,8 +313,9 @@ const BookAppointment = () => {
     if (error) {
       console.error("Appointment error:", error);
       showToast(error, "error");
+      clearError();
     }
-  }, [error, showToast]);
+  }, [error, showToast, clearError]);
 
   // Generate next 14 days for date selection
   const getAvailableDates = () => {
