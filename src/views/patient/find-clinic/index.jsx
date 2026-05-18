@@ -56,7 +56,7 @@ const FindClinic = () => {
   const [, setShareModalOpen] = useState(false);
 
   // Mock clinic data - In production, this would come from an API
-  const { clinics, getClinics } = useProvider();
+  const { clinics, getClinics, error: clinicsError } = useProvider();
   const hasFetchedClinics = useRef(false);
 
   useEffect(() => {
@@ -65,6 +65,12 @@ const FindClinic = () => {
       getClinics();
     }
   }, [clinics, getClinics]);
+
+  useEffect(() => {
+    if (clinicsError) {
+      showToast(clinicsError, "error");
+    }
+  }, [clinicsError, showToast]);
 
   const formatClinicData = (clinic) => {
     const getClinicStatus = () => {
@@ -233,12 +239,17 @@ const FindClinic = () => {
 
   const confirmDirections = (transport) => {
     setDirectionsModalOpen(false);
+    const { lat, lng } = selectedClinic.coordinates || {};
+    if (lat == null || lng == null) {
+      showToast("Clinic coordinates not available", "error");
+      return;
+    }
     showToast(
       `Opening ${transport} directions to ${selectedClinic.name}`,
       "info"
     );
 
-    const url = `https://www.google.com/maps/dir/?api=1&destination=${selectedClinic.coordinates.lat},${selectedClinic.coordinates.lng}&travelmode=${transport}`;
+    const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=${transport}`;
     window.open(url, "_blank");
   };
 

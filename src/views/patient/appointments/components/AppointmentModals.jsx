@@ -255,6 +255,9 @@ export const RescheduleModal = ({
   onConfirm,
   showToast,
 }) => {
+  const [rescheduleDate, setRescheduleDate] = useState("");
+  const [rescheduleTime, setRescheduleTime] = useState("");
+
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
       <div className="p-6">
@@ -279,7 +282,8 @@ export const RescheduleModal = ({
             </label>
             <input
               type="date"
-              id="rescheduleDate"
+              value={rescheduleDate}
+              onChange={(e) => setRescheduleDate(e.target.value)}
               min={new Date().toISOString().split("T")[0]}
               className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
             />
@@ -290,7 +294,8 @@ export const RescheduleModal = ({
             </label>
             <input
               type="time"
-              id="rescheduleTime"
+              value={rescheduleTime}
+              onChange={(e) => setRescheduleTime(e.target.value)}
               className="w-full rounded-lg border border-gray-300 p-3 dark:border-gray-600 dark:bg-navy-700"
             />
           </div>
@@ -315,10 +320,8 @@ export const RescheduleModal = ({
           </button>
           <button
             onClick={() => {
-              const date = document.getElementById("rescheduleDate")?.value;
-              const time = document.getElementById("rescheduleTime")?.value;
-              if (date && time) {
-                onConfirm(date, time);
+              if (rescheduleDate && rescheduleTime) {
+                onConfirm(rescheduleDate, rescheduleTime);
               } else {
                 showToast("Please select both date and time", "warning");
               }

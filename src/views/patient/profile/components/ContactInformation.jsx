@@ -93,7 +93,6 @@ const ContactInformation = () => {
         setError("Failed to load patient data. Please try again.");
       }
     } catch (error) {
-      console.error("Error loading patient data:", error);
       setError("An error occurred while loading your information.");
     } finally {
       setLoading(false);
@@ -116,7 +115,6 @@ const ContactInformation = () => {
         year: "numeric",
       });
     } catch (error) {
-      console.error("Error formatting date:", error);
       return dateString;
     }
   };
@@ -219,14 +217,11 @@ const ContactInformation = () => {
         return;
       }
 
-      console.log("Sending updates:", updates);
-
       // Merge with current patient data
       const merged = { ...patient, ...updates };
 
       if (patient?.id) {
         const result = await updatePatientProfile(patient.id, merged);
-        console.log(result);
 
         if (result.success) {
           // Update local state with merged data
@@ -266,7 +261,6 @@ const ContactInformation = () => {
         "An error occurred while updating contact information",
         "error"
       );
-      console.error("Update error:", error);
     } finally {
       setIsSaving(false);
     }
@@ -305,7 +299,6 @@ const ContactInformation = () => {
         "An error occurred while updating notification preferences",
         "error"
       );
-      console.error("Toggle SMS error:", error);
     }
   };
 

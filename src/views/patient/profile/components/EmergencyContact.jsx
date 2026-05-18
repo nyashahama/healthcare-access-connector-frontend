@@ -133,8 +133,6 @@ const EmergencyContact = () => {
   };
 
   const confirmCall = () => {
-    // In a real app, this would initiate a call
-    console.log(`Calling ${selectedContact.name} at ${selectedContact.phone}`);
     setCallModalOpen(false);
     showToast(`Calling ${selectedContact.name}...`, "info");
   };
