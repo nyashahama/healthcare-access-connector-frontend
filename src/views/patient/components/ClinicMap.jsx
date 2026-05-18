@@ -100,6 +100,7 @@ const ClinicMap = ({ clinics, userLocation, onClinicSelect }) => {
 
       // Add clinic markers
       clinics.forEach((clinic) => {
+        if (!clinic?.coordinates?.lat || !clinic?.coordinates?.lng) return;
         const clinicIcon = L.divIcon({
           className: "clinic-marker",
           html: `
