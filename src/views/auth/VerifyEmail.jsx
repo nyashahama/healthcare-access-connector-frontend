@@ -97,6 +97,13 @@ const VerifyEmail = () => {
     }
   };
 
+  const headingClassMap = {
+    blue: "text-blue-700 dark:text-blue-300",
+    green: "text-green-700 dark:text-green-300",
+    red: "text-red-700 dark:text-red-300",
+    gray: "text-gray-700 dark:text-gray-300",
+  };
+
   const getContent = () => {
     switch (status) {
       case "verifying":
@@ -104,7 +111,7 @@ const VerifyEmail = () => {
           icon: <MdHealthAndSafety className="h-16 w-16 text-blue-500" />,
           title: "Verifying Your Email",
           message: "Please wait while we verify your email address...",
-          color: "blue",
+          headingClass: headingClassMap.blue,
         };
       case "success":
         return {
@@ -112,7 +119,7 @@ const VerifyEmail = () => {
           title: "Email Verified!",
           message:
             "Your email has been successfully verified. Redirecting to sign in...",
-          color: "green",
+          headingClass: headingClassMap.green,
         };
       case "error":
         return {
@@ -121,14 +128,14 @@ const VerifyEmail = () => {
           message: token
             ? "Unable to verify your email. The link may have expired or is invalid."
             : "Invalid verification link.",
-          color: "red",
+          headingClass: headingClassMap.red,
         };
       default:
         return {
           icon: <MdHealthAndSafety className="h-16 w-16 text-gray-500" />,
           title: "Verification",
           message: "Processing your request...",
-          color: "gray",
+          headingClass: headingClassMap.gray,
         };
     }
   };
@@ -144,7 +151,7 @@ const VerifyEmail = () => {
           </div>
 
           <h1
-            className={`mb-3 text-3xl font-bold text-${content.color}-700 dark:text-${content.color}-300`}
+            className={`mb-3 text-3xl font-bold ${content.headingClass}`}
           >
             {content.title}
           </h1>

@@ -10,6 +10,7 @@ import {
 import SystemHealth from "../components/SystemHealth";
 import RegistrationQueue from "../components/RegistrationQueue";
 import AnalyticsChart from "../components/AnalyticsChart";
+import { useToast } from "hooks/useToast";
 
 // Component imports
 import StatsWidgets from "./components/StatsWidgets";
@@ -19,7 +20,6 @@ import PendingActionsCard from "./components/PendingActionsCard";
 import SMSCreditsCard from "./components/SMSCreditsCard";
 import QuickActionsButtons from "./components/QuickActionsButtons";
 import SystemStatusFooter from "./components/SystemStatusFooter";
-import ToastNotification from "./components/ToastNotification";
 import {
   RestartModal,
   BackupModal,
@@ -34,7 +34,7 @@ import NotificationModal from "./components/NotificationModal";
 const SystemDashboard = () => {
   const [selectedSystem, setSelectedSystem] = useState(null);
   const [selectedClinic, setSelectedClinic] = useState(null);
-  const [toasts, setToasts] = useState([]);
+  const { showToast } = useToast();
 
   // Modal states
   const [restartModalOpen, setRestartModalOpen] = useState(false);
@@ -106,22 +106,6 @@ const SystemDashboard = () => {
     },
   };
 
-  // Toast notification system
-  const showToast = (message, type = "info") => {
-    const id = Date.now();
-    const newToast = { id, message, type };
-    setToasts((prev) => [...prev, newToast]);
-
-    // Auto remove after 5 seconds
-    setTimeout(() => {
-      setToasts((prev) => prev.filter((toast) => toast.id !== id));
-    }, 5000);
-  };
-
-  const removeToast = (id) => {
-    setToasts((prev) => prev.filter((toast) => toast.id !== id));
-  };
-
   // Handlers for system actions
   const handleRestartSystem = (system) => {
     setSelectedSystem(system);
@@ -181,6 +165,7 @@ const SystemDashboard = () => {
   };
 
   const confirmApproveClinic = () => {
+    if (!selectedClinic) return;
     console.log(`Approving clinic: ${selectedClinic.name}`);
     setApproveClinicModalOpen(false);
     showToast(
@@ -190,6 +175,7 @@ const SystemDashboard = () => {
   };
 
   const confirmRejectClinic = () => {
+    if (!selectedClinic) return;
     console.log(`Rejecting clinic: ${selectedClinic.name}`);
     setRejectClinicModalOpen(false);
     setRejectReason("");
@@ -214,9 +200,6 @@ const SystemDashboard = () => {
 
   return (
     <div className="h-full">
-      {/* Toast Notifications */}
-      <ToastNotification toasts={toasts} onRemove={removeToast} />
-
       {/* Header */}
       <div className="mb-5">
         <h2 className="text-3xl font-bold text-navy-700 dark:text-white">

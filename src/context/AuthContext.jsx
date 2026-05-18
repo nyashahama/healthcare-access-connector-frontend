@@ -70,7 +70,7 @@ export const AuthProvider = ({ children }) => {
       return { success: true, data: response };
     } catch (error) {
       const errorMessage =
-        error.response?.data?.error || "Staff registration failed";
+        error.message || "Staff registration failed";
       console.error("Staff registration error:", error);
       return { success: false, error: errorMessage };
     } finally {
@@ -89,7 +89,7 @@ export const AuthProvider = ({ children }) => {
       const response = await authService.register(data);
       return { success: true, data: response };
     } catch (error) {
-      const errorMessage = error.response?.data?.error || "Registration failed";
+      const errorMessage = error.message || "Registration failed";
       console.error("Registration error:", error);
       return { success: false, error: errorMessage };
     } finally {
@@ -161,7 +161,7 @@ export const AuthProvider = ({ children }) => {
 
       return { success: true, data: response };
     } catch (error) {
-      const errorMessage = error.response?.data?.error || "Verification failed";
+      const errorMessage = error.message || "Verification failed";
       console.error("Verification error:", error);
       return { success: false, error: errorMessage };
     } finally {
@@ -181,7 +181,7 @@ export const AuthProvider = ({ children }) => {
 
       return { success: true, data: response };
     } catch (error) {
-      const errorMessage = error.response?.data?.error || "Request failed";
+      const errorMessage = error.message || "Request failed";
       console.error("Password reset request error:", error);
       return { success: false, error: errorMessage };
     } finally {
@@ -202,7 +202,7 @@ export const AuthProvider = ({ children }) => {
       return { success: true, data: response };
     } catch (error) {
       const errorMessage =
-        error.response?.data?.error || "Password reset failed";
+        error.message || "Password reset failed";
       console.error("Password reset error:", error);
       return { success: false, error: errorMessage };
     } finally {
@@ -223,7 +223,7 @@ export const AuthProvider = ({ children }) => {
       return { success: true, data: response };
     } catch (error) {
       const errorMessage =
-        error.response?.data?.error || "Failed to generate OTP";
+        error.message || "Failed to generate OTP";
       console.error("OTP generation error:", error);
       return { success: false, error: errorMessage };
     } finally {
@@ -244,7 +244,7 @@ export const AuthProvider = ({ children }) => {
       return { success: true, data: response };
     } catch (error) {
       const errorMessage =
-        error.response?.data?.error || "Failed to verify OTP";
+        error.message || "Failed to verify OTP";
       console.error("OTP verification error:", error);
       return { success: false, error: errorMessage };
     } finally {
@@ -265,7 +265,7 @@ export const AuthProvider = ({ children }) => {
       return { success: true, data: response };
     } catch (error) {
       const errorMessage =
-        error.response?.data?.error || "Failed to resend verification";
+        error.message || "Failed to resend verification";
       console.error("Resend verification error:", error);
       return { success: false, error: errorMessage };
     } finally {
@@ -286,7 +286,7 @@ export const AuthProvider = ({ children }) => {
       return { success: true, data: response };
     } catch (error) {
       const errorMessage =
-        error.response?.data?.error || "Password update failed";
+        error.message || "Password update failed";
       console.error("Password update error:", error);
       return { success: false, error: errorMessage };
     } finally {
@@ -307,7 +307,7 @@ export const AuthProvider = ({ children }) => {
       return { success: true, data: response };
     } catch (error) {
       const errorMessage =
-        error.response?.data?.error || "Failed to load profile";
+        error.message || "Failed to load profile";
       console.error("Get profile error:", error);
       return { success: false, error: errorMessage };
     } finally {
@@ -328,7 +328,7 @@ export const AuthProvider = ({ children }) => {
       return { success: true, data: response };
     } catch (error) {
       const errorMessage =
-        error.response?.data?.error || "Failed to load consent";
+        error.message || "Failed to load consent";
       console.error("Get consent error:", error);
       return { success: false, error: errorMessage };
     } finally {

@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "context/AuthContext";
 import InputField from "components/fields/InputField";
 import { useToast } from "hooks/useToast";
 import { usePatient } from "hooks/usePatient";
@@ -52,7 +53,15 @@ const CompletePatientProfile = () => {
 
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const { user } = useAuth();
   const { upsertPatientProfile } = usePatient();
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -91,6 +100,10 @@ const CompletePatientProfile = () => {
       showToast("Country is required", "warning");
       return false;
     }
+    if (!formData.preferredCommunicationMethod) {
+      showToast("Preferred communication method is required", "warning");
+      return false;
+    }
     return true;
   };
 
@@ -107,14 +120,14 @@ const CompletePatientProfile = () => {
 
     try {
       // Map formData to snake_case for backend
-      // Debug: log what we're sending
-
-      const userStr = localStorage.getItem("user");
-
-      const user = JSON.parse(userStr);
+      if (!user?.id) {
+        showToast("User session expired. Please sign in again.", "error");
+        navigate("/auth/sign-in");
+        return;
+      }
 
       const profileData = {
-        user_id: user ? user.id : undefined,
+        user_id: user.id,
         first_name: formData.firstName,
         last_name: formData.lastName,
         preferred_name: formData.preferredName || undefined,
@@ -158,7 +171,9 @@ const CompletePatientProfile = () => {
         localStorage.removeItem(cacheKey);
 
         setTimeout(() => {
-          navigate("/patient/dashboard");
+          if (mountedRef.current) {
+            navigate("/patient/dashboard");
+          }
         }, 1500);
       } else {
         showToast(result.error || "Failed to save profile", "error");

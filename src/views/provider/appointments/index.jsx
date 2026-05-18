@@ -40,7 +40,7 @@ const Appointments = () => {
     confirmAppointment,
   } = useAppointment();
 
-  const { clinic, getClinics } = useProvider();
+  const { getClinics } = useProvider();
 
   const currentUser = getCurrentUser();
 
@@ -163,8 +163,6 @@ const Appointments = () => {
 
     fetchClinicAndAppointments();
   }, [getAppointmentsByClinic, getClinics, getPendingAppointments, getTodayAppointments, showToast]);
-
-  console.log("do i have a clinic id?", clinic);
 
   // Show error toast
   useEffect(() => {

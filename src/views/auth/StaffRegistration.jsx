@@ -58,7 +58,7 @@ const StaffRegistration = () => {
 
         setInvitation(null);
         showToast(
-          error.response?.data?.error || "Invalid or expired invitation",
+          error.message || "Invalid or expired invitation",
           "error"
         );
       } finally {

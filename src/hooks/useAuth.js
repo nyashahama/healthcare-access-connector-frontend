@@ -22,7 +22,7 @@ export const useAuth = () => {
       setLoading(false);
       return { success: true, data: response };
     } catch (err) {
-      const errorMessage = err.response?.data?.error || "Registration failed";
+      const errorMessage = err.message || "Registration failed";
       setError(errorMessage);
       setLoading(false);
       return { success: false, error: errorMessage };
@@ -40,7 +40,7 @@ export const useAuth = () => {
       return { success: true, data: response };
     } catch (err) {
       const errorMessage =
-        err.response?.data?.error || "Staff registration failed";
+        err.message || "Staff registration failed";
       setError(errorMessage);
       setLoading(false);
       return { success: false, error: errorMessage };
@@ -57,7 +57,7 @@ export const useAuth = () => {
       setLoading(false);
       return { success: true, data: response };
     } catch (err) {
-      const errorMessage = err.response?.data?.error || "Login unsuccessful";
+      const errorMessage = err.message || "Login unsuccessful";
       setError(errorMessage);
       setLoading(false);
       return { success: false, error: errorMessage };
@@ -74,7 +74,7 @@ export const useAuth = () => {
       setLoading(false);
       return { success: true };
     } catch (err) {
-      const errorMessage = err.response?.data?.error || "Couldn't log out";
+      const errorMessage = err.message || "Couldn't log out";
       setError(errorMessage);
       setLoading(false);
       return { success: false, error: errorMessage };
@@ -91,7 +91,7 @@ export const useAuth = () => {
       setLoading(false);
       return { success: true, data: response };
     } catch (err) {
-      const errorMessage = err.response?.data?.error || "Verification failed";
+      const errorMessage = err.message || "Verification failed";
       setError(errorMessage);
       setLoading(false);
       return { success: false, error: errorMessage };
@@ -108,7 +108,7 @@ export const useAuth = () => {
       setLoading(false);
       return { success: true, data: response };
     } catch (err) {
-      const errorMessage = err.response?.data?.error || "Request failed";
+      const errorMessage = err.message || "Request failed";
       setError(errorMessage);
       setLoading(false);
       return { success: false, error: errorMessage };
@@ -125,7 +125,7 @@ export const useAuth = () => {
       setLoading(false);
       return { success: true, data: response };
     } catch (err) {
-      const errorMessage = err.response?.data?.error || "Password reset failed";
+      const errorMessage = err.message || "Password reset failed";
       setError(errorMessage);
       setLoading(false);
       return { success: false, error: errorMessage };
@@ -143,7 +143,7 @@ export const useAuth = () => {
       return { success: true, data: response };
     } catch (err) {
       const errorMessage =
-        err.response?.data?.error || "Failed to generate OTP";
+        err.message || "Failed to generate OTP";
       setError(errorMessage);
       setLoading(false);
       return { success: false, error: errorMessage };
@@ -160,7 +160,7 @@ export const useAuth = () => {
       setLoading(false);
       return { success: true, data: response };
     } catch (err) {
-      const errorMessage = err.response?.data?.error || "Failed to generate OTP";
+      const errorMessage = err.message || "Failed to generate OTP";
       setError(errorMessage);
       setLoading(false);
       return { success: false, error: errorMessage };
@@ -178,7 +178,7 @@ export const useAuth = () => {
       return { success: true, data: response };
     } catch (err) {
       const errorMessage =
-        err.response?.data?.error || "Failed to resend verification";
+        err.message || "Failed to resend verification";
       setError(errorMessage);
       setLoading(false);
       return { success: false, error: errorMessage };
@@ -196,7 +196,7 @@ export const useAuth = () => {
       return { success: true, data: response };
     } catch (err) {
       const errorMessage =
-        err.response?.data?.error || "Password update failed";
+        err.message || "Password update failed";
       setError(errorMessage);
       setLoading(false);
       return { success: false, error: errorMessage };
@@ -214,7 +214,7 @@ export const useAuth = () => {
       return { success: true, data: response };
     } catch (err) {
       const errorMessage =
-        err.response?.data?.error || "Failed to load profile";
+        err.message || "Failed to load profile";
       setError(errorMessage);
       setLoading(false);
       return { success: false, error: errorMessage };
@@ -232,7 +232,7 @@ export const useAuth = () => {
       return { success: true, data: response };
     } catch (err) {
       const errorMessage =
-        err.response?.data?.error || "Failed to load consent";
+        err.message || "Failed to load consent";
       setError(errorMessage);
       setLoading(false);
       return { success: false, error: errorMessage };
