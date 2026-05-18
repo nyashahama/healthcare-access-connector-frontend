@@ -1,3 +1,4 @@
+import { getErrorMessage } from "utils/errorUtils";
 import consultationNotesService from "api/services/consultationNotesService";
 import { useCallback, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -126,7 +127,7 @@ export const useConsultationNotes = () => {
         setLoading(false);
         return { success: true, data: response };
       } catch (err) {
-        const msg = err.response?.data?.error || "Failed to create note";
+        const msg = getErrorMessage(err, "Failed to create note");
         setError(msg);
         setLoading(false);
         return { success: false, error: msg };
@@ -157,7 +158,7 @@ export const useConsultationNotes = () => {
           setLoading(false);
           return { success: true, data: null };
         }
-        const msg = err.response?.data?.error || "Failed to fetch note";
+        const msg = getErrorMessage(err, "Failed to fetch note");
         setError(msg);
         setLoading(false);
         return { success: false, error: msg };
@@ -179,7 +180,7 @@ export const useConsultationNotes = () => {
         setLoading(false);
         return { success: true, data: response };
       } catch (err) {
-        const msg = err.response?.data?.error || "Failed to update note";
+        const msg = getErrorMessage(err, "Failed to update note");
         setError(msg);
         setLoading(false);
         return { success: false, error: msg };
@@ -200,7 +201,7 @@ export const useConsultationNotes = () => {
         setLoading(false);
         return { success: true, data: response };
       } catch (err) {
-        const msg = err.response?.data?.error || "Failed to finalise note";
+        const msg = getErrorMessage(err, "Failed to finalise note");
         setError(msg);
         setLoading(false);
         return { success: false, error: msg };
@@ -244,7 +245,7 @@ export const useConsultationNotes = () => {
         setLoading(false);
         return { success: true, data: response };
       } catch (err) {
-        const msg = err.response?.data?.error || "Failed to fetch note";
+        const msg = getErrorMessage(err, "Failed to fetch note");
         setError(msg);
         setLoading(false);
         return { success: false, error: msg };
@@ -328,7 +329,7 @@ export const useConsultationNotes = () => {
       return { success: true, data: response };
     } catch (err) {
       const msg =
-        err.response?.data?.error || "Failed to fetch patient note history";
+        getErrorMessage(err, "Failed to fetch patient note history");
       setError(msg);
       setLoading(false);
       return { success: false, error: msg };

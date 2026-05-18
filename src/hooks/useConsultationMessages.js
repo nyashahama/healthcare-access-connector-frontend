@@ -1,3 +1,4 @@
+import { getErrorMessage } from "utils/errorUtils";
 import consultationMessagesService from "api/services/consultationMessagesService";
 import { useCallback, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -185,7 +186,7 @@ export const useConsultationMessages = () => {
         setLoading(false);
         return { success: true, data: response };
       } catch (err) {
-        const msg = err.response?.data?.error || "Failed to send message";
+        const msg = getErrorMessage(err, "Failed to send message");
         setError(msg);
         setLoading(false);
         return { success: false, error: msg };
@@ -204,7 +205,7 @@ export const useConsultationMessages = () => {
         setLoading(false);
         return { success: true };
       } catch (err) {
-        const msg = err.response?.data?.error || "Failed to delete message";
+        const msg = getErrorMessage(err, "Failed to delete message");
         setError(msg);
         setLoading(false);
         return { success: false, error: msg };
@@ -228,7 +229,7 @@ export const useConsultationMessages = () => {
         return { success: true, data: response };
       } catch (err) {
         const msg =
-          err.response?.data?.error || "Failed to insert system event";
+          getErrorMessage(err, "Failed to insert system event");
         setError(msg);
         setLoading(false);
         return { success: false, error: msg };
@@ -262,7 +263,7 @@ export const useConsultationMessages = () => {
         setLoading(false);
         return { success: true, data: response };
       } catch (err) {
-        const msg = err.response?.data?.error || "Failed to fetch messages";
+        const msg = getErrorMessage(err, "Failed to fetch messages");
         setError(msg);
         setLoading(false);
         return { success: false, error: msg };
@@ -294,7 +295,7 @@ export const useConsultationMessages = () => {
         return { success: true, data: response };
       } catch (err) {
         const msg =
-          err.response?.data?.error || "Failed to fetch new messages";
+          getErrorMessage(err, "Failed to fetch new messages");
         setError(msg);
         setLoading(false);
         return { success: false, error: msg };
@@ -322,7 +323,7 @@ export const useConsultationMessages = () => {
         return { success: true, data: response };
       } catch (err) {
         const msg =
-          err.response?.data?.error || "Failed to fetch last message";
+          getErrorMessage(err, "Failed to fetch last message");
         setError(msg);
         setLoading(false);
         return { success: false, error: msg };
@@ -352,7 +353,7 @@ export const useConsultationMessages = () => {
         return { success: true, data: response };
       } catch (err) {
         const msg =
-          err.response?.data?.error || "Failed to fetch attachments";
+          getErrorMessage(err, "Failed to fetch attachments");
         setError(msg);
         setLoading(false);
         return { success: false, error: msg };
@@ -380,7 +381,7 @@ export const useConsultationMessages = () => {
         return { success: true, data: response };
       } catch (err) {
         const msg =
-          err.response?.data?.error || "Failed to fetch system events";
+          getErrorMessage(err, "Failed to fetch system events");
         setError(msg);
         setLoading(false);
         return { success: false, error: msg };
@@ -407,7 +408,7 @@ export const useConsultationMessages = () => {
         return { success: true };
       } catch (err) {
         const msg =
-          err.response?.data?.error || "Failed to mark message read";
+          getErrorMessage(err, "Failed to mark message read");
         setError(msg);
         setLoading(false);
         return { success: false, error: msg };
@@ -494,7 +495,7 @@ export const useConsultationMessages = () => {
         return { success: true, data: response };
       } catch (err) {
         const msg =
-          err.response?.data?.error || "Failed to fetch unread count";
+          getErrorMessage(err, "Failed to fetch unread count");
         setError(msg);
         setLoading(false);
         return { success: false, error: msg };
