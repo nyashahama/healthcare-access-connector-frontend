@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "context/AuthContext";
 import { usePatient } from "hooks/usePatient";
@@ -11,8 +11,10 @@ const ProfileCompletionGuard = ({ children, minCompletion = 50 }) => {
     patient,
     profileCompletion,
     loading: profileLoading,
+    error: profileError,
     getCurrentPatientProfile,
   } = usePatient();
+  const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated && user?.role === "patient") {
@@ -55,8 +57,11 @@ const ProfileCompletionGuard = ({ children, minCompletion = 50 }) => {
 
   if (!isAuthenticated || user?.role !== "patient") return children;
 
+  // If profile fetch failed, don't lock the user out - let them proceed
+  if (profileError) return children;
+
   const completion = patient ? profileCompletion : 0;
-  const showModal = location.pathname !== "/auth/complete-patient-profile" && completion < minCompletion;
+  const showModal = !dismissed && location.pathname !== "/auth/complete-patient-profile" && completion < minCompletion;
 
   return (
     <>
@@ -98,6 +103,12 @@ const ProfileCompletionGuard = ({ children, minCompletion = 50 }) => {
                 className="w-full rounded-lg bg-brand-500 px-4 py-3 font-medium text-white hover:bg-brand-600"
               >
                 Complete Profile Now
+              </button>
+              <button
+                onClick={() => setDismissed(true)}
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-navy-600 dark:text-gray-400 dark:hover:bg-navy-700"
+              >
+                Remind Me Later
               </button>
             </div>
           </div>
