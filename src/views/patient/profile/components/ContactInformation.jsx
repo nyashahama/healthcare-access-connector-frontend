@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   MdEmail,
   MdPhone,
@@ -52,58 +52,58 @@ const ContactInformation = () => {
     language: "",
   });
 
+  const loadPatientData = useCallback(async () => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const result = await getCurrentPatientProfile();
+
+      if (result.success && result.data) {
+        // Map patient data to contact info format
+        const patientData = result.data;
+        const newContactInfo = {
+          fullName:
+            `${patientData.first_name || ""} ${
+              patientData.last_name || ""
+            }`.trim() || "",
+          email: patientData.email || user.email || "",
+          phone: patientData.phone || user.phone || "",
+          address: patientData.primary_address || "",
+          dateOfBirth: patientData.date_of_birth
+            ? formatDate(patientData.date_of_birth)
+            : "",
+          gender: patientData.gender || "",
+          language:
+            patientData.home_language ||
+            patientData.language_preferences?.join(", ") ||
+            "",
+          smsNotifications:
+            patientData.sms_notifications !== undefined
+              ? patientData.sms_notifications
+              : true,
+        };
+        setContactInfo(newContactInfo);
+      } else {
+        setError("Failed to load patient data. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error loading patient data:", error);
+      setError("An error occurred while loading your information.");
+    } finally {
+      setLoading(false);
+    }
+  }, [user, getCurrentPatientProfile]);
+
   // Load patient data on component mount
   useEffect(() => {
-    const loadPatientData = async () => {
-      if (!user) {
-        setLoading(false);
-        return;
-      }
-
-      setLoading(true);
-      setError(null);
-
-      try {
-        const result = await getCurrentPatientProfile();
-
-        if (result.success && result.data) {
-          // Map patient data to contact info format
-          const patientData = result.data;
-          const newContactInfo = {
-            fullName:
-              `${patientData.first_name || ""} ${
-                patientData.last_name || ""
-              }`.trim() || "",
-            email: patientData.email || user.email || "",
-            phone: patientData.phone || user.phone || "",
-            address: patientData.primary_address || "",
-            dateOfBirth: patientData.date_of_birth
-              ? formatDate(patientData.date_of_birth)
-              : "",
-            gender: patientData.gender || "",
-            language:
-              patientData.home_language ||
-              patientData.language_preferences?.join(", ") ||
-              "",
-            smsNotifications:
-              patientData.sms_notifications !== undefined
-                ? patientData.sms_notifications
-                : true,
-          };
-          setContactInfo(newContactInfo);
-        } else {
-          setError("Failed to load patient data. Please try again.");
-        }
-      } catch (error) {
-        console.error("Error loading patient data:", error);
-        setError("An error occurred while loading your information.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
     loadPatientData();
-  }, [user, getCurrentPatientProfile]);
+  }, [loadPatientData]);
 
   // Format date for display
   const formatDate = (dateString) => {
@@ -357,7 +357,7 @@ const ContactInformation = () => {
             {error}
           </p>
           <button
-            onClick={() => window.location.reload()}
+            onClick={() => loadPatientData()}
             className="mt-6 rounded-lg bg-brand-500 px-4 py-2 text-white hover:bg-brand-600"
           >
             Try Again
