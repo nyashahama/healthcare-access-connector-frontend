@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useEffect } from "react";
+import { useProvider } from "hooks/useProvider";
 import ClinicBanner from "./components/ClinicBanner";
 import ClinicInformation from "./components/ClinicInformation";
 import OperatingHours from "./components/OperatingHours";
@@ -9,11 +10,26 @@ import AppointmentSettings from "./components/AppointmentSettings";
 import PerformanceMetrics from "./components/PerformanceMetrics";
 
 const ProviderProfile = () => {
+  const { clinic, getMyClinic, loading } = useProvider();
+  const clinicId = clinic?.id;
+
+  useEffect(() => {
+    getMyClinic();
+  }, [getMyClinic]);
+
+  if (loading || !clinicId) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <div className="border-t-transparent h-12 w-12 animate-spin rounded-full border-4 border-brand-500" />
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-full w-full flex-col">
       {/* Clinic Banner */}
       <div className="w-full">
-        <ClinicBanner />
+        <ClinicBanner clinicId={clinicId} />
       </div>
 
       {/* Main Content Grid */}
@@ -22,23 +38,23 @@ const ProviderProfile = () => {
           {/* Left Column - Clinic Details */}
           <div className="space-y-5">
             <div className="h-fit">
-              <ClinicInformation />
+              <ClinicInformation clinicId={clinicId} />
             </div>
             <div className="h-fit">
-              <OperatingHours />
+              <OperatingHours clinicId={clinicId} />
             </div>
             <div className="h-fit">
-              <ServicesOffered />
+              <ServicesOffered clinicId={clinicId} />
             </div>
           </div>
 
           {/* Middle Column - Staff & Credentials */}
           <div className="space-y-5">
             <div className="h-fit">
-              <MedicalStaff />
+              <MedicalStaff clinicId={clinicId} />
             </div>
             <div className="h-fit">
-              <Credentials />
+              <Credentials clinicId={clinicId} />
             </div>
           </div>
 

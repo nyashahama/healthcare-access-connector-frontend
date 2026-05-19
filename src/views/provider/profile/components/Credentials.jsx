@@ -12,7 +12,7 @@ import Card from "components/card";
 import Modal from "components/modal/Modal";
 import { useToast } from "hooks/useToast";
 
-const Credentials = () => {
+const Credentials = ({ clinicId }) => {
   const [credentials] = useState([
     {
       id: 1,
