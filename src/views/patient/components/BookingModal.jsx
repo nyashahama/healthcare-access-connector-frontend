@@ -37,6 +37,31 @@ const BookingModal = ({
     "03:00 PM",
   ];
 
+  const getAvailableDates = () => {
+    const dates = [];
+    const today = new Date();
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(today);
+      date.setDate(today.getDate() + i);
+      dates.push(date);
+    }
+    return dates;
+  };
+
+  const formatDateForDisplay = (date) => {
+    const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    const d = String(date.getDate()).padStart(2, "0");
+    return {
+      day: days[date.getDay()],
+      date: date.getDate(),
+      month: months[date.getMonth()],
+      fullDate: `${y}-${m}-${d}`,
+    };
+  };
+
   const handleSubmit = () => {
     if (!selectedDate || !selectedTime) {
       showToast("Please select date and time", "warning");
@@ -110,6 +135,39 @@ const BookingModal = ({
                   <option>Emergency Visit</option>
                   <option>Child Health Check</option>
                 </select>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Preferred Date
+                </label>
+                <div className="grid grid-cols-7 gap-2">
+                  {getAvailableDates().map((date) => {
+                    const formatted = formatDateForDisplay(date);
+                    const isSelected = selectedDate === formatted.fullDate;
+                    const isToday = formatted.fullDate === formatDateForDisplay(new Date()).fullDate;
+                    return (
+                      <button
+                        key={formatted.fullDate}
+                        type="button"
+                        onClick={() => setSelectedDate(formatted.fullDate)}
+                        className={`flex flex-col items-center rounded-xl p-2 transition-all ${
+                          isSelected
+                            ? "bg-gradient-to-br from-brand-500 to-brand-600 text-white shadow-lg"
+                            : "border-2 border-gray-200 hover:border-brand-300 dark:border-gray-700"
+                        }`}
+                      >
+                        <div className="text-xs font-medium">
+                          {isToday ? "Today" : formatted.day}
+                        </div>
+                        <div className="mt-1 text-lg font-bold">
+                          {formatted.date}
+                        </div>
+                        <div className="text-xs">{formatted.month}</div>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
               <div>
