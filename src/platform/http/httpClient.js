@@ -21,7 +21,20 @@ export const createHttpClient = ({ baseURL, getToken, onUnauthorized }) => {
     (error) => {
       const normalized = normalizeHttpError(error);
       if (normalized.kind === "auth") {
-        onUnauthorized?.(normalized);
+        // Only trigger logout for genuine authentication failures,
+        // not for 401s caused by missing resources or permissions.
+        const msg = (normalized.message || "").toLowerCase();
+        const isRealAuthFailure =
+          msg.includes("invalid") ||
+          msg.includes("expired") ||
+          msg.includes("unauthorized") ||
+          msg.includes("unauthenticated") ||
+          msg.includes("token") ||
+          msg.includes("sign in") ||
+          msg.includes("login");
+        if (isRealAuthFailure) {
+          onUnauthorized?.(normalized);
+        }
       }
       return Promise.reject(normalized);
     }
