@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "context/AuthContext";
 import { usePatient } from "hooks/usePatient";
@@ -10,51 +10,39 @@ const ProfileCompletionGuard = ({ children, minCompletion = 50 }) => {
   const {
     patient,
     profileCompletion,
-    loading: profileLoading,
     error: profileError,
     getCurrentPatientProfile,
   } = usePatient();
   const [dismissed, setDismissed] = useState(false);
+  const hasFetched = useRef(false);
 
   useEffect(() => {
-    if (isAuthenticated && user?.role === "patient") {
+    if (isAuthenticated && user?.role === "patient" && !hasFetched.current) {
+      hasFetched.current = true;
       getCurrentPatientProfile();
     }
   }, [getCurrentPatientProfile, isAuthenticated, user?.role]);
 
-  if (authLoading || profileLoading) {
+  // Only show spinner on first load — never during navigation
+  if (authLoading) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-lightPrimary dark:bg-navy-900">
         <div className="text-center">
           <div className="relative mx-auto mb-6 h-16 w-16">
-            <svg
-              className="h-full w-full animate-spin text-brand-500"
-              viewBox="0 0 24 24"
-            >
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-                fill="none"
-              />
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-              />
+            <svg className="h-full w-full animate-spin text-brand-500" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
             </svg>
           </div>
           <h3 className="text-lg font-semibold text-navy-700 dark:text-white">
-            Loading Your Profile
+            Verifying Access
           </h3>
         </div>
       </div>
     );
   }
 
+  // Once we have data (even if still loading), show children so sidebar persists
   if (!isAuthenticated || user?.role !== "patient") return children;
 
   // If profile fetch failed, don't lock the user out - let them proceed
