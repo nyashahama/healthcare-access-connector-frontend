@@ -4,12 +4,10 @@ import { patientRoutes } from "routes.js";
 import { useAuth } from "context/AuthContext";
 
 const PatientSidebar = ({ open, onClose }) => {
-  const { getCurrentUser } = useAuth();
-  const user = getCurrentUser();
-  const userRole = user?.role;
+  const { user } = useAuth();
 
   // Only render for patient role
-  if (userRole !== "patient") return null;
+  if (user?.role !== "patient") return null;
 
   // Filter out routes that should not appear in sidebar
   const filteredRoutes = patientRoutes.filter((route) => {

@@ -3,9 +3,8 @@ import Links from "./components/Links";
 import { providerRoutes } from "routes.js";
 import { useAuth } from "context/AuthContext";
 const ProviderSidebar = ({ open, onClose }) => {
-  const { getCurrentUser } = useAuth();
+  const { user } = useAuth();
 
-  const currentUser = getCurrentUser();
 
   const filteredRoutes = providerRoutes.filter((route) => {
     // 1. Skip routes marked as not in sidebar
@@ -16,14 +15,14 @@ const ProviderSidebar = ({ open, onClose }) => {
       // Check if user has any of the required roles
       const hasRequiredRole = route.roles.some(
         (role) =>
-          currentUser?.role === role || currentUser?.roles?.includes(role)
+          user?.role === role || user?.roles?.includes(role)
       );
       if (!hasRequiredRole) return false;
     }
 
     // 3. Check specific email restrictions if they exist
     if (route.allowedEmails) {
-      return route.allowedEmails.includes(currentUser?.email);
+      return route.allowedEmails.includes(user?.email);
     }
 
     return true;

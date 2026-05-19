@@ -4,12 +4,10 @@ import { adminRoutes } from "routes.js";
 import { useAuth } from "context/AuthContext";
 
 const AdminSidebar = ({ open, onClose }) => {
-  const { getCurrentUser } = useAuth();
-  const user = getCurrentUser();
-  const userRole = user?.role;
+  const { user } = useAuth();
 
   // Only render for system_admin
-  if (userRole !== "system_admin") return null;
+  if (user?.role !== "system_admin") return null;
 
   // Admin routes have no role restrictions; just hide those with sidebar: false
   const filteredRoutes = adminRoutes.filter((route) => route.sidebar !== false);
