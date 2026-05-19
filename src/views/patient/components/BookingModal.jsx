@@ -114,6 +114,19 @@ const BookingModal = ({
 
               <div>
                 <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Preferred Date
+                </label>
+                <input
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  className="w-full rounded-lg border border-gray-300 p-2 dark:border-gray-600 dark:bg-navy-800"
+                  min={new Date().toISOString().split("T")[0]}
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
                   Preferred Time
                 </label>
                 <select
