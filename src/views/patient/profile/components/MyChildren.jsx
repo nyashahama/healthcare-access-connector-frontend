@@ -1,8 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FaBaby, FaCalendarAlt, FaHeartbeat } from "react-icons/fa";
 import Card from "components/card";
 import Modal from "components/modal/Modal";
 import { useToast } from "hooks/useToast";
+import { useAuth } from "context/AuthContext";
+import { usePatient } from "hooks/usePatient";
+import patientService from "api/services/patientService";
 import {
   MdEdit,
   MdAdd,
@@ -14,6 +17,9 @@ import {
 
 const MyChildren = () => {
   const { showToast } = useToast();
+  const { user } = useAuth();
+  const { patient, getPatientProfileByUserId } = usePatient();
+  
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -21,32 +27,31 @@ const MyChildren = () => {
   const [selectedChild, setSelectedChild] = useState(null);
   const [actionType, setActionType] = useState("");
 
-  const [children, setChildren] = useState([
-    {
-      id: 1,
-      name: "Emily Johnson",
-      age: "5 years",
-      gender: "Female",
-      dateOfBirth: "2019-05-15",
-      lastCheckup: "2 weeks ago",
-      nextAppointment: "Next month",
-      healthStatus: "Good",
-      vaccinations: ["6-week", "10-week", "14-week", "9 months"],
-      upcomingVaccination: "6-year shots in July 2024",
-    },
-    {
-      id: 2,
-      name: "James Johnson",
-      age: "2 years",
-      gender: "Male",
-      dateOfBirth: "2022-03-10",
-      lastCheckup: "1 month ago",
-      nextAppointment: "In 3 months",
-      healthStatus: "Excellent",
-      vaccinations: ["6-week", "10-week", "14-week", "9 months", "18 months"],
-      upcomingVaccination: "6-year shots in March 2028",
-    },
-  ]);
+  const [children, setChildren] = useState([]);
+
+  // Fetch real dependents on mount
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        let patientId = patient?.id;
+        if (!patientId && user?.id) {
+          const result = await getPatientProfileByUserId(user.id);
+          if (result.success && result.data) {
+            patientId = result.data.id;
+          }
+        }
+        if (!patientId) {
+          return;
+        }
+        const data = await patientService.getDependents(patientId);
+        setChildren(data?.dependents || []);
+      } catch (err) {
+        // Silent
+      } finally {
+      }
+    };
+    fetchData();
+  }, [patient?.id, user?.id, getPatientProfileByUserId]);
 
   const [childForm, setChildForm] = useState({
     name: "",

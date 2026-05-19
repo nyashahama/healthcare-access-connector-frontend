@@ -1,8 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FaAllergies, FaPills, FaHeart, FaNotesMedical } from "react-icons/fa";
 import Card from "components/card";
 import Modal from "components/modal/Modal";
 import { useToast } from "hooks/useToast";
+import { useAuth } from "context/AuthContext";
+import { usePatient } from "hooks/usePatient";
+import patientService from "api/services/patientService";
 import {
   MdEdit,
   MdAdd,
@@ -13,6 +16,9 @@ import {
 
 const MedicalInformation = () => {
   const { showToast } = useToast();
+  const { user } = useAuth();
+  const { patient, getPatientProfileByUserId } = usePatient();
+  
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [addMedicationModalOpen, setAddMedicationModalOpen] = useState(false);
   const [addAllergyModalOpen, setAddAllergyModalOpen] = useState(false);
@@ -22,55 +28,54 @@ const MedicalInformation = () => {
   const [actionType, setActionType] = useState("");
 
   const [medicalData, setMedicalData] = useState({
-    bloodType: "O+",
-    allergies: [
-      { id: 1, name: "Penicillin", severity: "Severe" },
-      { id: 2, name: "Peanuts", severity: "Moderate" },
-      { id: 3, name: "Dust mites", severity: "Mild" },
-    ],
-    medications: [
-      {
-        id: 1,
-        name: "Salbutamol inhaler",
-        dosage: "As needed",
-        for: "Asthma",
-        frequency: "When symptomatic",
-      },
-      {
-        id: 2,
-        name: "Multivitamin",
-        dosage: "Daily",
-        for: "General health",
-        frequency: "Once daily",
-      },
-    ],
-    conditions: [
-      {
-        id: 1,
-        name: "Asthma",
-        status: "Controlled",
-        diagnosed: "2018",
-        type: "Chronic",
-      },
-      {
-        id: 2,
-        name: "Seasonal allergies",
-        status: "Mild",
-        diagnosed: "2020",
-        type: "Seasonal",
-      },
-    ],
-    surgeries: [
-      {
-        id: 1,
-        procedure: "Appendectomy",
-        year: "2015",
-        hospital: "Johannesburg General",
-        notes: "Recovered well",
-      },
-    ],
-    bloodTypeLastUpdated: "March 2023",
+    bloodType: "",
+    allergies: [],
+    medications: [],
+    conditions: [],
+    surgeries: [],
+    bloodTypeLastUpdated: "",
   });
+
+  // Fetch real data on mount
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Ensure we have a patient profile
+        let patientId = patient?.id;
+        if (!patientId && user?.id) {
+          const result = await getPatientProfileByUserId(user.id);
+          if (result.success && result.data) {
+            patientId = result.data.id;
+          }
+        }
+        if (!patientId) {
+          return;
+        }
+
+        const [allergiesRes, conditionsRes, medicationsRes, surgeriesRes, medicalInfoRes] =
+          await Promise.allSettled([
+            patientService.getAllergies(patientId),
+            patientService.getConditions(patientId),
+            patientService.getMedications(patientId),
+            patientService.getSurgeries(patientId),
+            patientService.getMedicalInfo(patientId),
+          ]);
+
+        setMedicalData({
+          bloodType: medicalInfoRes.status === "fulfilled" ? medicalInfoRes.value?.blood_type || "" : "",
+          allergies: allergiesRes.status === "fulfilled" ? allergiesRes.value?.allergies || [] : [],
+          medications: medicationsRes.status === "fulfilled" ? medicationsRes.value?.medications || [] : [],
+          conditions: conditionsRes.status === "fulfilled" ? conditionsRes.value?.conditions || [] : [],
+          surgeries: surgeriesRes.status === "fulfilled" ? surgeriesRes.value?.surgeries || [] : [],
+          bloodTypeLastUpdated: medicalInfoRes.status === "fulfilled" ? medicalInfoRes.value?.updated_at || "" : "",
+        });
+      } catch (err) {
+        // Silent — data just stays empty
+      } finally {
+      }
+    };
+    fetchData();
+  }, [patient?.id, user?.id, getPatientProfileByUserId]);
 
   const [bloodTypeForm, setBloodTypeForm] = useState({
     bloodType: medicalData.bloodType,

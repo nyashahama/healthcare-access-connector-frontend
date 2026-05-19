@@ -1,32 +1,34 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FaBell, FaSms, FaEnvelope, FaCalendarAlt } from "react-icons/fa";
 import Card from "components/card";
 import Modal from "components/modal/Modal";
 import { useToast } from "hooks/useToast";
+import { useAuth } from "context/AuthContext";
+import patientService from "api/services/patientService";
 import Switch from "components/switch";
 import { MdSave, MdInfo } from "react-icons/md";
 
 const NotificationPreferences = () => {
   const { showToast } = useToast();
+  const { user } = useAuth();
   const [saveModalOpen, setSaveModalOpen] = useState(false);
   const [testModalOpen, setTestModalOpen] = useState(false);
 
   const [preferences, setPreferences] = useState({
-    sms: {
-      appointments: true,
-      healthTips: true,
-      medication: false,
-    },
-    email: {
-      summaries: true,
-      reports: false,
-      newsletter: true,
-    },
-    appointment: {
-      reminderTime: "2 hours before",
-      language: "English",
-    },
+    sms: { appointments: true, healthTips: false, medication: false },
+    email: { summaries: false, reports: false, newsletter: false },
+    appointment: { reminderTime: "", language: "" },
   });
+
+  // Fetch preferences on mount
+  useEffect(() => {
+    if (!user?.id) return;
+    patientService.getNotificationPreferences(user.id).then((data) => {
+      if (data) {
+        setPreferences((prev) => ({ ...prev, ...data }));
+      }
+    }).catch(() => {});
+  }, [user?.id]);
 
   const [testForm, setTestForm] = useState({
     type: "sms",
@@ -57,9 +59,16 @@ const NotificationPreferences = () => {
     setSaveModalOpen(true);
   };
 
-  const confirmSave = () => {
+  const confirmSave = async () => {
     setSaveModalOpen(false);
-    showToast("Notification preferences saved successfully!", "success");
+    try {
+      if (user?.id) {
+        await patientService.updateNotificationPreferences(user.id, preferences);
+      }
+      showToast("Notification preferences saved successfully!", "success");
+    } catch (err) {
+      showToast("Failed to save preferences", "error");
+    }
   };
 
   const handleTestNotification = () => {

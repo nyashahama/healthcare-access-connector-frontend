@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FaPhone, FaUserFriends, FaExclamationTriangle } from "react-icons/fa";
 import {
   MdEdit,
@@ -10,6 +10,9 @@ import {
 import Card from "components/card";
 import Modal from "components/modal/Modal";
 import { useToast } from "hooks/useToast";
+import { useAuth } from "context/AuthContext";
+import { usePatient } from "hooks/usePatient";
+import patientService from "api/services/patientService";
 
 const EmergencyContact = () => {
   const { showToast } = useToast();
@@ -20,29 +23,35 @@ const EmergencyContact = () => {
   const [selectedContact, setSelectedContact] = useState(null);
   const [actionType, setActionType] = useState("");
 
-  const [emergencyContacts, setEmergencyContacts] = useState([
-    {
-      id: 1,
-      name: "John Johnson",
-      relationship: "Husband",
-      phone: "+27 72 987 6543",
-      isPrimary: true,
-    },
-    {
-      id: 2,
-      name: "Mary Smith",
-      relationship: "Sister",
-      phone: "+27 82 456 7890",
-      isPrimary: false,
-    },
-    {
-      id: 3,
-      name: "Dr. Michael Smith",
-      relationship: "Family Doctor",
-      phone: "+27 11 123 4567",
-      isPrimary: false,
-    },
-  ]);
+  const [emergencyContacts, setEmergencyContacts] = useState([]);
+  
+
+  const { user } = useAuth();
+  const { patient, getPatientProfileByUserId } = usePatient();
+
+  // Fetch real emergency contacts on mount
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        let patientId = patient?.id;
+        if (!patientId && user?.id) {
+          const result = await getPatientProfileByUserId(user.id);
+          if (result.success && result.data) {
+            patientId = result.data.id;
+          }
+        }
+        if (!patientId) {
+          return;
+        }
+        const data = await patientService.getEmergencyContacts(patientId);
+        setEmergencyContacts(data?.emergency_contacts || data?.contacts || []);
+      } catch (err) {
+        // Silent
+      } finally {
+      }
+    };
+    fetchData();
+  }, [patient?.id, user?.id, getPatientProfileByUserId]);
 
   const [contactForm, setContactForm] = useState({
     name: "",

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FaShieldAlt, FaUserLock, FaFileExport } from "react-icons/fa";
 import {
   MdHistory,
@@ -11,9 +11,12 @@ import {
 import Card from "components/card";
 import Modal from "components/modal/Modal";
 import { useToast } from "hooks/useToast";
+import { useAuth } from "context/AuthContext";
+import patientService from "api/services/patientService";
 
 const PrivacyData = () => {
   const { showToast } = useToast();
+  const { user } = useAuth();
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
@@ -25,10 +28,20 @@ const PrivacyData = () => {
   });
 
   const [consents, setConsents] = useState({
-    healthData: true,
+    healthData: false,
     research: false,
-    emergencyAccess: true,
+    emergencyAccess: false,
   });
+
+  // Fetch consent on mount
+  useEffect(() => {
+    if (!user?.id) return;
+    patientService.getConsent(user.id).then((data) => {
+      if (data) {
+        setConsents((prev) => ({ ...prev, ...data }));
+      }
+    }).catch(() => {});
+  }, [user?.id]);
 
   const handleConsentToggle = (consent) => {
     setConsents((prev) => ({
@@ -83,9 +96,16 @@ const PrivacyData = () => {
     );
   };
 
-  const confirmSaveConsents = () => {
+  const confirmSaveConsents = async () => {
     setSaveModalOpen(false);
-    showToast("Privacy preferences saved successfully!", "success");
+    try {
+      if (user?.id) {
+        await patientService.updateConsent(user.id, consents);
+      }
+      showToast("Privacy preferences saved successfully!", "success");
+    } catch (err) {
+      showToast("Failed to save preferences", "error");
+    }
   };
 
   return (

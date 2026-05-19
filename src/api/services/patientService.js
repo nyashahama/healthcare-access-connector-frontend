@@ -290,6 +290,82 @@ const patientService = {
       errors,
     };
   },
+
+  // ─── Sub-resource APIs ──────────────────────────────────────────────────
+
+  // Allergies
+  getAllergies: async (patientId) => {
+    const response = await apiClient.get(`/api/v1/patients/allergies/patient/${patientId}`);
+    return response.data;
+  },
+  getActiveAllergies: async (patientId) => {
+    const response = await apiClient.get(`/api/v1/patients/allergies/patient/${patientId}/active`);
+    return response.data;
+  },
+
+  // Conditions
+  getConditions: async (patientId) => {
+    const response = await apiClient.get(`/api/v1/patients/conditions/patient/${patientId}`);
+    return response.data;
+  },
+  getActiveConditions: async (patientId) => {
+    const response = await apiClient.get(`/api/v1/patients/conditions/patient/${patientId}/active`);
+    return response.data;
+  },
+
+  // Medications
+  getMedications: async (patientId) => {
+    const response = await apiClient.get(`/api/v1/patients/medications/patient/${patientId}`);
+    return response.data;
+  },
+  getActiveMedications: async (patientId) => {
+    const response = await apiClient.get(`/api/v1/patients/medications/patient/${patientId}/active`);
+    return response.data;
+  },
+
+  // Surgeries
+  getSurgeries: async (patientId) => {
+    const response = await apiClient.get(`/api/v1/patients/surgeries/patient/${patientId}`);
+    return response.data;
+  },
+
+  // Medical Info
+  getMedicalInfo: async (patientId) => {
+    const response = await apiClient.get(`/api/v1/patients/medical-info/patient/${patientId}`);
+    return response.data;
+  },
+
+  // Emergency Contacts
+  getEmergencyContacts: async (patientId) => {
+    const response = await apiClient.get(`/api/v1/patients/emergency-contacts/patient/${patientId}`);
+    return response.data;
+  },
+
+  // Dependents
+  getDependents: async (patientId) => {
+    const response = await apiClient.get(`/api/v1/patients/dependents/patient/${patientId}`);
+    return response.data;
+  },
+
+  // Notification Preferences
+  getNotificationPreferences: async (userId) => {
+    const response = await apiClient.get(`/api/v1/notifications/users/${userId}/preferences`);
+    return response.data;
+  },
+  updateNotificationPreferences: async (userId, data) => {
+    const response = await apiClient.put(`/api/v1/notifications/users/${userId}/preferences`, data);
+    return response.data;
+  },
+
+  // Consent
+  getConsent: async (userId) => {
+    const response = await apiClient.get(`/api/v1/consent/users/${userId}/privacy`);
+    return response.data;
+  },
+  updateConsent: async (userId, data) => {
+    const response = await apiClient.put(`/api/v1/consent/users/${userId}/privacy`, data);
+    return response.data;
+  },
 };
 
 export default patientService;
