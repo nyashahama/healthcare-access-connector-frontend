@@ -1,17 +1,20 @@
-/* eslint-disable */
 import React from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation } from "@tanstack/react-router";
 import DashIcon from "components/icons/DashIcon";
+import { SidebarItem } from "@/layouts/sidebarItems";
 
-export function SidebarLinks(props) {
-  let location = useLocation();
-  const { routes } = props;
+interface SidebarLinksProps {
+  routes: SidebarItem[];
+}
 
-  const activeRoute = (routeName) => {
+export function SidebarLinks({ routes }: SidebarLinksProps) {
+  const location = useLocation();
+
+  const activeRoute = (routeName: string) => {
     return location.pathname.includes(routeName);
   };
 
-  const createLinks = (routes) => {
+  const createLinks = (routes: SidebarItem[]) => {
     return routes.map((route, index) => {
       return (
         <Link key={index} to={route.layout + "/" + route.path}>

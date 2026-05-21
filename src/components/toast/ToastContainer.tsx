@@ -1,9 +1,8 @@
 import React from "react";
-// import { useToast } from "../hooks/useToast";
 import Toast from "./Toast";
 import { useToast } from "hooks/useToast";
 
-const ToastContainer = () => {
+const ToastContainer: React.FC = () => {
   const { toasts, removeToast } = useToast();
 
   return (

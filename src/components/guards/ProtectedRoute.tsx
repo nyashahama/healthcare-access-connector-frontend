@@ -1,9 +1,14 @@
 import React from "react";
-import { Link, Navigate } from "react-router-dom";
-import { useAuth } from "context/AuthContext";
+import { Link, Navigate } from "@tanstack/react-router";
+import { useAuth } from "@/context/AuthContext";
 import { hasRouteAccess, getDashboardPath } from "utils/roleUtils";
 
-const ProtectedRoute = ({ children, allowedRoles = [] }) => {
+interface ProtectedRouteProps {
+  children: React.ReactNode;
+  allowedRoles?: string[];
+}
+
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles = [] }) => {
   const { loading, isAuthenticated, user } = useAuth();
 
   if (loading) {

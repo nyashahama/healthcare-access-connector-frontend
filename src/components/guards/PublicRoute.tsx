@@ -1,9 +1,13 @@
 import React from "react";
-import { Navigate, useLocation } from "react-router-dom";
-import { useAuth } from "context/AuthContext";
+import { Navigate, useLocation } from "@tanstack/react-router";
+import { useAuth } from "@/context/AuthContext";
 import { getDashboardPath } from "utils/roleUtils";
 
-const PublicRoute = ({ children }) => {
+interface PublicRouteProps {
+  children: React.ReactNode;
+}
+
+const PublicRoute: React.FC<PublicRouteProps> = ({ children }) => {
   const { loading, isAuthenticated, user } = useAuth();
   const location = useLocation();
 

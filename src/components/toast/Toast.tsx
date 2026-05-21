@@ -7,7 +7,16 @@ import {
   MdClose,
 } from "react-icons/md";
 
-const Toast = ({ message, type = "info", onClose, duration = 5000 }) => {
+type ToastType = "success" | "error" | "warning" | "info";
+
+interface ToastProps {
+  message: string;
+  type?: ToastType;
+  onClose: () => void;
+  duration?: number;
+}
+
+const Toast: React.FC<ToastProps> = ({ message, type = "info", onClose, duration = 5000 }) => {
   useEffect(() => {
     if (duration) {
       const timer = setTimeout(onClose, duration);
@@ -15,14 +24,14 @@ const Toast = ({ message, type = "info", onClose, duration = 5000 }) => {
     }
   }, [duration, onClose]);
 
-  const icons = {
+  const icons: Record<ToastType, React.ReactNode> = {
     success: <MdCheckCircle className="h-5 w-5 text-green-500" />,
     error: <MdError className="h-5 w-5 text-red-500" />,
     warning: <MdWarning className="h-5 w-5 text-yellow-500" />,
     info: <MdInfo className="h-5 w-5 text-blue-500" />,
   };
 
-  const bgColors = {
+  const bgColors: Record<ToastType, string> = {
     success:
       "bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800",
     error: "bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800",
@@ -31,7 +40,7 @@ const Toast = ({ message, type = "info", onClose, duration = 5000 }) => {
     info: "bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800",
   };
 
-  const textColors = {
+  const textColors: Record<ToastType, string> = {
     success: "text-green-800 dark:text-green-300",
     error: "text-red-800 dark:text-red-300",
     warning: "text-yellow-800 dark:text-yellow-300",
@@ -54,7 +63,6 @@ const Toast = ({ message, type = "info", onClose, duration = 5000 }) => {
           <MdClose className="h-4 w-4" />
         </button>
       </div>
-      {/* Progress bar */}
       <div className="bg-black/10 mt-2 h-1 w-full overflow-hidden rounded-full">
         <div
           className={`h-full ${

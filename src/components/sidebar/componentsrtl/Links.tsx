@@ -1,21 +1,20 @@
-/* eslint-disable */
 import React from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation } from "@tanstack/react-router";
 import DashIcon from "components/icons/DashIcon";
-// chakra imports
+import { SidebarItem } from "@/layouts/sidebarItems";
 
-export function SidebarLinks(props) {
-  // Chakra color mode
-  let location = useLocation();
+interface SidebarLinksRTLProps {
+  routes: SidebarItem[];
+}
 
-  const { routes } = props;
+export function SidebarLinks({ routes }: SidebarLinksRTLProps) {
+  const location = useLocation();
 
-  // verifies if routeName is the one active (in browser input)
-  const activeRoute = (routeName) => {
+  const activeRoute = (routeName: string) => {
     return location.pathname.includes(routeName);
   };
 
-  const createLinks = (routes) => {
+  const createLinks = (routes: SidebarItem[]) => {
     return routes.map((route, index) => {
       if (
         route.layout === "/admin" ||
@@ -57,7 +56,7 @@ export function SidebarLinks(props) {
       }
     });
   };
-  // BRAND
+
   return createLinks(routes);
 }
 

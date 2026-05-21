@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { Navigate } from "react-router-dom";
-import { useAuth } from "context/AuthContext";
+import { Navigate } from "@tanstack/react-router";
+import { useAuth } from "@/context/AuthContext";
 import {
   getDashboardPath,
   isAdminRole,
@@ -8,24 +8,21 @@ import {
   isProviderRole,
 } from "utils/roleUtils";
 
-/**
- * RoleBasedRoute component to guard routes based on user roles
- * @param {Object} props - Component props
- * @param {React.ReactNode} props.children - Child components to render if role matches
- * @param {Array<string>} props.allowedRoles - Array of allowed user roles
- */
-const RoleBasedRoute = ({ children, allowedRoles = [] }) => {
-  const { user, isAuthenticated, loading } = useAuth();
-  const [shouldRender, setShouldRender] = useState(false);
+interface RoleBasedRouteProps {
+  children: React.ReactNode;
+  allowedRoles?: string[];
+}
 
-  // Re-evaluate authentication whenever auth state changes
+const RoleBasedRoute: React.FC<RoleBasedRouteProps> = ({ children, allowedRoles = [] }) => {
+  const { user, isAuthenticated, loading } = useAuth();
+  const [shouldRender, setShouldRender] = useState<boolean>(false);
+
   useEffect(() => {
     if (!loading) {
       setShouldRender(true);
     }
   }, [loading, isAuthenticated, user?.id, user?.role]);
 
-  // Show loading while checking
   if (loading || !shouldRender) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-lightPrimary dark:bg-navy-900">
@@ -62,29 +59,21 @@ const RoleBasedRoute = ({ children, allowedRoles = [] }) => {
     );
   }
 
-  // If not authenticated, this should be caught by ProtectedRoute
   if (!isAuthenticated || !user) {
     return <Navigate to="/auth/sign-in" replace />;
   }
 
-  // Check if user has one of the allowed roles
   const userRole = user.role;
   const hasPermission = allowedRoles.includes(userRole);
 
   if (!hasPermission) {
-    // Redirect to unauthorized page or user's dashboard
     return <Navigate to={getRoleBasedDashboard(userRole)} replace />;
   }
 
   return children;
 };
 
-/**
- * Get dashboard path based on user role
- * @param {string} role - User role
- * @returns {string} Dashboard path
- */
-const getRoleBasedDashboard = (role) => {
+const getRoleBasedDashboard = (role: string): string => {
   if (isPatientRole(role)) {
     return "/patient/dashboard";
   }

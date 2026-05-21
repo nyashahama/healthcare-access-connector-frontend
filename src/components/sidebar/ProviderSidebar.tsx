@@ -1,28 +1,25 @@
 import { HiX } from "react-icons/hi";
 import Links from "./components/Links";
-import { providerRoutes } from "routes.js";
-import { useAuth } from "context/AuthContext";
-const ProviderSidebar = ({ open, onClose }) => {
+import { providerSidebarItems } from "@/layouts/sidebarItems";
+import { useAuth } from "@/context/AuthContext";
+
+interface ProviderSidebarProps {
+  open: boolean;
+  onClose: () => void;
+}
+
+const ProviderSidebar: React.FC<ProviderSidebarProps> = ({ open, onClose }) => {
   const { user } = useAuth();
 
-
-  const filteredRoutes = providerRoutes.filter((route) => {
-    // 1. Skip routes marked as not in sidebar
+  const filteredRoutes = providerSidebarItems.filter((route) => {
     if (route.sidebar === false) return false;
 
-    // 2. Check if route has role restrictions
     if (route.roles) {
-      // Check if user has any of the required roles
       const hasRequiredRole = route.roles.some(
-        (role) =>
-          user?.role === role || user?.roles?.includes(role)
+        (role: string) =>
+          user?.role === role || (user as any)?.roles?.includes(role)
       );
       if (!hasRequiredRole) return false;
-    }
-
-    // 3. Check specific email restrictions if they exist
-    if (route.allowedEmails) {
-      return route.allowedEmails.includes(user?.email);
     }
 
     return true;
@@ -48,12 +45,10 @@ const ProviderSidebar = ({ open, onClose }) => {
       </div>
       <div className="mb-7 mt-[58px] h-px bg-gray-300 dark:bg-white/30" />
 
-      {/* Navigation Links */}
       <ul className="mb-auto pt-1">
         <Links routes={filteredRoutes} />
       </ul>
 
-      {/* Quick Stats Card */}
       <div className="flex justify-center">
         <div className="to-emerald-600 relative mt-14 flex w-[256px] justify-center rounded-[20px] bg-gradient-to-br from-green-500 pb-4">
           <div className="to-emerald-500 absolute -top-12 flex h-24 w-24 items-center justify-center rounded-full border-[4px] border-white bg-gradient-to-b from-green-400 dark:!border-navy-800">

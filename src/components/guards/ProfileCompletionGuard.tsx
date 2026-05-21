@@ -1,9 +1,14 @@
 import React, { useEffect, useState, useRef } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import { useAuth } from "context/AuthContext";
+import { useNavigate, useLocation } from "@tanstack/react-router";
+import { useAuth } from "@/context/AuthContext";
 import { usePatient } from "hooks/usePatient";
 
-const ProfileCompletionGuard = ({ children, minCompletion = 50 }) => {
+interface ProfileCompletionGuardProps {
+  children: React.ReactNode;
+  minCompletion?: number;
+}
+
+const ProfileCompletionGuard: React.FC<ProfileCompletionGuardProps> = ({ children, minCompletion = 50 }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, isAuthenticated, loading: authLoading } = useAuth();
@@ -13,8 +18,8 @@ const ProfileCompletionGuard = ({ children, minCompletion = 50 }) => {
     error: profileError,
     getCurrentPatientProfile,
   } = usePatient();
-  const [dismissed, setDismissed] = useState(false);
-  const hasFetched = useRef(false);
+  const [dismissed, setDismissed] = useState<boolean>(false);
+  const hasFetched = useRef<boolean>(false);
 
   useEffect(() => {
     if (isAuthenticated && user?.role === "patient" && !hasFetched.current) {
@@ -23,7 +28,6 @@ const ProfileCompletionGuard = ({ children, minCompletion = 50 }) => {
     }
   }, [getCurrentPatientProfile, isAuthenticated, user?.role]);
 
-  // Only show spinner on first load — never during navigation
   if (authLoading) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-lightPrimary dark:bg-navy-900">
@@ -42,10 +46,8 @@ const ProfileCompletionGuard = ({ children, minCompletion = 50 }) => {
     );
   }
 
-  // Once we have data (even if still loading), show children so sidebar persists
   if (!isAuthenticated || user?.role !== "patient") return children;
 
-  // If profile fetch failed, don't lock the user out - let them proceed
   if (profileError) return children;
 
   const completion = patient ? profileCompletion : 0;
@@ -87,7 +89,7 @@ const ProfileCompletionGuard = ({ children, minCompletion = 50 }) => {
 
             <div className="space-y-3">
               <button
-                onClick={() => navigate("/auth/complete-patient-profile")}
+                onClick={() => navigate({ to: "/auth/complete-patient-profile" })}
                 className="w-full rounded-lg bg-brand-500 px-4 py-3 font-medium text-white hover:bg-brand-600"
               >
                 Complete Profile Now

@@ -1,11 +1,16 @@
 import React from "react";
 
-const AuthErrorFallback = ({ onReset }) => (
-  <div className="flex h-screen w-full items-center justify-center bg-lightPrimary p-4 dark:bg-navy-900">
+interface CriticalFeatureFallbackProps {
+  feature?: string;
+  onReset: () => void;
+}
+
+const CriticalFeatureFallback: React.FC<CriticalFeatureFallbackProps> = ({ feature = "this feature", onReset }) => (
+  <div className="flex h-full w-full items-center justify-center bg-lightPrimary p-4 dark:bg-navy-900">
     <div className="max-w-md rounded-xl bg-white p-8 text-center shadow-xl dark:bg-navy-800">
-      <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-orange-100">
+      <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-yellow-100">
         <svg
-          className="h-8 w-8 text-orange-600"
+          className="h-8 w-8 text-yellow-600"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -14,15 +19,16 @@ const AuthErrorFallback = ({ onReset }) => (
             strokeLinecap="round"
             strokeLinejoin="round"
             strokeWidth={2}
-            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+            d="M13 10V3L4 14h7v7l9-11h-7z"
           />
         </svg>
       </div>
       <h3 className="mb-2 text-xl font-bold text-navy-700 dark:text-white">
-        Authentication unavailable
+        {feature} is temporarily unavailable
       </h3>
       <p className="mb-6 text-sm text-gray-600 dark:text-gray-300">
-        The sign-in page is temporarily unavailable. Please try again.
+        Something went wrong loading {feature}. Your session is safe. Please
+        try again or navigate elsewhere.
       </p>
       <div className="space-y-3">
         <button
@@ -35,11 +41,11 @@ const AuthErrorFallback = ({ onReset }) => (
           href="/"
           className="block w-full rounded-lg border border-gray-300 px-4 py-3 font-medium text-navy-700 hover:bg-gray-50 dark:border-navy-600 dark:text-white dark:hover:bg-navy-700"
         >
-          Go to Home
+          Go to Dashboard
         </a>
       </div>
     </div>
   </div>
 );
 
-export default AuthErrorFallback;
+export default CriticalFeatureFallback;

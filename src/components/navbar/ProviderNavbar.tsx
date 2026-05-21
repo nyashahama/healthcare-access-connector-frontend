@@ -1,7 +1,7 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import Dropdown from "components/dropdown";
 import { FiAlignJustify } from "react-icons/fi";
-import { Link } from "react-router-dom";
+import { Link } from "@tanstack/react-router";
 import { BsArrowBarUp } from "react-icons/bs";
 import { FiSearch } from "react-icons/fi";
 import { RiMoonFill, RiSunFill } from "react-icons/ri";
@@ -9,11 +9,15 @@ import { IoMdNotificationsOutline } from "react-icons/io";
 import { FaUserMd } from "react-icons/fa";
 import { useLogoutHandler } from "hooks/useLogoutHandler";
 import { useStaff } from "hooks/useStaff";
-import { useAuth } from "context/AuthContext";
+import { useAuth } from "@/context/AuthContext";
 
-const ProviderNavbar = (props) => {
-  const { onOpenSidenav, brandText } = props;
-  const [darkmode, setDarkmode] = React.useState(false);
+interface ProviderNavbarProps {
+  onOpenSidenav: () => void;
+  brandText: string;
+}
+
+const ProviderNavbar: React.FC<ProviderNavbarProps> = ({ onOpenSidenav, brandText }) => {
+  const [darkmode, setDarkmode] = useState<boolean>(false);
 
   const { user } = useAuth();
   const { staff, getStaffByUserId } = useStaff();
@@ -67,7 +71,6 @@ const ProviderNavbar = (props) => {
           <FiAlignJustify className="h-5 w-5" />
         </span>
 
-        {/* Notifications */}
         <Dropdown
           button={
             <p className="cursor-pointer">
@@ -75,50 +78,48 @@ const ProviderNavbar = (props) => {
             </p>
           }
           animation="origin-[65%_0%] md:origin-top-right transition-all duration-300 ease-in-out"
-          children={
-            <div className="flex w-[360px] flex-col gap-3 rounded-[20px] bg-white p-4 shadow-xl shadow-shadow-500 dark:!bg-navy-700 dark:text-white dark:shadow-none sm:w-[460px]">
-              <div className="flex items-center justify-between">
-                <p className="text-base font-bold text-navy-700 dark:text-white">
-                  Clinic Notifications
+          classNames={"py-2 top-4 -left-[230px] md:-left-[440px] w-max"}
+        >
+          <div className="flex w-[360px] flex-col gap-3 rounded-[20px] bg-white p-4 shadow-xl shadow-shadow-500 dark:!bg-navy-700 dark:text-white dark:shadow-none sm:w-[460px]">
+            <div className="flex items-center justify-between">
+              <p className="text-base font-bold text-navy-700 dark:text-white">
+                Clinic Notifications
+              </p>
+              <p className="text-sm font-bold text-navy-700 dark:text-white">
+                Mark all read
+              </p>
+            </div>
+
+            <button className="flex w-full items-center">
+              <div className="flex h-full w-[85px] items-center justify-center rounded-xl bg-gradient-to-b from-blue-500 to-blue-400 py-4 text-2xl text-white">
+                <BsArrowBarUp />
+              </div>
+              <div className="ml-2 flex h-full w-full flex-col justify-center rounded-lg px-1 text-sm">
+                <p className="mb-1 text-left text-base font-bold text-gray-900 dark:text-white">
+                  New Appointment
                 </p>
-                <p className="text-sm font-bold text-navy-700 dark:text-white">
-                  Mark all read
+                <p className="font-base text-left text-xs text-gray-900 dark:text-white">
+                  Sarah M. booked for tomorrow at 2:00 PM
                 </p>
               </div>
+            </button>
 
-              <button className="flex w-full items-center">
-                <div className="flex h-full w-[85px] items-center justify-center rounded-xl bg-gradient-to-b from-blue-500 to-blue-400 py-4 text-2xl text-white">
-                  <BsArrowBarUp />
-                </div>
-                <div className="ml-2 flex h-full w-full flex-col justify-center rounded-lg px-1 text-sm">
-                  <p className="mb-1 text-left text-base font-bold text-gray-900 dark:text-white">
-                    New Appointment
-                  </p>
-                  <p className="font-base text-left text-xs text-gray-900 dark:text-white">
-                    Sarah M. booked for tomorrow at 2:00 PM
-                  </p>
-                </div>
-              </button>
+            <button className="flex w-full items-center">
+              <div className="flex h-full w-[85px] items-center justify-center rounded-xl bg-gradient-to-b from-green-500 to-green-400 py-4 text-2xl text-white">
+                <BsArrowBarUp />
+              </div>
+              <div className="ml-2 flex h-full w-full flex-col justify-center rounded-lg px-1 text-sm">
+                <p className="mb-1 text-left text-base font-bold text-gray-900 dark:text-white">
+                  Patient Waiting
+                </p>
+                <p className="font-base text-left text-xs text-gray-900 dark:text-white">
+                  2 patients in telemedicine queue
+                </p>
+              </div>
+            </button>
+          </div>
+        </Dropdown>
 
-              <button className="flex w-full items-center">
-                <div className="flex h-full w-[85px] items-center justify-center rounded-xl bg-gradient-to-b from-green-500 to-green-400 py-4 text-2xl text-white">
-                  <BsArrowBarUp />
-                </div>
-                <div className="ml-2 flex h-full w-full flex-col justify-center rounded-lg px-1 text-sm">
-                  <p className="mb-1 text-left text-base font-bold text-gray-900 dark:text-white">
-                    Patient Waiting
-                  </p>
-                  <p className="font-base text-left text-xs text-gray-900 dark:text-white">
-                    2 patients in telemedicine queue
-                  </p>
-                </div>
-              </button>
-            </div>
-          }
-          classNames={"py-2 top-4 -left-[230px] md:-left-[440px] w-max"}
-        />
-
-        {/* Dark Mode Toggle */}
         <div
           className="cursor-pointer text-gray-600"
           onClick={() => {
@@ -138,7 +139,6 @@ const ProviderNavbar = (props) => {
           )}
         </div>
 
-        {/* Profile */}
         <Dropdown
           button={
             <div className="flex items-center gap-2">
@@ -148,40 +148,39 @@ const ProviderNavbar = (props) => {
               </span>
             </div>
           }
-          children={
-            <div className="flex w-56 flex-col justify-start rounded-[20px] bg-white bg-cover bg-no-repeat shadow-xl shadow-shadow-500 dark:!bg-navy-700 dark:text-white dark:shadow-none">
-              <div className="p-4">
-                <div className="flex items-center gap-2">
-                  <p className="text-sm font-bold text-navy-700 dark:text-white">
-                    👋 Hey {staff?.first_name}
-                  </p>
-                </div>
-              </div>
-              <div className="h-px w-full bg-gray-200 dark:bg-white/20" />
-              <div className="flex flex-col p-4">
-                <Link
-                  to="/provider/profile"
-                  className="text-sm text-gray-800 dark:text-white hover:dark:text-white"
-                >
-                  Clinic Profile
-                </Link>
-                <Link
-                  to="/provider/clinic-management"
-                  className="mt-3 text-sm text-gray-800 dark:text-white hover:dark:text-white"
-                >
-                  Manage Clinic
-                </Link>
-                <button
-                  onClick={handleLogout}
-                  className="mt-3 text-sm font-medium text-red-500 transition duration-150 ease-out hover:text-red-500 hover:ease-in"
-                >
-                  Log Out
-                </button>
+          classNames={"py-2 top-8 -left-[180px] w-max"}
+        >
+          <div className="flex w-56 flex-col justify-start rounded-[20px] bg-white bg-cover bg-no-repeat shadow-xl shadow-shadow-500 dark:!bg-navy-700 dark:text-white dark:shadow-none">
+            <div className="p-4">
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-bold text-navy-700 dark:text-white">
+                  👋 Hey {staff?.first_name}
+                </p>
               </div>
             </div>
-          }
-          classNames={"py-2 top-8 -left-[180px] w-max"}
-        />
+            <div className="h-px w-full bg-gray-200 dark:bg-white/20" />
+            <div className="flex flex-col p-4">
+              <Link
+                to="/provider/profile"
+                className="text-sm text-gray-800 dark:text-white hover:dark:text-white"
+              >
+                Clinic Profile
+              </Link>
+              <Link
+                to="/provider/clinic-management"
+                className="mt-3 text-sm text-gray-800 dark:text-white hover:dark:text-white"
+              >
+                Manage Clinic
+              </Link>
+              <button
+                onClick={handleLogout}
+                className="mt-3 text-sm font-medium text-red-500 transition duration-150 ease-out hover:text-red-500 hover:ease-in"
+              >
+                Log Out
+              </button>
+            </div>
+          </div>
+        </Dropdown>
       </div>
     </nav>
   );

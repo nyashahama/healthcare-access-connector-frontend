@@ -1,14 +1,18 @@
 import React, { useEffect, useRef } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import { useAuth } from "context/AuthContext";
+import { useNavigate, useLocation } from "@tanstack/react-router";
+import { useAuth } from "@/context/AuthContext";
 import { useProvider } from "hooks/useProvider";
 
-const ClinicRegistrationGuard = ({ children }) => {
+interface ClinicRegistrationGuardProps {
+  children: React.ReactNode;
+}
+
+const ClinicRegistrationGuard: React.FC<ClinicRegistrationGuardProps> = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, loading: authLoading } = useAuth();
   const { clinic, getMyClinic } = useProvider();
-  const hasFetched = useRef(false);
+  const hasFetched = useRef<boolean>(false);
 
   useEffect(() => {
     if (user?.role === "clinic_admin" && !hasFetched.current) {
@@ -17,7 +21,6 @@ const ClinicRegistrationGuard = ({ children }) => {
     }
   }, [getMyClinic, user?.role]);
 
-  // Only show spinner on initial auth check, not during navigation
   if (authLoading) {
     return (
       <div className="flex h-screen items-center justify-center bg-lightPrimary dark:bg-navy-900">
@@ -72,7 +75,7 @@ const ClinicRegistrationGuard = ({ children }) => {
             </div>
 
             <button
-              onClick={() => navigate("/provider/clinic-registration")}
+              onClick={() => navigate({ to: "/provider/clinic-registration" })}
               className="w-full rounded-lg bg-brand-500 px-4 py-3 font-medium text-white hover:bg-brand-600"
             >
               Register Clinic Now
