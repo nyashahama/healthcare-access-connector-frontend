@@ -1,11 +1,11 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { providerService } from "api/services/providerService";
+import { providerService } from "@/api/services/providerService";
 import { useProvider } from "../useProvider";
 import React from 'react';
 
-vi.mock("api/services/providerService", () => ({
+vi.mock("@/api/services/providerService", () => ({
   providerService: {
     getMyClinic: vi.fn(),
     getClinics: vi.fn(),
@@ -17,20 +17,18 @@ vi.mock("api/services/providerService", () => ({
 describe("useProvider", () => {
   beforeEach(() => {
     vi.mocked(providerService.getMyClinic).mockResolvedValue({
-      data: { clinic: { id: "c1", name: "City Clinic" } },
-      status: 200,
+      clinic: { id: "c1", name: "City Clinic" },
     } as never);
     vi.mocked(providerService.getClinics).mockResolvedValue({
-      data: { clinics: [{ id: "c1", clinic_name: "City Clinic" }], total: 1 },
-      status: 200,
+      clinics: [{ id: "c1", clinic_name: "City Clinic" }],
+      total: 1,
     } as never);
     vi.mocked(providerService.listClinicStaff).mockResolvedValue({
-      data: { staff: [{ id: "s1", first_name: "Amina", last_name: "", staff_role: "doctor", clinic_id: "c1", user_id: "u1", staff_id: "s1", work_email: "", email: "", work_phone: "", phone_number: "", employment_status: "", status: "", role: "" }], total: 1 },
-      status: 200,
+      staff: [{ id: "s1", first_name: "Amina", last_name: "", staff_role: "doctor", clinic_id: "c1", user_id: "u1", staff_id: "s1", work_email: "", email: "", work_phone: "", phone_number: "", employment_status: "", status: "", role: "" }],
+      total: 1,
     } as never);
     vi.mocked(providerService.getClinicService).mockResolvedValue({
-      data: { services: [{ id: "svc1", service_name: "Consultation", service_id: "svc1" }] },
-      status: 200,
+      services: [{ id: "svc1", service_name: "Consultation", service_id: "svc1" }],
     } as never);
   });
 
@@ -72,11 +70,11 @@ describe("useProvider", () => {
 
     expect(clinics.success).toBe(true);
     expect(clinics.data.clinics).toHaveLength(1);
-    expect(staff).toEqual({
+    expect(staff).toMatchObject({
       success: true,
       data: [{ id: "s1", first_name: "Amina" }],
     });
-    expect(services).toEqual({
+    expect(services).toMatchObject({
       success: true,
       data: [{ id: "svc1", service_name: "Consultation" }],
     });

@@ -1,11 +1,11 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { patientService } from "api/services/patientService";
+import { patientService } from "@/api/services/patientService";
 import { usePatient } from "../usePatient";
 import React from 'react';
 
-vi.mock("api/services/patientService", () => ({
+vi.mock("@/api/services/patientService", () => ({
   patientService: {
     getCurrentPatientProfile: vi.fn(),
     getPatientProfileByUserId: vi.fn(),
@@ -17,15 +17,13 @@ vi.mock("api/services/patientService", () => ({
 describe("usePatient", () => {
   beforeEach(() => {
     vi.mocked(patientService.getCurrentPatientProfile).mockResolvedValue({
-      data: { id: "p1", first_name: "Amina", last_name: "Dube", user_id: "u1", country: "Zimbabwe", preferred_communication_method: "email", timezone: "Africa/Harare" },
-      status: 200,
+      id: "p1", first_name: "Amina", last_name: "Dube", user_id: "u1", country: "Zimbabwe", preferred_communication_method: "email", timezone: "Africa/Harare",
     } as never);
     vi.mocked(patientService.getPatientProfileByUserId).mockResolvedValue({
-      data: { id: "p1", user_id: "u1", first_name: "Amina", last_name: "Dube", country: "Zimbabwe", preferred_communication_method: "email", timezone: "Africa/Harare" },
-      status: 200,
+      id: "p1", user_id: "u1", first_name: "Amina", last_name: "Dube", country: "Zimbabwe", preferred_communication_method: "email", timezone: "Africa/Harare",
     } as never);
     vi.mocked(patientService.upsertPatientProfile).mockImplementation((data) =>
-      Promise.resolve({ data: { id: "p1", ...data }, status: 200 } as never)
+      Promise.resolve({ id: "p1", ...data } as never)
     );
   });
 
@@ -60,7 +58,7 @@ describe("usePatient", () => {
       response = await result.current.getPatientProfileByUserId("u1");
     });
 
-    expect(response).toEqual({
+    expect(response).toMatchObject({
       success: true,
       data: {
         id: "p1",

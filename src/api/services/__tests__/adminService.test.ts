@@ -1,16 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import apiClient from "api/apiClient";
-import { sessionManager } from "platform/auth/sessionManager";
+import apiClient from "@/api/apiClient";
+import { sessionManager } from "@/platform/auth/sessionManager";
 import { adminService } from "../adminService";
 
-vi.mock("api/apiClient", () => ({
-  get: vi.fn(),
-  post: vi.fn(),
-  put: vi.fn(),
-  delete: vi.fn(),
+vi.mock("@/api/apiClient", () => ({
+  default: {
+    get: vi.fn(),
+    post: vi.fn(),
+    put: vi.fn(),
+    delete: vi.fn(),
+  },
 }));
 
-vi.mock("platform/auth/sessionManager", () => ({
+vi.mock("@/platform/auth/sessionManager", () => ({
   sessionManager: {
     hydrate: vi.fn(),
   },

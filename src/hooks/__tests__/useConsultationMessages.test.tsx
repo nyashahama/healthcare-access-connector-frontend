@@ -1,16 +1,14 @@
 import { renderHook, waitFor, act } from "@testing-library/react";
 import { describe, it, expect, vi } from 'vitest';
 import { QueryClientProvider } from "@tanstack/react-query";
-import { queryClient } from "platform/query/queryClient";
+import { queryClient } from "@/platform/query/queryClient";
 import { useConsultationMessages } from "../useConsultationMessages";
 import React from 'react';
 
-vi.mock("api/services/consultationMessagesService", () => ({
-  __esModule: true,
-  default: {
-    getConsultationMessages: () =>
-      Promise.resolve({ messages: [{ id: "m1", content: "Hello" }], count: 1 }),
-    sendMessage: () => Promise.resolve({ id: "m2", content: "Hi" }),
+vi.mock("@/api/services/consultationMessagesService", () => ({
+  consultationMessagesService: {
+    getConsultationMessages: vi.fn().mockResolvedValue({ messages: [{ id: "m1", content: "Hello" }], count: 1 }),
+    sendMessage: vi.fn().mockResolvedValue({ id: "m2", content: "Hi" }),
   },
 }));
 
