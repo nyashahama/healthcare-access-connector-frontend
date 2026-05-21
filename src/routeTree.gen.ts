@@ -10,6 +10,53 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminProtectedRouteImport } from './routes/admin/_protected'
+import { Route as AdminIndexRouteImport } from './routes/admin/index'
+import { Route as AdminAnalyticsRouteImport } from './routes/admin/analytics'
+import { Route as AdminClinicVerificationRouteImport } from './routes/admin/clinic-verification'
+import { Route as AdminContentManagementRouteImport } from './routes/admin/content-management'
+import { Route as AdminUserManagementRouteImport } from './routes/admin/user-management'
+import { Route as AuthPublicRouteImport } from './routes/auth/_public'
+import { Route as AuthSignInRouteImport } from './routes/auth/sign-in'
+import { Route as AuthChangePasswordRouteImport } from './routes/auth/change-password'
+import { Route as AuthCompletePatientProfileRouteImport } from './routes/auth/complete-patient-profile'
+import { Route as AuthForgotPasswordRouteImport } from './routes/auth/forgot-password'
+import { Route as AuthResetPasswordRouteImport } from './routes/auth/reset-password'
+import { Route as AuthVerifyEmailRouteImport } from './routes/auth/verify-email'
+import { Route as AuthSignUpPatientRouteImport } from './routes/auth/sign-up/patient'
+import { Route as AuthSignUpProviderRouteImport } from './routes/auth/sign-up/provider'
+import { Route as AuthRegisterStaffRouteImport } from './routes/auth/register/staff'
+import { Route as PatientProtectedRouteImport } from './routes/patient/_protected'
+import { Route as PatientIndexRouteImport } from './routes/patient/index'
+import { Route as PatientAppointmentsRouteImport } from './routes/patient/appointments'
+import { Route as PatientBookAppointmentRouteImport } from './routes/patient/book-appointment'
+import { Route as PatientChangePasswordRouteImport } from './routes/patient/change-password'
+import { Route as PatientConsentSettingsRouteImport } from './routes/patient/consent-settings'
+import { Route as PatientFindClinicRouteImport } from './routes/patient/find-clinic'
+import { Route as PatientHealthRecordsRouteImport } from './routes/patient/health-records'
+import { Route as PatientLabResultsRouteImport } from './routes/patient/lab-results'
+import { Route as PatientMedicationRemindersRouteImport } from './routes/patient/medication-reminders'
+import { Route as PatientNutritionRouteImport } from './routes/patient/nutrition'
+import { Route as PatientPrescriptionsRouteImport } from './routes/patient/prescriptions'
+import { Route as PatientProfileRouteImport } from './routes/patient/profile'
+import { Route as PatientSymptomCheckerRouteImport } from './routes/patient/symptom-checker'
+import { Route as PatientTelemedicineRouteImport } from './routes/patient/telemedicine'
+import { Route as PatientCommunityIndexRouteImport } from './routes/patient/community/index'
+import { Route as PatientCommunityNewRouteImport } from './routes/patient/community/new'
+import { Route as PatientCommunityPostIdRouteImport } from './routes/patient/community/post/$id'
+import { Route as ProviderProtectedRouteImport } from './routes/provider/_protected'
+import { Route as ProviderIndexRouteImport } from './routes/provider/index'
+import { Route as ProviderChangePasswordRouteImport } from './routes/provider/change-password'
+import { Route as ProviderClinicManagementRouteImport } from './routes/provider/clinic-management'
+import { Route as ProviderClinicRegistrationRouteImport } from './routes/provider/clinic-registration'
+import { Route as ProviderProfileRouteImport } from './routes/provider/profile'
+import { Route as ProviderStaffRouteImport } from './routes/provider/staff'
+import { Route as ProviderTelemedicineRouteImport } from './routes/provider/telemedicine'
+import { Route as ProviderAppointmentsIndexRouteImport } from './routes/provider/appointments/index'
+import { Route as ProviderAppointmentsQueueRouteImport } from './routes/provider/appointments/queue'
+import { Route as ProviderCommunityIndexRouteImport } from './routes/provider/community/index'
+import { Route as ProviderCommunityNewRouteImport } from './routes/provider/community/new'
+import { Route as ProviderCommunityPostIdRouteImport } from './routes/provider/community/post/$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -17,26 +64,602 @@ const IndexRoute = IndexRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 
+const AdminProtectedRoute = AdminProtectedRouteImport.update({
+  id: '/admin/_protected',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/admin/',
+  path: '/',
+  getParentRoute: () => AdminProtectedRoute,
+} as any)
+
+const AdminAnalyticsRoute = AdminAnalyticsRouteImport.update({
+  id: '/admin/analytics',
+  path: '/analytics',
+  getParentRoute: () => AdminProtectedRoute,
+} as any)
+
+const AdminClinicVerificationRoute = AdminClinicVerificationRouteImport.update({
+  id: '/admin/clinic-verification',
+  path: '/clinic-verification',
+  getParentRoute: () => AdminProtectedRoute,
+} as any)
+
+const AdminContentManagementRoute = AdminContentManagementRouteImport.update({
+  id: '/admin/content-management',
+  path: '/content-management',
+  getParentRoute: () => AdminProtectedRoute,
+} as any)
+
+const AdminUserManagementRoute = AdminUserManagementRouteImport.update({
+  id: '/admin/user-management',
+  path: '/user-management',
+  getParentRoute: () => AdminProtectedRoute,
+} as any)
+
+const AuthPublicRoute = AuthPublicRouteImport.update({
+  id: '/auth/_public',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+
+const AuthSignInRoute = AuthSignInRouteImport.update({
+  id: '/auth/sign-in',
+  path: '/sign-in',
+  getParentRoute: () => AuthPublicRoute,
+} as any)
+
+const AuthChangePasswordRoute = AuthChangePasswordRouteImport.update({
+  id: '/auth/change-password',
+  path: '/change-password',
+  getParentRoute: () => AuthPublicRoute,
+} as any)
+
+const AuthCompletePatientProfileRoute = AuthCompletePatientProfileRouteImport.update({
+  id: '/auth/complete-patient-profile',
+  path: '/complete-patient-profile',
+  getParentRoute: () => AuthPublicRoute,
+} as any)
+
+const AuthForgotPasswordRoute = AuthForgotPasswordRouteImport.update({
+  id: '/auth/forgot-password',
+  path: '/forgot-password',
+  getParentRoute: () => AuthPublicRoute,
+} as any)
+
+const AuthResetPasswordRoute = AuthResetPasswordRouteImport.update({
+  id: '/auth/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => AuthPublicRoute,
+} as any)
+
+const AuthVerifyEmailRoute = AuthVerifyEmailRouteImport.update({
+  id: '/auth/verify-email',
+  path: '/verify-email',
+  getParentRoute: () => AuthPublicRoute,
+} as any)
+
+const AuthSignUpPatientRoute = AuthSignUpPatientRouteImport.update({
+  id: '/auth/sign-up/patient',
+  path: '/sign-up/patient',
+  getParentRoute: () => AuthPublicRoute,
+} as any)
+
+const AuthSignUpProviderRoute = AuthSignUpProviderRouteImport.update({
+  id: '/auth/sign-up/provider',
+  path: '/sign-up/provider',
+  getParentRoute: () => AuthPublicRoute,
+} as any)
+
+const AuthRegisterStaffRoute = AuthRegisterStaffRouteImport.update({
+  id: '/auth/register/staff',
+  path: '/register/staff',
+  getParentRoute: () => AuthPublicRoute,
+} as any)
+
+const PatientProtectedRoute = PatientProtectedRouteImport.update({
+  id: '/patient/_protected',
+  path: '/patient',
+  getParentRoute: () => rootRouteImport,
+} as any)
+
+const PatientIndexRoute = PatientIndexRouteImport.update({
+  id: '/patient/',
+  path: '/',
+  getParentRoute: () => PatientProtectedRoute,
+} as any)
+
+const PatientAppointmentsRoute = PatientAppointmentsRouteImport.update({
+  id: '/patient/appointments',
+  path: '/appointments',
+  getParentRoute: () => PatientProtectedRoute,
+} as any)
+
+const PatientBookAppointmentRoute = PatientBookAppointmentRouteImport.update({
+  id: '/patient/book-appointment',
+  path: '/book-appointment',
+  getParentRoute: () => PatientProtectedRoute,
+} as any)
+
+const PatientChangePasswordRoute = PatientChangePasswordRouteImport.update({
+  id: '/patient/change-password',
+  path: '/change-password',
+  getParentRoute: () => PatientProtectedRoute,
+} as any)
+
+const PatientConsentSettingsRoute = PatientConsentSettingsRouteImport.update({
+  id: '/patient/consent-settings',
+  path: '/consent-settings',
+  getParentRoute: () => PatientProtectedRoute,
+} as any)
+
+const PatientFindClinicRoute = PatientFindClinicRouteImport.update({
+  id: '/patient/find-clinic',
+  path: '/find-clinic',
+  getParentRoute: () => PatientProtectedRoute,
+} as any)
+
+const PatientHealthRecordsRoute = PatientHealthRecordsRouteImport.update({
+  id: '/patient/health-records',
+  path: '/health-records',
+  getParentRoute: () => PatientProtectedRoute,
+} as any)
+
+const PatientLabResultsRoute = PatientLabResultsRouteImport.update({
+  id: '/patient/lab-results',
+  path: '/lab-results',
+  getParentRoute: () => PatientProtectedRoute,
+} as any)
+
+const PatientMedicationRemindersRoute = PatientMedicationRemindersRouteImport.update({
+  id: '/patient/medication-reminders',
+  path: '/medication-reminders',
+  getParentRoute: () => PatientProtectedRoute,
+} as any)
+
+const PatientNutritionRoute = PatientNutritionRouteImport.update({
+  id: '/patient/nutrition',
+  path: '/nutrition',
+  getParentRoute: () => PatientProtectedRoute,
+} as any)
+
+const PatientPrescriptionsRoute = PatientPrescriptionsRouteImport.update({
+  id: '/patient/prescriptions',
+  path: '/prescriptions',
+  getParentRoute: () => PatientProtectedRoute,
+} as any)
+
+const PatientProfileRoute = PatientProfileRouteImport.update({
+  id: '/patient/profile',
+  path: '/profile',
+  getParentRoute: () => PatientProtectedRoute,
+} as any)
+
+const PatientSymptomCheckerRoute = PatientSymptomCheckerRouteImport.update({
+  id: '/patient/symptom-checker',
+  path: '/symptom-checker',
+  getParentRoute: () => PatientProtectedRoute,
+} as any)
+
+const PatientTelemedicineRoute = PatientTelemedicineRouteImport.update({
+  id: '/patient/telemedicine',
+  path: '/telemedicine',
+  getParentRoute: () => PatientProtectedRoute,
+} as any)
+
+const PatientCommunityIndexRoute = PatientCommunityIndexRouteImport.update({
+  id: '/patient/community/',
+  path: '/community/',
+  getParentRoute: () => PatientProtectedRoute,
+} as any)
+
+const PatientCommunityNewRoute = PatientCommunityNewRouteImport.update({
+  id: '/patient/community/new',
+  path: '/community/new',
+  getParentRoute: () => PatientProtectedRoute,
+} as any)
+
+const PatientCommunityPostIdRoute = PatientCommunityPostIdRouteImport.update({
+  id: '/patient/community/post/$id',
+  path: '/community/post/$id',
+  getParentRoute: () => PatientProtectedRoute,
+} as any)
+
+const ProviderProtectedRoute = ProviderProtectedRouteImport.update({
+  id: '/provider/_protected',
+  path: '/provider',
+  getParentRoute: () => rootRouteImport,
+} as any)
+
+const ProviderIndexRoute = ProviderIndexRouteImport.update({
+  id: '/provider/',
+  path: '/',
+  getParentRoute: () => ProviderProtectedRoute,
+} as any)
+
+const ProviderChangePasswordRoute = ProviderChangePasswordRouteImport.update({
+  id: '/provider/change-password',
+  path: '/change-password',
+  getParentRoute: () => ProviderProtectedRoute,
+} as any)
+
+const ProviderClinicManagementRoute = ProviderClinicManagementRouteImport.update({
+  id: '/provider/clinic-management',
+  path: '/clinic-management',
+  getParentRoute: () => ProviderProtectedRoute,
+} as any)
+
+const ProviderClinicRegistrationRoute = ProviderClinicRegistrationRouteImport.update({
+  id: '/provider/clinic-registration',
+  path: '/clinic-registration',
+  getParentRoute: () => ProviderProtectedRoute,
+} as any)
+
+const ProviderProfileRoute = ProviderProfileRouteImport.update({
+  id: '/provider/profile',
+  path: '/profile',
+  getParentRoute: () => ProviderProtectedRoute,
+} as any)
+
+const ProviderStaffRoute = ProviderStaffRouteImport.update({
+  id: '/provider/staff',
+  path: '/staff',
+  getParentRoute: () => ProviderProtectedRoute,
+} as any)
+
+const ProviderTelemedicineRoute = ProviderTelemedicineRouteImport.update({
+  id: '/provider/telemedicine',
+  path: '/telemedicine',
+  getParentRoute: () => ProviderProtectedRoute,
+} as any)
+
+const ProviderAppointmentsIndexRoute = ProviderAppointmentsIndexRouteImport.update({
+  id: '/provider/appointments/',
+  path: '/appointments/',
+  getParentRoute: () => ProviderProtectedRoute,
+} as any)
+
+const ProviderAppointmentsQueueRoute = ProviderAppointmentsQueueRouteImport.update({
+  id: '/provider/appointments/queue',
+  path: '/appointments/queue',
+  getParentRoute: () => ProviderProtectedRoute,
+} as any)
+
+const ProviderCommunityIndexRoute = ProviderCommunityIndexRouteImport.update({
+  id: '/provider/community/',
+  path: '/community/',
+  getParentRoute: () => ProviderProtectedRoute,
+} as any)
+
+const ProviderCommunityNewRoute = ProviderCommunityNewRouteImport.update({
+  id: '/provider/community/new',
+  path: '/community/new',
+  getParentRoute: () => ProviderProtectedRoute,
+} as any)
+
+const ProviderCommunityPostIdRoute = ProviderCommunityPostIdRouteImport.update({
+  id: '/provider/community/post/$id',
+  path: '/community/post/$id',
+  getParentRoute: () => ProviderProtectedRoute,
+} as any)
+
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin/_protected': typeof AdminProtectedRoute
+  '/admin/': typeof AdminIndexRoute
+  '/admin/analytics': typeof AdminAnalyticsRoute
+  '/admin/clinic-verification': typeof AdminClinicVerificationRoute
+  '/admin/content-management': typeof AdminContentManagementRoute
+  '/admin/user-management': typeof AdminUserManagementRoute
+  '/auth/_public': typeof AuthPublicRoute
+  '/auth/sign-in': typeof AuthSignInRoute
+  '/auth/change-password': typeof AuthChangePasswordRoute
+  '/auth/complete-patient-profile': typeof AuthCompletePatientProfileRoute
+  '/auth/forgot-password': typeof AuthForgotPasswordRoute
+  '/auth/reset-password': typeof AuthResetPasswordRoute
+  '/auth/verify-email': typeof AuthVerifyEmailRoute
+  '/auth/sign-up/patient': typeof AuthSignUpPatientRoute
+  '/auth/sign-up/provider': typeof AuthSignUpProviderRoute
+  '/auth/register/staff': typeof AuthRegisterStaffRoute
+  '/patient/_protected': typeof PatientProtectedRoute
+  '/patient/': typeof PatientIndexRoute
+  '/patient/appointments': typeof PatientAppointmentsRoute
+  '/patient/book-appointment': typeof PatientBookAppointmentRoute
+  '/patient/change-password': typeof PatientChangePasswordRoute
+  '/patient/consent-settings': typeof PatientConsentSettingsRoute
+  '/patient/find-clinic': typeof PatientFindClinicRoute
+  '/patient/health-records': typeof PatientHealthRecordsRoute
+  '/patient/lab-results': typeof PatientLabResultsRoute
+  '/patient/medication-reminders': typeof PatientMedicationRemindersRoute
+  '/patient/nutrition': typeof PatientNutritionRoute
+  '/patient/prescriptions': typeof PatientPrescriptionsRoute
+  '/patient/profile': typeof PatientProfileRoute
+  '/patient/symptom-checker': typeof PatientSymptomCheckerRoute
+  '/patient/telemedicine': typeof PatientTelemedicineRoute
+  '/patient/community/': typeof PatientCommunityIndexRoute
+  '/patient/community/new': typeof PatientCommunityNewRoute
+  '/patient/community/post/$id': typeof PatientCommunityPostIdRoute
+  '/provider/_protected': typeof ProviderProtectedRoute
+  '/provider/': typeof ProviderIndexRoute
+  '/provider/change-password': typeof ProviderChangePasswordRoute
+  '/provider/clinic-management': typeof ProviderClinicManagementRoute
+  '/provider/clinic-registration': typeof ProviderClinicRegistrationRoute
+  '/provider/profile': typeof ProviderProfileRoute
+  '/provider/staff': typeof ProviderStaffRoute
+  '/provider/telemedicine': typeof ProviderTelemedicineRoute
+  '/provider/appointments/': typeof ProviderAppointmentsIndexRoute
+  '/provider/appointments/queue': typeof ProviderAppointmentsQueueRoute
+  '/provider/community/': typeof ProviderCommunityIndexRoute
+  '/provider/community/new': typeof ProviderCommunityNewRoute
+  '/provider/community/post/$id': typeof ProviderCommunityPostIdRoute
 }
+
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminProtectedRoute
+  '/admin/': typeof AdminIndexRoute
+  '/admin/analytics': typeof AdminAnalyticsRoute
+  '/admin/clinic-verification': typeof AdminClinicVerificationRoute
+  '/admin/content-management': typeof AdminContentManagementRoute
+  '/admin/user-management': typeof AdminUserManagementRoute
+  '/auth': typeof AuthPublicRoute
+  '/auth/sign-in': typeof AuthSignInRoute
+  '/auth/change-password': typeof AuthChangePasswordRoute
+  '/auth/complete-patient-profile': typeof AuthCompletePatientProfileRoute
+  '/auth/forgot-password': typeof AuthForgotPasswordRoute
+  '/auth/reset-password': typeof AuthResetPasswordRoute
+  '/auth/verify-email': typeof AuthVerifyEmailRoute
+  '/auth/sign-up/patient': typeof AuthSignUpPatientRoute
+  '/auth/sign-up/provider': typeof AuthSignUpProviderRoute
+  '/auth/register/staff': typeof AuthRegisterStaffRoute
+  '/patient': typeof PatientProtectedRoute
+  '/patient/': typeof PatientIndexRoute
+  '/patient/appointments': typeof PatientAppointmentsRoute
+  '/patient/book-appointment': typeof PatientBookAppointmentRoute
+  '/patient/change-password': typeof PatientChangePasswordRoute
+  '/patient/consent-settings': typeof PatientConsentSettingsRoute
+  '/patient/find-clinic': typeof PatientFindClinicRoute
+  '/patient/health-records': typeof PatientHealthRecordsRoute
+  '/patient/lab-results': typeof PatientLabResultsRoute
+  '/patient/medication-reminders': typeof PatientMedicationRemindersRoute
+  '/patient/nutrition': typeof PatientNutritionRoute
+  '/patient/prescriptions': typeof PatientPrescriptionsRoute
+  '/patient/profile': typeof PatientProfileRoute
+  '/patient/symptom-checker': typeof PatientSymptomCheckerRoute
+  '/patient/telemedicine': typeof PatientTelemedicineRoute
+  '/patient/community/': typeof PatientCommunityIndexRoute
+  '/patient/community/new': typeof PatientCommunityNewRoute
+  '/patient/community/post/$id': typeof PatientCommunityPostIdRoute
+  '/provider': typeof ProviderProtectedRoute
+  '/provider/': typeof ProviderIndexRoute
+  '/provider/change-password': typeof ProviderChangePasswordRoute
+  '/provider/clinic-management': typeof ProviderClinicManagementRoute
+  '/provider/clinic-registration': typeof ProviderClinicRegistrationRoute
+  '/provider/profile': typeof ProviderProfileRoute
+  '/provider/staff': typeof ProviderStaffRoute
+  '/provider/telemedicine': typeof ProviderTelemedicineRoute
+  '/provider/appointments/': typeof ProviderAppointmentsIndexRoute
+  '/provider/appointments/queue': typeof ProviderAppointmentsQueueRoute
+  '/provider/community/': typeof ProviderCommunityIndexRoute
+  '/provider/community/new': typeof ProviderCommunityNewRoute
+  '/provider/community/post/$id': typeof ProviderCommunityPostIdRoute
 }
+
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin/_protected': typeof AdminProtectedRoute
+  '/admin/': typeof AdminIndexRoute
+  '/admin/analytics': typeof AdminAnalyticsRoute
+  '/admin/clinic-verification': typeof AdminClinicVerificationRoute
+  '/admin/content-management': typeof AdminContentManagementRoute
+  '/admin/user-management': typeof AdminUserManagementRoute
+  '/auth/_public': typeof AuthPublicRoute
+  '/auth/sign-in': typeof AuthSignInRoute
+  '/auth/change-password': typeof AuthChangePasswordRoute
+  '/auth/complete-patient-profile': typeof AuthCompletePatientProfileRoute
+  '/auth/forgot-password': typeof AuthForgotPasswordRoute
+  '/auth/reset-password': typeof AuthResetPasswordRoute
+  '/auth/verify-email': typeof AuthVerifyEmailRoute
+  '/auth/sign-up/patient': typeof AuthSignUpPatientRoute
+  '/auth/sign-up/provider': typeof AuthSignUpProviderRoute
+  '/auth/register/staff': typeof AuthRegisterStaffRoute
+  '/patient/_protected': typeof PatientProtectedRoute
+  '/patient/': typeof PatientIndexRoute
+  '/patient/appointments': typeof PatientAppointmentsRoute
+  '/patient/book-appointment': typeof PatientBookAppointmentRoute
+  '/patient/change-password': typeof PatientChangePasswordRoute
+  '/patient/consent-settings': typeof PatientConsentSettingsRoute
+  '/patient/find-clinic': typeof PatientFindClinicRoute
+  '/patient/health-records': typeof PatientHealthRecordsRoute
+  '/patient/lab-results': typeof PatientLabResultsRoute
+  '/patient/medication-reminders': typeof PatientMedicationRemindersRoute
+  '/patient/nutrition': typeof PatientNutritionRoute
+  '/patient/prescriptions': typeof PatientPrescriptionsRoute
+  '/patient/profile': typeof PatientProfileRoute
+  '/patient/symptom-checker': typeof PatientSymptomCheckerRoute
+  '/patient/telemedicine': typeof PatientTelemedicineRoute
+  '/patient/community/': typeof PatientCommunityIndexRoute
+  '/patient/community/new': typeof PatientCommunityNewRoute
+  '/patient/community/post/$id': typeof PatientCommunityPostIdRoute
+  '/provider/_protected': typeof ProviderProtectedRoute
+  '/provider/': typeof ProviderIndexRoute
+  '/provider/change-password': typeof ProviderChangePasswordRoute
+  '/provider/clinic-management': typeof ProviderClinicManagementRoute
+  '/provider/clinic-registration': typeof ProviderClinicRegistrationRoute
+  '/provider/profile': typeof ProviderProfileRoute
+  '/provider/staff': typeof ProviderStaffRoute
+  '/provider/telemedicine': typeof ProviderTelemedicineRoute
+  '/provider/appointments/': typeof ProviderAppointmentsIndexRoute
+  '/provider/appointments/queue': typeof ProviderAppointmentsQueueRoute
+  '/provider/community/': typeof ProviderCommunityIndexRoute
+  '/provider/community/new': typeof ProviderCommunityNewRoute
+  '/provider/community/post/$id': typeof ProviderCommunityPostIdRoute
 }
+
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/admin/_protected'
+    | '/admin/'
+    | '/admin/analytics'
+    | '/admin/clinic-verification'
+    | '/admin/content-management'
+    | '/admin/user-management'
+    | '/auth/_public'
+    | '/auth/sign-in'
+    | '/auth/change-password'
+    | '/auth/complete-patient-profile'
+    | '/auth/forgot-password'
+    | '/auth/reset-password'
+    | '/auth/verify-email'
+    | '/auth/sign-up/patient'
+    | '/auth/sign-up/provider'
+    | '/auth/register/staff'
+    | '/patient/_protected'
+    | '/patient/'
+    | '/patient/appointments'
+    | '/patient/book-appointment'
+    | '/patient/change-password'
+    | '/patient/consent-settings'
+    | '/patient/find-clinic'
+    | '/patient/health-records'
+    | '/patient/lab-results'
+    | '/patient/medication-reminders'
+    | '/patient/nutrition'
+    | '/patient/prescriptions'
+    | '/patient/profile'
+    | '/patient/symptom-checker'
+    | '/patient/telemedicine'
+    | '/patient/community/'
+    | '/patient/community/new'
+    | '/patient/community/post/$id'
+    | '/provider/_protected'
+    | '/provider/'
+    | '/provider/change-password'
+    | '/provider/clinic-management'
+    | '/provider/clinic-registration'
+    | '/provider/profile'
+    | '/provider/staff'
+    | '/provider/telemedicine'
+    | '/provider/appointments/'
+    | '/provider/appointments/queue'
+    | '/provider/community/'
+    | '/provider/community/new'
+    | '/provider/community/post/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/admin'
+    | '/admin/'
+    | '/admin/analytics'
+    | '/admin/clinic-verification'
+    | '/admin/content-management'
+    | '/admin/user-management'
+    | '/auth'
+    | '/auth/sign-in'
+    | '/auth/change-password'
+    | '/auth/complete-patient-profile'
+    | '/auth/forgot-password'
+    | '/auth/reset-password'
+    | '/auth/verify-email'
+    | '/auth/sign-up/patient'
+    | '/auth/sign-up/provider'
+    | '/auth/register/staff'
+    | '/patient'
+    | '/patient/'
+    | '/patient/appointments'
+    | '/patient/book-appointment'
+    | '/patient/change-password'
+    | '/patient/consent-settings'
+    | '/patient/find-clinic'
+    | '/patient/health-records'
+    | '/patient/lab-results'
+    | '/patient/medication-reminders'
+    | '/patient/nutrition'
+    | '/patient/prescriptions'
+    | '/patient/profile'
+    | '/patient/symptom-checker'
+    | '/patient/telemedicine'
+    | '/patient/community/'
+    | '/patient/community/new'
+    | '/patient/community/post/$id'
+    | '/provider'
+    | '/provider/'
+    | '/provider/change-password'
+    | '/provider/clinic-management'
+    | '/provider/clinic-registration'
+    | '/provider/profile'
+    | '/provider/staff'
+    | '/provider/telemedicine'
+    | '/provider/appointments/'
+    | '/provider/appointments/queue'
+    | '/provider/community/'
+    | '/provider/community/new'
+    | '/provider/community/post/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/admin/_protected'
+    | '/admin/'
+    | '/admin/analytics'
+    | '/admin/clinic-verification'
+    | '/admin/content-management'
+    | '/admin/user-management'
+    | '/auth/_public'
+    | '/auth/sign-in'
+    | '/auth/change-password'
+    | '/auth/complete-patient-profile'
+    | '/auth/forgot-password'
+    | '/auth/reset-password'
+    | '/auth/verify-email'
+    | '/auth/sign-up/patient'
+    | '/auth/sign-up/provider'
+    | '/auth/register/staff'
+    | '/patient/_protected'
+    | '/patient/'
+    | '/patient/appointments'
+    | '/patient/book-appointment'
+    | '/patient/change-password'
+    | '/patient/consent-settings'
+    | '/patient/find-clinic'
+    | '/patient/health-records'
+    | '/patient/lab-results'
+    | '/patient/medication-reminders'
+    | '/patient/nutrition'
+    | '/patient/prescriptions'
+    | '/patient/profile'
+    | '/patient/symptom-checker'
+    | '/patient/telemedicine'
+    | '/patient/community/'
+    | '/patient/community/new'
+    | '/patient/community/post/$id'
+    | '/provider/_protected'
+    | '/provider/'
+    | '/provider/change-password'
+    | '/provider/clinic-management'
+    | '/provider/clinic-registration'
+    | '/provider/profile'
+    | '/provider/staff'
+    | '/provider/telemedicine'
+    | '/provider/appointments/'
+    | '/provider/appointments/queue'
+    | '/provider/community/'
+    | '/provider/community/new'
+    | '/provider/community/post/$id'
   fileRoutesById: FileRoutesById
 }
+
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminProtectedRoute: typeof AdminProtectedRoute
+  AuthPublicRoute: typeof AuthPublicRoute
+  PatientProtectedRoute: typeof PatientProtectedRoute
+  ProviderProtectedRoute: typeof ProviderProtectedRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,15 +671,409 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/_protected': {
+      id: '/admin/_protected'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminProtectedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminProtectedRouteImport
+    }
+    '/admin/analytics': {
+      id: '/admin/analytics'
+      path: '/analytics'
+      fullPath: '/admin/analytics'
+      preLoaderRoute: typeof AdminAnalyticsRouteImport
+      parentRoute: typeof AdminProtectedRouteImport
+    }
+    '/admin/clinic-verification': {
+      id: '/admin/clinic-verification'
+      path: '/clinic-verification'
+      fullPath: '/admin/clinic-verification'
+      preLoaderRoute: typeof AdminClinicVerificationRouteImport
+      parentRoute: typeof AdminProtectedRouteImport
+    }
+    '/admin/content-management': {
+      id: '/admin/content-management'
+      path: '/content-management'
+      fullPath: '/admin/content-management'
+      preLoaderRoute: typeof AdminContentManagementRouteImport
+      parentRoute: typeof AdminProtectedRouteImport
+    }
+    '/admin/user-management': {
+      id: '/admin/user-management'
+      path: '/user-management'
+      fullPath: '/admin/user-management'
+      preLoaderRoute: typeof AdminUserManagementRouteImport
+      parentRoute: typeof AdminProtectedRouteImport
+    }
+    '/auth/_public': {
+      id: '/auth/_public'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthPublicRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/sign-in': {
+      id: '/auth/sign-in'
+      path: '/sign-in'
+      fullPath: '/auth/sign-in'
+      preLoaderRoute: typeof AuthSignInRouteImport
+      parentRoute: typeof AuthPublicRouteImport
+    }
+    '/auth/change-password': {
+      id: '/auth/change-password'
+      path: '/change-password'
+      fullPath: '/auth/change-password'
+      preLoaderRoute: typeof AuthChangePasswordRouteImport
+      parentRoute: typeof AuthPublicRouteImport
+    }
+    '/auth/complete-patient-profile': {
+      id: '/auth/complete-patient-profile'
+      path: '/complete-patient-profile'
+      fullPath: '/auth/complete-patient-profile'
+      preLoaderRoute: typeof AuthCompletePatientProfileRouteImport
+      parentRoute: typeof AuthPublicRouteImport
+    }
+    '/auth/forgot-password': {
+      id: '/auth/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/auth/forgot-password'
+      preLoaderRoute: typeof AuthForgotPasswordRouteImport
+      parentRoute: typeof AuthPublicRouteImport
+    }
+    '/auth/reset-password': {
+      id: '/auth/reset-password'
+      path: '/reset-password'
+      fullPath: '/auth/reset-password'
+      preLoaderRoute: typeof AuthResetPasswordRouteImport
+      parentRoute: typeof AuthPublicRouteImport
+    }
+    '/auth/verify-email': {
+      id: '/auth/verify-email'
+      path: '/verify-email'
+      fullPath: '/auth/verify-email'
+      preLoaderRoute: typeof AuthVerifyEmailRouteImport
+      parentRoute: typeof AuthPublicRouteImport
+    }
+    '/auth/sign-up/patient': {
+      id: '/auth/sign-up/patient'
+      path: '/sign-up/patient'
+      fullPath: '/auth/sign-up/patient'
+      preLoaderRoute: typeof AuthSignUpPatientRouteImport
+      parentRoute: typeof AuthPublicRouteImport
+    }
+    '/auth/sign-up/provider': {
+      id: '/auth/sign-up/provider'
+      path: '/sign-up/provider'
+      fullPath: '/auth/sign-up/provider'
+      preLoaderRoute: typeof AuthSignUpProviderRouteImport
+      parentRoute: typeof AuthPublicRouteImport
+    }
+    '/auth/register/staff': {
+      id: '/auth/register/staff'
+      path: '/register/staff'
+      fullPath: '/auth/register/staff'
+      preLoaderRoute: typeof AuthRegisterStaffRouteImport
+      parentRoute: typeof AuthPublicRouteImport
+    }
+    '/patient/_protected': {
+      id: '/patient/_protected'
+      path: '/patient'
+      fullPath: '/patient'
+      preLoaderRoute: typeof PatientProtectedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/patient/': {
+      id: '/patient/'
+      path: '/'
+      fullPath: '/patient'
+      preLoaderRoute: typeof PatientIndexRouteImport
+      parentRoute: typeof PatientProtectedRouteImport
+    }
+    '/patient/appointments': {
+      id: '/patient/appointments'
+      path: '/appointments'
+      fullPath: '/patient/appointments'
+      preLoaderRoute: typeof PatientAppointmentsRouteImport
+      parentRoute: typeof PatientProtectedRouteImport
+    }
+    '/patient/book-appointment': {
+      id: '/patient/book-appointment'
+      path: '/book-appointment'
+      fullPath: '/patient/book-appointment'
+      preLoaderRoute: typeof PatientBookAppointmentRouteImport
+      parentRoute: typeof PatientProtectedRouteImport
+    }
+    '/patient/change-password': {
+      id: '/patient/change-password'
+      path: '/change-password'
+      fullPath: '/patient/change-password'
+      preLoaderRoute: typeof PatientChangePasswordRouteImport
+      parentRoute: typeof PatientProtectedRouteImport
+    }
+    '/patient/consent-settings': {
+      id: '/patient/consent-settings'
+      path: '/consent-settings'
+      fullPath: '/patient/consent-settings'
+      preLoaderRoute: typeof PatientConsentSettingsRouteImport
+      parentRoute: typeof PatientProtectedRouteImport
+    }
+    '/patient/find-clinic': {
+      id: '/patient/find-clinic'
+      path: '/find-clinic'
+      fullPath: '/patient/find-clinic'
+      preLoaderRoute: typeof PatientFindClinicRouteImport
+      parentRoute: typeof PatientProtectedRouteImport
+    }
+    '/patient/health-records': {
+      id: '/patient/health-records'
+      path: '/health-records'
+      fullPath: '/patient/health-records'
+      preLoaderRoute: typeof PatientHealthRecordsRouteImport
+      parentRoute: typeof PatientProtectedRouteImport
+    }
+    '/patient/lab-results': {
+      id: '/patient/lab-results'
+      path: '/lab-results'
+      fullPath: '/patient/lab-results'
+      preLoaderRoute: typeof PatientLabResultsRouteImport
+      parentRoute: typeof PatientProtectedRouteImport
+    }
+    '/patient/medication-reminders': {
+      id: '/patient/medication-reminders'
+      path: '/medication-reminders'
+      fullPath: '/patient/medication-reminders'
+      preLoaderRoute: typeof PatientMedicationRemindersRouteImport
+      parentRoute: typeof PatientProtectedRouteImport
+    }
+    '/patient/nutrition': {
+      id: '/patient/nutrition'
+      path: '/nutrition'
+      fullPath: '/patient/nutrition'
+      preLoaderRoute: typeof PatientNutritionRouteImport
+      parentRoute: typeof PatientProtectedRouteImport
+    }
+    '/patient/prescriptions': {
+      id: '/patient/prescriptions'
+      path: '/prescriptions'
+      fullPath: '/patient/prescriptions'
+      preLoaderRoute: typeof PatientPrescriptionsRouteImport
+      parentRoute: typeof PatientProtectedRouteImport
+    }
+    '/patient/profile': {
+      id: '/patient/profile'
+      path: '/profile'
+      fullPath: '/patient/profile'
+      preLoaderRoute: typeof PatientProfileRouteImport
+      parentRoute: typeof PatientProtectedRouteImport
+    }
+    '/patient/symptom-checker': {
+      id: '/patient/symptom-checker'
+      path: '/symptom-checker'
+      fullPath: '/patient/symptom-checker'
+      preLoaderRoute: typeof PatientSymptomCheckerRouteImport
+      parentRoute: typeof PatientProtectedRouteImport
+    }
+    '/patient/telemedicine': {
+      id: '/patient/telemedicine'
+      path: '/telemedicine'
+      fullPath: '/patient/telemedicine'
+      preLoaderRoute: typeof PatientTelemedicineRouteImport
+      parentRoute: typeof PatientProtectedRouteImport
+    }
+    '/patient/community/': {
+      id: '/patient/community/'
+      path: '/community/'
+      fullPath: '/patient/community'
+      preLoaderRoute: typeof PatientCommunityIndexRouteImport
+      parentRoute: typeof PatientProtectedRouteImport
+    }
+    '/patient/community/new': {
+      id: '/patient/community/new'
+      path: '/community/new'
+      fullPath: '/patient/community/new'
+      preLoaderRoute: typeof PatientCommunityNewRouteImport
+      parentRoute: typeof PatientProtectedRouteImport
+    }
+    '/patient/community/post/$id': {
+      id: '/patient/community/post/$id'
+      path: '/community/post/$id'
+      fullPath: '/patient/community/post/$id'
+      preLoaderRoute: typeof PatientCommunityPostIdRouteImport
+      parentRoute: typeof PatientProtectedRouteImport
+    }
+    '/provider/_protected': {
+      id: '/provider/_protected'
+      path: '/provider'
+      fullPath: '/provider'
+      preLoaderRoute: typeof ProviderProtectedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/provider/': {
+      id: '/provider/'
+      path: '/'
+      fullPath: '/provider'
+      preLoaderRoute: typeof ProviderIndexRouteImport
+      parentRoute: typeof ProviderProtectedRouteImport
+    }
+    '/provider/change-password': {
+      id: '/provider/change-password'
+      path: '/change-password'
+      fullPath: '/provider/change-password'
+      preLoaderRoute: typeof ProviderChangePasswordRouteImport
+      parentRoute: typeof ProviderProtectedRouteImport
+    }
+    '/provider/clinic-management': {
+      id: '/provider/clinic-management'
+      path: '/clinic-management'
+      fullPath: '/provider/clinic-management'
+      preLoaderRoute: typeof ProviderClinicManagementRouteImport
+      parentRoute: typeof ProviderProtectedRouteImport
+    }
+    '/provider/clinic-registration': {
+      id: '/provider/clinic-registration'
+      path: '/clinic-registration'
+      fullPath: '/provider/clinic-registration'
+      preLoaderRoute: typeof ProviderClinicRegistrationRouteImport
+      parentRoute: typeof ProviderProtectedRouteImport
+    }
+    '/provider/profile': {
+      id: '/provider/profile'
+      path: '/profile'
+      fullPath: '/provider/profile'
+      preLoaderRoute: typeof ProviderProfileRouteImport
+      parentRoute: typeof ProviderProtectedRouteImport
+    }
+    '/provider/staff': {
+      id: '/provider/staff'
+      path: '/staff'
+      fullPath: '/provider/staff'
+      preLoaderRoute: typeof ProviderStaffRouteImport
+      parentRoute: typeof ProviderProtectedRouteImport
+    }
+    '/provider/telemedicine': {
+      id: '/provider/telemedicine'
+      path: '/telemedicine'
+      fullPath: '/provider/telemedicine'
+      preLoaderRoute: typeof ProviderTelemedicineRouteImport
+      parentRoute: typeof ProviderProtectedRouteImport
+    }
+    '/provider/appointments/': {
+      id: '/provider/appointments/'
+      path: '/appointments/'
+      fullPath: '/provider/appointments'
+      preLoaderRoute: typeof ProviderAppointmentsIndexRouteImport
+      parentRoute: typeof ProviderProtectedRouteImport
+    }
+    '/provider/appointments/queue': {
+      id: '/provider/appointments/queue'
+      path: '/appointments/queue'
+      fullPath: '/provider/appointments/queue'
+      preLoaderRoute: typeof ProviderAppointmentsQueueRouteImport
+      parentRoute: typeof ProviderProtectedRouteImport
+    }
+    '/provider/community/': {
+      id: '/provider/community/'
+      path: '/community/'
+      fullPath: '/provider/community'
+      preLoaderRoute: typeof ProviderCommunityIndexRouteImport
+      parentRoute: typeof ProviderProtectedRouteImport
+    }
+    '/provider/community/new': {
+      id: '/provider/community/new'
+      path: '/community/new'
+      fullPath: '/provider/community/new'
+      preLoaderRoute: typeof ProviderCommunityNewRouteImport
+      parentRoute: typeof ProviderProtectedRouteImport
+    }
+    '/provider/community/post/$id': {
+      id: '/provider/community/post/$id'
+      path: '/community/post/$id'
+      fullPath: '/provider/community/post/$id'
+      preLoaderRoute: typeof ProviderCommunityPostIdRouteImport
+      parentRoute: typeof ProviderProtectedRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminProtectedRoute: AdminProtectedRoute,
+  AuthPublicRoute: AuthPublicRoute,
+  PatientProtectedRoute: PatientProtectedRoute,
+  ProviderProtectedRoute: ProviderProtectedRoute,
 }
+
+const adminProtectedRouteChildren = {
+  AdminIndexRoute: AdminIndexRoute,
+  AdminAnalyticsRoute: AdminAnalyticsRoute,
+  AdminClinicVerificationRoute: AdminClinicVerificationRoute,
+  AdminContentManagementRoute: AdminContentManagementRoute,
+  AdminUserManagementRoute: AdminUserManagementRoute,
+}
+
+const authPublicRouteChildren = {
+  AuthSignInRoute: AuthSignInRoute,
+  AuthChangePasswordRoute: AuthChangePasswordRoute,
+  AuthCompletePatientProfileRoute: AuthCompletePatientProfileRoute,
+  AuthForgotPasswordRoute: AuthForgotPasswordRoute,
+  AuthResetPasswordRoute: AuthResetPasswordRoute,
+  AuthVerifyEmailRoute: AuthVerifyEmailRoute,
+  AuthSignUpPatientRoute: AuthSignUpPatientRoute,
+  AuthSignUpProviderRoute: AuthSignUpProviderRoute,
+  AuthRegisterStaffRoute: AuthRegisterStaffRoute,
+}
+
+const patientProtectedRouteChildren = {
+  PatientIndexRoute: PatientIndexRoute,
+  PatientAppointmentsRoute: PatientAppointmentsRoute,
+  PatientBookAppointmentRoute: PatientBookAppointmentRoute,
+  PatientChangePasswordRoute: PatientChangePasswordRoute,
+  PatientConsentSettingsRoute: PatientConsentSettingsRoute,
+  PatientFindClinicRoute: PatientFindClinicRoute,
+  PatientHealthRecordsRoute: PatientHealthRecordsRoute,
+  PatientLabResultsRoute: PatientLabResultsRoute,
+  PatientMedicationRemindersRoute: PatientMedicationRemindersRoute,
+  PatientNutritionRoute: PatientNutritionRoute,
+  PatientPrescriptionsRoute: PatientPrescriptionsRoute,
+  PatientProfileRoute: PatientProfileRoute,
+  PatientSymptomCheckerRoute: PatientSymptomCheckerRoute,
+  PatientTelemedicineRoute: PatientTelemedicineRoute,
+  PatientCommunityIndexRoute: PatientCommunityIndexRoute,
+  PatientCommunityNewRoute: PatientCommunityNewRoute,
+  PatientCommunityPostIdRoute: PatientCommunityPostIdRoute,
+}
+
+const providerProtectedRouteChildren = {
+  ProviderIndexRoute: ProviderIndexRoute,
+  ProviderChangePasswordRoute: ProviderChangePasswordRoute,
+  ProviderClinicManagementRoute: ProviderClinicManagementRoute,
+  ProviderClinicRegistrationRoute: ProviderClinicRegistrationRoute,
+  ProviderProfileRoute: ProviderProfileRoute,
+  ProviderStaffRoute: ProviderStaffRoute,
+  ProviderTelemedicineRoute: ProviderTelemedicineRoute,
+  ProviderAppointmentsIndexRoute: ProviderAppointmentsIndexRoute,
+  ProviderAppointmentsQueueRoute: ProviderAppointmentsQueueRoute,
+  ProviderCommunityIndexRoute: ProviderCommunityIndexRoute,
+  ProviderCommunityNewRoute: ProviderCommunityNewRoute,
+  ProviderCommunityPostIdRoute: ProviderCommunityPostIdRoute,
+}
+
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+AdminProtectedRoute._addFileChildren(adminProtectedRouteChildren)
+AuthPublicRoute._addFileChildren(authPublicRouteChildren)
+PatientProtectedRoute._addFileChildren(patientProtectedRouteChildren)
+ProviderProtectedRoute._addFileChildren(providerProtectedRouteChildren)
 
 import type { getRouter } from './router.tsx'
 import type { createStart } from '@tanstack/react-start'

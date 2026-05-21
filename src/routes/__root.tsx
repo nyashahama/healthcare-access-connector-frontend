@@ -5,6 +5,10 @@ import {
   HeadContent,
   Scripts,
 } from '@tanstack/react-router'
+import { QueryClientProvider } from '@tanstack/react-query'
+import { queryClient } from '@/platform/query/queryClient'
+import { AuthProvider } from '@/context/AuthContext'
+import { ToastProvider } from '@/hooks/useToast'
 
 export const Route = createRootRoute({
   head: () => ({
@@ -20,7 +24,13 @@ export const Route = createRootRoute({
 function RootComponent() {
   return (
     <RootDocument>
-      <Outlet />
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <ToastProvider>
+            <Outlet />
+          </ToastProvider>
+        </AuthProvider>
+      </QueryClientProvider>
     </RootDocument>
   )
 }
