@@ -1,0 +1,34 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "strict": true,
+    "noImplicitAny": false,
+    "allowJs": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "components/*": ["./src/components/*"],
+      "layouts/*": ["./src/layouts/*"],
+      "views/*": ["./src/views/*"],
+      "hooks/*": ["./src/hooks/*"],
+      "platform/*": ["./src/platform/*"],
+      "api/*": ["./src/api/*"],
+      "context/*": ["./src/context/*"],
+      "utils/*": ["./src/utils/*"],
+      "assets/*": ["./src/assets/*"],
+      "variables/*": ["./src/variables/*"],
+      "test/*": ["./src/test/*"]
+    }
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx"]
+}
