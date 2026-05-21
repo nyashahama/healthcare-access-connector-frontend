@@ -1,5 +1,7 @@
-/** @type {import('tailwindcss').Config} */
-module.exports = {
+import type { Config } from 'tailwindcss'
+import tailwindcssRtl from 'tailwindcss-rtl'
+
+const config: Config = {
   darkMode: "class",
   content: ["./src/**/*.{js,jsx,ts,tsx}"],
   theme: {
@@ -134,7 +136,7 @@ module.exports = {
       "4xl": "1850px",
       "4xl-max": { max: "1850px" },
     },
-    colors: () => ({
+    colors: {
       white: "#ffffff",
       lightPrimary: "#F4F7FE",
       blueSecondary: "#4318FF",
@@ -322,7 +324,9 @@ module.exports = {
       shadow: {
         500: "rgba(112, 144, 176, 0.08)",
       },
-    }),
+    },
   },
-  plugins: [require("tailwindcss-rtl")],
-};
+  plugins: [tailwindcssRtl],
+}
+
+export default config
