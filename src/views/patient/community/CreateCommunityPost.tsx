@@ -51,7 +51,7 @@ const CreateCommunityPost = () => {
     ) {
       setModalState({ ...modalState, cancel: true });
     } else {
-      navigate({ to: "/patient/community/" });
+      navigate({ to: "/patient/community" });
     }
   };
 
@@ -78,7 +78,7 @@ const CreateCommunityPost = () => {
 
     showToast("Post created successfully!", "success");
     setTimeout(() => {
-      navigate({ to: "/patient/community/" });
+      navigate({ to: "/patient/community" });
     }, 1500);
   };
 
@@ -108,7 +108,7 @@ const CreateCommunityPost = () => {
 
   const confirmCancel = () => {
     setModalState({ ...modalState, cancel: false });
-    navigate({ to: "/patient/community/" });
+    navigate({ to: "/patient/community" });
     showToast("Post discarded", "info");
   };
 

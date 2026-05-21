@@ -109,7 +109,7 @@ const ProviderCommunityPost = () => {
   };
 
   const handleBack = () => {
-    navigate({ to: "/provider/community/" });
+    navigate({ to: "/provider/community" });
   };
 
   const handleLike = () => {

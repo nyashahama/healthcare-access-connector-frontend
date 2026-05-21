@@ -117,7 +117,7 @@ const CreateProviderCommunityPost = () => {
     if (postData.title || postData.content || postData.category) {
       setModalState({ ...modalState, cancel: true });
     } else {
-      navigate({ to: "/provider/community/" });
+      navigate({ to: "/provider/community" });
     }
   };
 
@@ -159,7 +159,7 @@ const CreateProviderCommunityPost = () => {
     console.log("Creating professional post:", postData);
     showToast("Professional discussion posted!", "success");
     setTimeout(() => {
-      navigate({ to: "/provider/community/" });
+      navigate({ to: "/provider/community" });
     }, 1500);
   };
 
@@ -201,7 +201,7 @@ const CreateProviderCommunityPost = () => {
 
   const confirmCancel = () => {
     setModalState({ ...modalState, cancel: false });
-    navigate({ to: "/provider/community/" });
+    navigate({ to: "/provider/community" });
     showToast("Discussion discarded", "info");
   };
 

@@ -131,7 +131,7 @@ const SymptomChecker = () => {
       return;
     }
 
-    const result = await submitSession(payload);
+    const result = await submitSession(payload as unknown as Record<string, unknown>);
 
     if (result.success) {
       const triageLevel = (result as any).data?.triage_level;

@@ -80,7 +80,7 @@ const CommunityPost = () => {
   };
 
   const handleBack = () => {
-    navigate({ to: "/patient/community/" });
+    navigate({ to: "/patient/community" });
   };
 
   const handleLike = () => {
