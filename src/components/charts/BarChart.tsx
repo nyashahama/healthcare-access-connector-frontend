@@ -4,10 +4,10 @@ import { ApexOptions } from "apexcharts";
 
 interface BarChartProps {
   chartData: ApexAxisChartSeries;
-  chartOptions: ApexOptions;
+  chartOptions: ApexOptions | Record<string, unknown>;
 }
 
-class BarChart extends React.Component<BarChartProps, { chartData: ApexAxisChartSeries; chartOptions: ApexOptions }> {
+class BarChart extends React.Component<BarChartProps, { chartData: ApexAxisChartSeries; chartOptions: ApexOptions | Record<string, unknown> }> {
   constructor(props: BarChartProps) {
     super(props);
     this.state = {
@@ -26,7 +26,7 @@ class BarChart extends React.Component<BarChartProps, { chartData: ApexAxisChart
   render() {
     return (
       <Chart
-        options={this.state.chartOptions}
+        options={this.state.chartOptions as ApexOptions}
         series={this.state.chartData}
         type="bar"
         width="100%"

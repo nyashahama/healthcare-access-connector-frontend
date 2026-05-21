@@ -4,6 +4,7 @@ interface WidgetProps {
   icon: React.ReactNode;
   title: string;
   subtitle: string;
+  [key: string]: unknown;
 }
 
 const Widget: React.FC<WidgetProps> = ({ icon, title, subtitle }) => {

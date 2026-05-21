@@ -6,6 +6,8 @@
     "moduleResolution": "bundler",
     "jsx": "react-jsx",
     "strict": true,
+    "noImplicitAny": false,
+    "allowJs": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
@@ -23,7 +25,9 @@
       "api/*": ["./src/api/*"],
       "context/*": ["./src/context/*"],
       "utils/*": ["./src/utils/*"],
-      "assets/*": ["./src/assets/*"]
+      "assets/*": ["./src/assets/*"],
+      "variables/*": ["./src/variables/*"],
+      "test/*": ["./src/test/*"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"]

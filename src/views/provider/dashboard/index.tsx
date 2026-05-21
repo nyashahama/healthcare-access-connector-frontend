@@ -1,0 +1,127 @@
+import { useState, useEffect } from "react";
+import { useAuth } from "context/AuthContext";
+import { useProvider } from "hooks/useProvider";
+import DoctorDashboard from "./components/DoctorDashboard";
+import NurseDashboard from "./components/NurseDashboard";
+import ManagerDashboard from "./components/ManagerDashboard";
+
+/**
+ * Main Provider Dashboard - Routes to role-specific dashboards
+ * Determines user's staff role and renders appropriate dashboard
+ */
+const ProviderDashboard = () => {
+  const { user } = useAuth();
+  const { getMyClinic, loading: providerLoading } = useProvider();
+
+  const [loading, setLoading] = useState(true);
+  const [userRole, setUserRole] = useState<any>(null);
+  const [clinicId, setClinicId] = useState<any>(null);
+  const [error, setError] = useState<any>(null);
+
+  useEffect(() => {
+    const initializeDashboard = async () => {
+      try {
+        setLoading(true);
+
+        if (!user) {
+          setError("User not authenticated");
+          setLoading(false);
+          return;
+        }
+
+        setUserRole(user.role);
+
+        const { success, data, error: clinicError } = await getMyClinic();
+
+        if (!success || !data?.clinic) {
+          setError(clinicError || "No clinic found for this user");
+          setLoading(false);
+          return;
+        }
+
+        setClinicId(data.clinic.id);
+        setLoading(false);
+      } catch (err) {
+        console.error("Error initializing dashboard:", err);
+        setError("Failed to load dashboard");
+        setLoading(false);
+      }
+    };
+
+    initializeDashboard();
+  }, [user, getMyClinic]);
+
+  if (loading || providerLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="border-t-transparent mx-auto h-12 w-12 animate-spin rounded-full border-4 border-brand-500"></div>
+          <p className="mt-4 text-gray-600 dark:text-gray-300">
+            Loading your dashboard...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="mb-4 text-red-500">
+            <svg
+              className="mx-auto h-12 w-12"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+          </div>
+          <h3 className="text-xl font-semibold text-navy-700 dark:text-white">
+            Unable to Load Dashboard
+          </h3>
+          <p className="mt-2 text-gray-600 dark:text-gray-300">{error}</p>
+          <button
+            onClick={() => { setError(null); setLoading(true); }}
+            className="mt-4 rounded-lg bg-brand-500 px-6 py-2 text-white hover:bg-brand-600"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Route to appropriate dashboard based on role
+  const renderDashboard = () => {
+    switch (userRole) {
+      case "clinic_admin":
+        return <ManagerDashboard clinicId={clinicId} />;
+
+      case "provider_staff":
+        return <DoctorDashboard clinicId={clinicId} />;
+
+      case "caregiver":
+        return <NurseDashboard clinicId={clinicId} />;
+
+      default:
+        return (
+          <div className="text-center">
+            <p className="text-gray-600 dark:text-gray-300">
+              Unknown role: {userRole}. Please contact support.
+            </p>
+          </div>
+        );
+    }
+  };
+
+  return <div className="h-full">{renderDashboard()}</div>;
+};
+
+export default ProviderDashboard;
