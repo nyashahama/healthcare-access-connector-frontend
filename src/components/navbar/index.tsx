@@ -36,14 +36,14 @@ const Navbar: React.FC<NavbarProps> = ({ onOpenSidenav, brandText }) => {
           </a>
           <Link
             className="text-sm font-normal capitalize text-navy-700 hover:underline dark:text-white dark:hover:text-white"
-            to="#"
+            to={'#' as any}
           >
             {brandText}
           </Link>
         </div>
         <p className="shrink text-[33px] capitalize text-navy-700 dark:text-white">
           <Link
-            to="#"
+            to={'#' as any}
             className="font-bold capitalize hover:text-navy-700 dark:hover:text-white"
           >
             {brandText}

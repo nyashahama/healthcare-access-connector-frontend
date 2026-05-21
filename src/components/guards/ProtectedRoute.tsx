@@ -48,8 +48,10 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles 
     return <Navigate to="/auth/sign-in" replace />;
   }
 
-  if (!hasRouteAccess(user.role, allowedRoles)) {
-    const dashboardPath = getDashboardPath(user.role);
+  const role = user.role as string;
+
+  if (!hasRouteAccess(role, allowedRoles)) {
+    const dashboardPath = getDashboardPath(role);
     return (
       <div className="flex h-screen w-full items-center justify-center bg-lightPrimary p-4 dark:bg-navy-900">
         <div className="max-w-md rounded-xl bg-white p-8 text-center shadow-xl dark:bg-navy-800">
@@ -87,7 +89,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles 
     );
   }
 
-  return children;
+  return <>{children}</>;
 };
 
 export default ProtectedRoute;

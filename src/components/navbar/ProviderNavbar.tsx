@@ -14,6 +14,7 @@ import { useAuth } from "@/context/AuthContext";
 interface ProviderNavbarProps {
   onOpenSidenav: () => void;
   brandText: string;
+  logoText?: string;
 }
 
 const ProviderNavbar: React.FC<ProviderNavbarProps> = ({ onOpenSidenav, brandText }) => {
@@ -24,7 +25,7 @@ const ProviderNavbar: React.FC<ProviderNavbarProps> = ({ onOpenSidenav, brandTex
 
   useEffect(() => {
     if (user?.id) {
-      getStaffByUserId(user.id);
+      getStaffByUserId(user.id as string);
     }
   }, [user?.id, getStaffByUserId]);
   const { handleLogout } = useLogoutHandler();
@@ -37,14 +38,14 @@ const ProviderNavbar: React.FC<ProviderNavbarProps> = ({ onOpenSidenav, brandTex
         <div className="h-6 w-[224px] pt-1">
           <Link
             className="text-sm font-normal capitalize text-navy-700 hover:underline dark:text-white dark:hover:text-white"
-            to="#"
+            to={'#' as any}
           >
             {brandText}
           </Link>
         </div>
         <p className="shrink text-[33px] capitalize text-navy-700 dark:text-white">
           <Link
-            to="#"
+            to={'#' as any}
             className="font-bold capitalize hover:text-navy-700 dark:hover:text-white"
           >
             {brandText}
@@ -144,7 +145,7 @@ const ProviderNavbar: React.FC<ProviderNavbarProps> = ({ onOpenSidenav, brandTex
             <div className="flex items-center gap-2">
               <FaUserMd className="h-6 w-6 text-navy-700 dark:text-white" />
               <span className="hidden text-sm font-medium md:block">
-                {staff?.first_name}
+                {staff?.first_name as React.ReactNode}
               </span>
             </div>
           }
@@ -154,7 +155,7 @@ const ProviderNavbar: React.FC<ProviderNavbarProps> = ({ onOpenSidenav, brandTex
             <div className="p-4">
               <div className="flex items-center gap-2">
                 <p className="text-sm font-bold text-navy-700 dark:text-white">
-                  👋 Hey {staff?.first_name}
+                  👋 Hey {staff?.first_name as React.ReactNode}
                 </p>
               </div>
             </div>

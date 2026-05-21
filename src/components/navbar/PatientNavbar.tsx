@@ -14,6 +14,7 @@ import { useLogoutHandler } from "hooks/useLogoutHandler";
 interface PatientNavbarProps {
   onOpenSidenav: () => void;
   brandText: string;
+  logoText?: string;
 }
 
 const PatientNavbar: React.FC<PatientNavbarProps> = ({ onOpenSidenav, brandText }) => {
@@ -28,14 +29,14 @@ const PatientNavbar: React.FC<PatientNavbarProps> = ({ onOpenSidenav, brandText 
         <div className="h-6 w-[224px] pt-1">
           <Link
             className="text-sm font-normal capitalize text-navy-700 hover:underline dark:text-white dark:hover:text-white"
-            to="#"
+            to={'#' as any}
           >
             {brandText}
           </Link>
         </div>
         <p className="shrink text-[33px] capitalize text-navy-700 dark:text-white">
           <Link
-            to="#"
+            to={'#' as any}
             className="font-bold capitalize hover:text-navy-700 dark:hover:text-white"
           >
             {brandText}
@@ -135,7 +136,7 @@ const PatientNavbar: React.FC<PatientNavbarProps> = ({ onOpenSidenav, brandText 
             <div className="flex items-center gap-2">
               <FaUserInjured className="h-6 w-6 text-navy-700 dark:text-white" />
               <span className="hidden text-sm font-medium md:block">
-                {patient?.first_name}
+                {patient?.first_name as React.ReactNode}
               </span>
             </div>
           }
@@ -145,7 +146,7 @@ const PatientNavbar: React.FC<PatientNavbarProps> = ({ onOpenSidenav, brandText 
             <div className="p-4">
               <div className="flex items-center gap-2">
                 <p className="text-sm font-bold text-navy-700 dark:text-white">
-                  👋 Hey, {patient?.first_name}
+                  👋 Hey, {patient?.first_name as React.ReactNode}
                 </p>
               </div>
             </div>
@@ -158,7 +159,7 @@ const PatientNavbar: React.FC<PatientNavbarProps> = ({ onOpenSidenav, brandText 
                 My Profile
               </Link>
               <Link
-                to="/patient/dashboard"
+                to={'/patient/dashboard' as any}
                 className="mt-3 text-sm text-gray-800 dark:text-white hover:dark:text-white"
               >
                 Appointments

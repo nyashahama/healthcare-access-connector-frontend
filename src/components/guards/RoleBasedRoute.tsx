@@ -63,7 +63,7 @@ const RoleBasedRoute: React.FC<RoleBasedRouteProps> = ({ children, allowedRoles 
     return <Navigate to="/auth/sign-in" replace />;
   }
 
-  const userRole = user.role;
+  const userRole = user.role as string;
   const hasPermission = allowedRoles.includes(userRole);
 
   if (!hasPermission) {

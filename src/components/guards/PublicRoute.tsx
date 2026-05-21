@@ -47,7 +47,7 @@ const PublicRoute: React.FC<PublicRouteProps> = ({ children }) => {
   if (location.pathname === "/auth/complete-patient-profile") return children;
 
   if (isAuthenticated && user) {
-    return <Navigate to={getDashboardPath(user.role)} replace />;
+    return <Navigate to={getDashboardPath(user.role as string)} replace />;
   }
 
   return children;

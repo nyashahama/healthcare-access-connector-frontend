@@ -4,14 +4,14 @@ import { useErrorLogger } from "hooks/useErrorLogger";
 
 interface ErrorBoundaryWrapperProps {
   children: React.ReactNode;
-  fallback: React.ComponentType<{ onReset: () => void; error?: Error | null; errorInfo?: React.ErrorInfo | null }>;
+  fallback: React.ComponentType<{ onReset: () => void; error: Error | null; errorInfo: React.ErrorInfo | null }>;
   context?: string;
 }
 
 const ErrorBoundaryWrapper: React.FC<ErrorBoundaryWrapperProps> = ({ children, fallback, context }) => {
   const logError = useErrorLogger();
   return (
-    <ErrorBoundary fallback={fallback} onError={logError} context={context}>
+    <ErrorBoundary fallback={fallback as any} onError={logError} context={context}>
       {children}
     </ErrorBoundary>
   );

@@ -14,6 +14,7 @@ import { useAuth } from "@/context/AuthContext";
 interface AdminNavbarProps {
   onOpenSidenav: () => void;
   brandText: string;
+  logoText?: string;
 }
 
 const AdminNavbar: React.FC<AdminNavbarProps> = ({ onOpenSidenav, brandText }) => {
@@ -24,7 +25,7 @@ const AdminNavbar: React.FC<AdminNavbarProps> = ({ onOpenSidenav, brandText }) =
 
   useEffect(() => {
     if (user?.id) {
-      getSystemAdminByUserId(user.id);
+      getSystemAdminByUserId(user.id as string);
     }
   }, [user?.id, getSystemAdminByUserId]);
   const { handleLogout } = useLogoutHandler();
@@ -35,14 +36,14 @@ const AdminNavbar: React.FC<AdminNavbarProps> = ({ onOpenSidenav, brandText }) =
         <div className="h-6 w-[224px] pt-1">
           <Link
             className="text-sm font-normal capitalize text-navy-700 hover:underline dark:text-white dark:hover:text-white"
-            to="#"
+            to={'#' as any}
           >
             {brandText}
           </Link>
         </div>
         <p className="shrink text-[33px] capitalize text-navy-700 dark:text-white">
           <Link
-            to="#"
+            to={'#' as any}
             className="font-bold capitalize hover:text-navy-700 dark:hover:text-white"
           >
             {brandText}
@@ -142,7 +143,7 @@ const AdminNavbar: React.FC<AdminNavbarProps> = ({ onOpenSidenav, brandText }) =
             <div className="flex items-center gap-2">
               <FaUserShield className="h-6 w-6 text-navy-700 dark:text-white" />
               <span className="hidden text-sm font-medium md:block">
-                {admin?.admin_level}
+                {admin?.admin_level as React.ReactNode}
               </span>
             </div>
           }
@@ -152,7 +153,7 @@ const AdminNavbar: React.FC<AdminNavbarProps> = ({ onOpenSidenav, brandText }) =
             <div className="p-4">
               <div className="flex items-center gap-2">
                 <p className="text-sm font-bold text-navy-700 dark:text-white">
-                  👋 {admin?.admin_level}
+                  👋 {admin?.admin_level as React.ReactNode}
                 </p>
               </div>
             </div>
