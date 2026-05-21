@@ -182,7 +182,7 @@ const ClinicVerification = () => {
       notes: `Clinic approved by ${currentUser.first_name || ""} ${
         currentUser.last_name || ""
       } on ${new Date().toLocaleDateString()}`,
-    });
+    }, "");
 
     if (result.success) {
       showToast(

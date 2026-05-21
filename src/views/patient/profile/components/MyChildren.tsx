@@ -5,7 +5,7 @@ import Modal from "components/modal/Modal";
 import { useToast } from "hooks/useToast";
 import { useAuth } from "context/AuthContext";
 import { usePatient } from "hooks/usePatient";
-import patientService from "api/services/patientService";
+import { patientService } from "api/services/patientService";
 import {
   MdEdit,
   MdAdd,
@@ -17,8 +17,8 @@ import {
 
 const MyChildren = () => {
   const { showToast } = useToast();
-  const { user } = useAuth();
-  const { patient, getPatientProfileByUserId } = usePatient();
+  const { user } = useAuth() as any;
+  const { patient, getPatientProfileByUserId } = usePatient() as any;
   
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -44,7 +44,7 @@ const MyChildren = () => {
           return;
         }
         const data = await patientService.getDependents(patientId);
-        setChildren(data?.dependents || []);
+        setChildren((data as any)?.dependents || []);
       } catch (err) {
         // Silent
       } finally {

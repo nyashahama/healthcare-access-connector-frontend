@@ -37,7 +37,7 @@ function CheckTable(props) {
       ),
       cell: (info) => (
         <div className="flex items-center gap-2">
-          {info.getValue().map((item: any, key: number) => {
+          {(info.getValue() as any).map((item: any, key: number) => {
             if (item === "apple") {
               return (
                 <div

@@ -1,15 +1,15 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useNavigate, useSearchParams } from "@tanstack/react-router";
+import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 import InputField from "components/fields/InputField";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { MdArrowBack, MdLock, MdWork } from "react-icons/md";
 import { useToast } from "hooks/useToast";
 import { useAuth } from "context/AuthContext";
-import staffService from "api/services/staffService";
+import { staffService } from "api/services/staffService";
 import { getDashboardPath } from "utils/roleUtils";
 
 const StaffRegistration = () => {
-  const [searchParams] = useSearchParams();
+  const searchParams = new URLSearchParams(window.location.search);
   const invitationToken = searchParams.get("invitation_token");
   const navigate = useNavigate();
   const { showToast } = useToast();
@@ -51,9 +51,9 @@ const StaffRegistration = () => {
         setInvitation(details);
         setFormData((prev: any) => ({
           ...prev,
-          email: details.work_email || prev.email,
+          email: (details as any).work_email || prev.email,
         }));
-      } catch (error) {
+      } catch (error: any) {
         if (!mountedRef.current || cancelled) return;
 
         setInvitation(null);
@@ -134,7 +134,7 @@ const StaffRegistration = () => {
     }));
   };
 
-  const handleSubmit = async (event) => {
+  const handleSubmit = async (event: any) => {
     event.preventDefault();
 
     if (!invitationToken) {
@@ -147,8 +147,8 @@ const StaffRegistration = () => {
     setIsLoading(true);
 
     try {
-      const payload = {
-        invitation_token: invitationToken,
+      const payload: Record<string, string> = {
+        invitation_token: invitationToken!,
         email: formData.email,
         password: formData.password,
       };
@@ -157,7 +157,7 @@ const StaffRegistration = () => {
         payload.phone = formData.phone;
       }
 
-      const response = await registerInvitedStaff(payload);
+      const response: any = await registerInvitedStaff(payload);
 
       if (!mountedRef.current) return;
 
@@ -182,7 +182,7 @@ const StaffRegistration = () => {
           "Registration successful. Please sign in to continue."
         );
       }
-    } catch (error) {
+    } catch (error: any) {
       if (!mountedRef.current) return;
       showToast("An unexpected error occurred", "error");
       console.error("Staff registration submit error:", error);
@@ -257,7 +257,7 @@ const StaffRegistration = () => {
           </p>
 
           <button
-            onClick={() => navigate(showSuccessMessage.includes("signed in") ? "/provider/dashboard" : "/auth/sign-in")}
+            onClick={() => navigate({ to: (showSuccessMessage.includes("signed in") ? "/provider/dashboard" : "/auth/sign-in") as any })}
             className="w-full rounded-xl bg-brand-500 py-3 text-white hover:bg-brand-600"
           >
             {showSuccessMessage.includes("signed in") ? "Go to dashboard" : "Go to sign in"}

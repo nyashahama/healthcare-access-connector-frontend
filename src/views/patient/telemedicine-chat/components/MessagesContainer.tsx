@@ -56,9 +56,9 @@ function getDateLabel(sent_at) {
   });
 }
 
-function insertDateSeparators(messages) {
-  const result = [];
-  let lastLabel = null;
+function insertDateSeparators(messages: any) {
+  const result: any[] = [];
+  let lastLabel: string | null = null;
   for (const msg of messages) {
     const label = getDateLabel(msg.sent_at);
     if (label && label !== lastLabel) {

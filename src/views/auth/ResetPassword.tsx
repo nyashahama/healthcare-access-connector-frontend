@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useNavigate, useSearchParams, Link } from "@tanstack/react-router";
+import { useNavigate, useSearch, Link } from "@tanstack/react-router";
 import InputField from "components/fields/InputField";
 import { MdHealthAndSafety, MdLock, MdCheckCircle } from "react-icons/md";
 import { useToast } from "hooks/useToast";
@@ -13,7 +13,7 @@ const ResetPassword = () => {
     confirmPassword: "",
   });
 
-  const [searchParams] = useSearchParams();
+  const searchParams = new URLSearchParams(window.location.search);
   const token = searchParams.get("token");
   const navigate = useNavigate();
   const { showToast } = useToast();

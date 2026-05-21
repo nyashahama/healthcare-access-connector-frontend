@@ -43,7 +43,7 @@ const ContentManagement = () => {
     title: "",
     category: "nutrition",
     status: "draft",
-    tags: [],
+    tags: [] as string[],
     language: ["en"],
   });
 

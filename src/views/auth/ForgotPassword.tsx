@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useNavigate, Link, useSearchParams } from "@tanstack/react-router";
+import { useNavigate, Link, useSearch } from "@tanstack/react-router";
 import InputField from "components/fields/InputField";
 import { FaArrowLeft } from "react-icons/fa";
 import {
@@ -25,7 +25,7 @@ const ForgotPassword = () => {
   const [resetToken, setResetToken] = useState<any>(null); // Store the token from OTP verification
   const [otpVerified, setOtpVerified] = useState(false);
 
-  const [searchParams] = useSearchParams();
+  const searchParams = new URLSearchParams(window.location.search);
   const token = searchParams.get("token");
   const navigate = useNavigate();
   const { showToast } = useToast();
@@ -74,7 +74,7 @@ const ForgotPassword = () => {
     setIsLoading(true);
 
     try {
-      const result = await generateOTP({
+      const result: any = await generateOTP({
         identifier: formData.identifier,
         purpose: "password_reset",
       });
@@ -116,7 +116,7 @@ const ForgotPassword = () => {
     setIsLoading(true);
 
     try {
-      const result = await generateOTP({
+      const result: any = await generateOTP({
         identifier: formData.identifier,
         purpose: "password_reset",
       });
@@ -152,7 +152,7 @@ const ForgotPassword = () => {
     setIsLoading(true);
 
     try {
-      const result = await verifyOTP({
+      const result: any = await verifyOTP({
         identifier: formData.identifier,
         otp: formData.otp,
       });

@@ -27,7 +27,7 @@ const OperatingHours = ({ clinicId }: any) => {
   useEffect(() => {
     const fetchClinicData = async () => {
       if (clinicId) {
-        const result = await getClinic(clinicId);
+        const result: any = await getClinic(clinicId);
         if (result.success && result.data?.operating_hours) {
           setClinicData(result.data);
           const apiHours = parseOperatingHours(result.data.operating_hours);
@@ -42,7 +42,7 @@ const OperatingHours = ({ clinicId }: any) => {
 
   // Parse API operating hours format to component format
   const parseOperatingHours = (apiHours: any) => {
-    const parsedHours = {};
+    const parsedHours: any = {};
     const daysOfWeek = [
       "monday",
       "tuesday",
@@ -82,7 +82,7 @@ const OperatingHours = ({ clinicId }: any) => {
   const formatOperatingHoursForAPI = (hoursObj: any) => {
     const apiFormat = {};
 
-    Object.entries(hoursObj).forEach(([day, data]) => {
+    Object.entries(hoursObj).forEach(([day, data]: [string, any]) => {
       if (data.closed) {
         apiFormat[day] = "Closed";
       } else {

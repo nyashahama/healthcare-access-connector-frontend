@@ -20,9 +20,9 @@ const ClinicInformation = ({ clinicId }: any) => {
   const [clinicInfo, setClinicInfo] = useState({
     clinic_type: "",
     description: "",
-    facilities: [],
-    languages: [],
-    payment_methods: [],
+    facilities: [] as string[],
+    languages: [] as string[],
+    payment_methods: [] as string[],
     accreditation_body: "",
     year_established: "",
   });

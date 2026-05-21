@@ -54,11 +54,11 @@ const BookAppointment = () => {
     clearAppointmentState,
   } = useAppointment();
 
-  const { getCurrentUser } = useAuth();
+  const { getCurrentUser } = useAuth() as any;
   const {
     patient,
     getPatientProfileByUserId,
-  } = usePatient();
+  } = usePatient() as any;
 
   const availableSlots = [
     "09:00 AM",
@@ -88,8 +88,8 @@ const BookAppointment = () => {
       setIsLoadingClinic(true);
 
       // First check for clinic in navigation state
-      if (location.state?.clinic) {
-        setClinic(location.state.clinic);
+      if ((location.state as any)?.clinic) {
+        setClinic((location.state as any).clinic);
         setIsLoadingClinic(false);
         return;
       }
@@ -291,7 +291,7 @@ const BookAppointment = () => {
           "error"
         );
       }
-    } catch (error) {
+    } catch (error: any) {
       setConfirmModalOpen(false);
       console.error("Validation error during booking:", error);
       showToast(
@@ -319,7 +319,7 @@ const BookAppointment = () => {
 
   // Generate next 14 days for date selection
   const getAvailableDates = () => {
-    const dates = [];
+    const dates: Date[] = [];
     const today = new Date();
     for (let i = 0; i < 14; i++) {
       const date = new Date(today);

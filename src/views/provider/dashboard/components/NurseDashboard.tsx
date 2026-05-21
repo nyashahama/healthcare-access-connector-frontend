@@ -17,12 +17,12 @@ import { useToast } from "hooks/useToast";
 const NurseDashboard = ({ clinicId }: any) => {
   const navigate = useNavigate();
   const { showToast } = useToast();
-  const { getCurrentUser } = useAuth();
+  const { getCurrentUser } = useAuth() as any;
   const {
     getTodayAppointments,
     todayAppointments,
     loading: appointmentsLoading,
-  } = useAppointment();
+  } = useAppointment() as any;
 
   const [dashboardStats, setDashboardStats] = useState({
     assignedPatients: 0,
@@ -200,12 +200,7 @@ const NurseDashboard = ({ clinicId }: any) => {
 
       {/* Patient Queue with Nursing Focus */}
       <div className="mt-5">
-        <PatientQueue
-          clinicId={clinicId}
-          appointments={todayAppointments}
-          loading={appointmentsLoading}
-          showNurseView={true}
-        />
+        <PatientQueue {...{ clinicId, appointments: todayAppointments, loading: appointmentsLoading, showNurseView: true } as any} />
       </div>
 
       {/* Nursing Tasks Today */}

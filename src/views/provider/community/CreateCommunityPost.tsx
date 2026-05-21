@@ -629,7 +629,7 @@ const CreateProviderCommunityPost = () => {
                   }
                   placeholder={`Describe the case, question, or topic. Include:\n• Relevant history and findings\n• Investigations and results\n• Current management\n• Specific questions for discussion`}
                   className="h-64 w-full rounded-lg border border-gray-300 bg-white p-4 dark:border-gray-600 dark:bg-navy-800"
-                  rows="10"
+                  rows={10}
                   required
                 />
                 <div className="mt-1 text-sm text-gray-500">

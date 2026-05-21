@@ -31,7 +31,7 @@ import {
 
 const TelemedicineChat = () => {
   const navigate = useNavigate();
-  const { getToken } = useAuth();
+  const { getToken } = useAuth() as any;
   const { showToast } = useToast();
 
   // ── Hooks ────────────────────────────────────────────────────────────────
@@ -43,10 +43,10 @@ const TelemedicineChat = () => {
     completeConsultation,
     submitPatientRating,
     loading: consultationLoading,
-  } = useConsultation();
+  } = useConsultation() as any;
 
   const { messages, fetchMessages, sendMessage, clearMessages } =
-    useConsultationMessages();
+    useConsultationMessages() as any;
 
   const {
     note,
@@ -54,13 +54,13 @@ const TelemedicineChat = () => {
     createNote,
     updateNote,
     finaliseNote,
-  } = useConsultationNotes();
+  } = useConsultationNotes() as any;
 
   const {
     availableProviders,
     fetchAvailableProviders,
     loading: providersLoading,
-  } = useProviderAvailability();
+  } = useProviderAvailability() as any;
 
   const { eligibleSession, fetchEligibleSession } = useSymptomChecker();
 
@@ -534,6 +534,7 @@ const TelemedicineChat = () => {
             activeProvider={activeProvider}
             onConnectToProvider={handleConnectToProvider}
             loading={providersLoading}
+            onRefresh={fetchAvailableProviders}
           />
 
           <ConsultationNotes

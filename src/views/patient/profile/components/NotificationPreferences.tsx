@@ -4,13 +4,13 @@ import Card from "components/card";
 import Modal from "components/modal/Modal";
 import { useToast } from "hooks/useToast";
 import { useAuth } from "context/AuthContext";
-import patientService from "api/services/patientService";
+import { patientService } from "api/services/patientService";
 import Switch from "components/switch";
 import { MdSave, MdInfo } from "react-icons/md";
 
 const NotificationPreferences = () => {
   const { showToast } = useToast();
-  const { user } = useAuth();
+  const { user } = useAuth() as any;
   const [saveModalOpen, setSaveModalOpen] = useState(false);
   const [testModalOpen, setTestModalOpen] = useState(false);
 

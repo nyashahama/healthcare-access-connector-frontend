@@ -25,19 +25,19 @@ import { useToast } from "hooks/useToast";
 const ClinicAdminDashboard = ({ clinicId }: any) => {
   const navigate = useNavigate();
   const { showToast } = useToast();
-  const { getClinic, clinic, loading: clinicLoading } = useProvider();
+  const { getClinic, clinic, loading: clinicLoading } = useProvider() as any;
   const {
     listActiveClinicStaff,
     staffList,
     loading: staffLoading,
-  } = useStaff();
+  } = useStaff() as any;
   const {
     getTodayAppointments,
     getPendingAppointments,
     appointments,
     todayAppointments,
     loading: appointmentsLoading,
-  } = useAppointment();
+  } = useAppointment() as any;
 
   const [dashboardStats, setDashboardStats] = useState({
     totalStaff: 0,
@@ -230,7 +230,7 @@ const ClinicAdminDashboard = ({ clinicId }: any) => {
             </div>
             <button
               onClick={() =>
-                navigate({ to: "/provider/appointments/" as any, search: { status: "pending" } })
+                navigate({ to: "/provider/appointments/", search: { status: "pending" } } as any)
               }
               className="ml-auto rounded-lg bg-yellow-500 px-4 py-2 text-sm font-medium text-white hover:bg-yellow-600"
             >
@@ -247,41 +247,25 @@ const ClinicAdminDashboard = ({ clinicId }: any) => {
 
       {/* Staff Availability */}
       <div className="mt-5">
-        <StaffAvailability
-          clinicId={clinicId}
-          staffList={staffList}
-          loading={staffLoading}
-        />
+        <StaffAvailability {...{ clinicId, staffList, loading: staffLoading } as any} />
       </div>
 
       {/* Two Column Layout */}
       <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-3">
         {/* Today's Schedule - Takes 2 columns */}
         <div className="lg:col-span-2">
-          <TodaySchedule
-            clinicId={clinicId}
-            appointments={todayAppointments}
-            loading={appointmentsLoading}
-          />
+          <TodaySchedule {...{ clinicId, appointments: todayAppointments, loading: appointmentsLoading } as any} />
         </div>
 
         {/* Patient Queue - Takes 1 column */}
         <div>
-          <PatientQueue
-            clinicId={clinicId}
-            appointments={todayAppointments}
-            loading={appointmentsLoading}
-          />
+          <PatientQueue {...{ clinicId, appointments: todayAppointments, loading: appointmentsLoading } as any} />
         </div>
       </div>
 
       {/* Clinic Performance Stats */}
       <div className="mt-5">
-        <ClinicStats
-          clinic={clinic}
-          staffList={staffList}
-          appointments={appointments}
-        />
+        <ClinicStats {...{ clinic, staffList, appointments } as any} />
       </div>
     </div>
   );

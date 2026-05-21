@@ -29,7 +29,7 @@ describe("Session expiry integration", () => {
     // Pre-seed a valid session
     sessionManager.saveSession({
       token: "expired-token",
-      user: { id: "u1", role: "patient" },
+      user: { id: "u1", roles: ["patient"] } as any,
       expiresAt: "2099-01-01T00:00:00Z",
     });
 

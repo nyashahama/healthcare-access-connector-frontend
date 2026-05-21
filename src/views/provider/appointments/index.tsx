@@ -26,7 +26,7 @@ const Appointments = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [searchTerm, setSearchTerm] = useState("");
   const { showToast } = useToast();
-  const { getCurrentUser } = useAuth();
+  const { getCurrentUser } = useAuth() as any;
   const {
     error,
     appointments,
@@ -38,7 +38,7 @@ const Appointments = () => {
     rescheduleAppointment,
     cancelAppointment,
     confirmAppointment,
-  } = useAppointment();
+  } = useAppointment() as any;
 
   const { getClinics } = useProvider();
 
@@ -263,7 +263,7 @@ const Appointments = () => {
   };
 
   const handleStartAppointment = async (id) => {
-    const result = await confirmAppointment(id);
+    const result = await confirmAppointment(id, {});
     if (result.success) {
       showToast("Appointment started!", "success");
       refreshAppointments();
@@ -346,7 +346,7 @@ const Appointments = () => {
             <h4 className="mb-4 text-lg font-bold text-navy-700 dark:text-white">
               Today's Schedule
             </h4>
-            <TodaySchedule />
+            <TodaySchedule clinicId={clinicId} />
           </div>
         </div>
 

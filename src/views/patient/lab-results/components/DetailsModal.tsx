@@ -103,7 +103,7 @@ const DetailsModal = ({
                   {key.replace(/([A-Z])/g, " $1")}:
                 </span>
                 <span className="font-medium text-navy-700 dark:text-white">
-                  {value}
+                  {value as any}
                 </span>
               </div>
             ))}

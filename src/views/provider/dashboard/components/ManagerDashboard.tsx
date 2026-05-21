@@ -21,19 +21,19 @@ import { useToast } from "hooks/useToast";
 const ManagerDashboard = ({ clinicId }: any) => {
   const navigate = useNavigate();
   const { showToast } = useToast();
-  const { getCurrentUser } = useAuth();
-  const { getClinic, clinic } = useProvider();
+  const { getCurrentUser } = useAuth() as any;
+  const { getClinic, clinic } = useProvider() as any;
   const {
     listActiveClinicStaff,
     staffList,
     loading: staffLoading,
-  } = useStaff();
+  } = useStaff() as any;
   const {
     getTodayAppointments,
     getPendingAppointments,
     todayAppointments,
     loading: appointmentsLoading,
-  } = useAppointment();
+  } = useAppointment() as any;
 
   const [dashboardStats, setDashboardStats] = useState({
     totalStaff: 0,
@@ -222,7 +222,7 @@ const ManagerDashboard = ({ clinicId }: any) => {
             </div>
             <button
               onClick={() =>
-                navigate({ to: "/provider/appointments/" as any, search: { status: "pending" } })
+                navigate({ to: "/provider/appointments/", search: { status: "pending" } } as any)
               }
               className="ml-auto rounded-lg bg-yellow-500 px-4 py-2 text-sm font-medium text-white hover:bg-yellow-600"
             >
@@ -239,32 +239,19 @@ const ManagerDashboard = ({ clinicId }: any) => {
 
       {/* Staff Availability */}
       <div className="mt-5">
-        <StaffAvailability
-          clinicId={clinicId}
-          staffList={staffList}
-          loading={staffLoading}
-        />
+        <StaffAvailability {...{ clinicId, staffList, loading: staffLoading } as any} />
       </div>
 
       {/* Two Column Layout */}
       <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-2">
         {/* Today's Schedule */}
         <div>
-          <TodaySchedule
-            clinicId={clinicId}
-            appointments={todayAppointments}
-            loading={appointmentsLoading}
-            showManagerView={true}
-          />
+          <TodaySchedule {...{ clinicId, appointments: todayAppointments, loading: appointmentsLoading, showManagerView: true } as any} />
         </div>
 
         {/* Clinic Performance */}
         <div>
-          <ClinicStats
-            clinic={clinic}
-            staffList={staffList}
-            appointments={todayAppointments}
-          />
+          <ClinicStats {...{ clinic, staffList, appointments: todayAppointments } as any} />
         </div>
       </div>
     </div>

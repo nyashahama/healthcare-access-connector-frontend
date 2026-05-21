@@ -50,13 +50,13 @@ const PatientDashboard = () => {
     loading: patientLoading,
     error: patientError,
     getPatientProfileByUserId,
-  } = usePatient();
+  } = usePatient() as any;
   const {
     appointments,
     getAppointmentsByPatient,
     loading: appointmentsLoading,
-  } = useAppointment();
-  const { user } = useAuth();
+  } = useAppointment() as any;
+  const { user } = useAuth() as any;
 
   const patientId = patient?.id;
 

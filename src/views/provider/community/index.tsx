@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import forumService from "api/services/forumService";
+import { forumService } from "api/services/forumService";
 import { useToast } from "hooks/useToast";
 import Card from "components/card";
 import {
@@ -16,7 +16,7 @@ const ProviderCommunityForum = () => {
 
   useEffect(() => {
     forumService.getPosts({ limit: 50 }).then((data) => {
-      setPosts(data.posts || []);
+      setPosts((data as any).posts || []);
     }).catch(() => {
       showToast("Failed to load posts", "error");
     }).finally(() => setLoading(false));

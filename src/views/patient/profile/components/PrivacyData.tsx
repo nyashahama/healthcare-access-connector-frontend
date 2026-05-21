@@ -12,11 +12,11 @@ import Card from "components/card";
 import Modal from "components/modal/Modal";
 import { useToast } from "hooks/useToast";
 import { useAuth } from "context/AuthContext";
-import patientService from "api/services/patientService";
+import { patientService } from "api/services/patientService";
 
 const PrivacyData = () => {
   const { showToast } = useToast();
-  const { user } = useAuth();
+  const { user } = useAuth() as any;
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [historyModalOpen, setHistoryModalOpen] = useState(false);

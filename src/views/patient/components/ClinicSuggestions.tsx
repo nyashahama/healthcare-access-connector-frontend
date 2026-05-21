@@ -131,7 +131,7 @@ const ClinicSuggestions = () => {
 
   const confirmBooking = () => {
     if (selectedClinic) {
-      navigate({ to: "/patient/book-appointment", state: { clinic: selectedClinic } });
+      navigate({ to: "/patient/book-appointment", state: { clinic: selectedClinic } } as any);
     } else {
       showToast("Please select a clinic first", "warning");
     }

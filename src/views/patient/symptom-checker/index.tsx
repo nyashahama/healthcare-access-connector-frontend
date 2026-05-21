@@ -134,7 +134,7 @@ const SymptomChecker = () => {
     const result = await submitSession(payload);
 
     if (result.success) {
-      const triageLevel = result.data.triage_level;
+      const triageLevel = (result as any).data?.triage_level;
 
       if (triageLevel === "emergency") {
         showToast("⚠️ Emergency — please seek immediate care!", "error");

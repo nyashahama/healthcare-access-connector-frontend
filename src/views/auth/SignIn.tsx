@@ -28,7 +28,7 @@ export default function SignIn() {
     }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: any) => {
     e.preventDefault();
 
     // Validation
@@ -45,7 +45,7 @@ export default function SignIn() {
     setIsLoading(true);
 
     try {
-      const result = await login(credentials);
+      const result: any = await login(credentials);
 
       if (result.success) {
         showToast("Login successful!", "success");

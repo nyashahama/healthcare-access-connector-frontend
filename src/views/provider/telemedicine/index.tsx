@@ -462,13 +462,13 @@ const ProviderTelemedicineChat = () => {
         content: text,
       });
       if (result.success) {
-        const m = result.data;
+        const m: any = result.data;
         setWsMessages((prev: any) => {
           if (prev.some((msg: any) => msg.id === m.id)) return prev;
           return [...prev, mapDbMessage(m)];
         });
       } else {
-        showToast(result.error, "error");
+        showToast(result.error || "", "error");
         setNewMessage(text);
       }
     }
@@ -613,14 +613,7 @@ const ProviderTelemedicineChat = () => {
 
         {/* ── Right sidebar: queue + quick actions (1 col) ── */}
         <div className="space-y-6">
-          <PatientQueue
-            patients={patients}
-            activePatient={activePatient}
-            onAcceptPatient={handleAcceptPatient}
-            onDeclinePatient={handleDeclinePatient}
-            loading={queueLoading}
-            onRefresh={loadQueue}
-          />
+          <PatientQueue {...{ patients, activePatient, onAcceptPatient: handleAcceptPatient, onDeclinePatient: handleDeclinePatient, loading: queueLoading, onRefresh: loadQueue } as any} />
           <ProviderQuickActionsCard />
           {isConsulting && (
             <PrescriptionPadCard

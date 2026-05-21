@@ -146,15 +146,15 @@ const ClinicRegistration = () => {
     },
 
     // Services & Specialties
-    services: [],
-    specialties: [],
-    languages_spoken: [],
-    facilities: [],
+    services: [] as string[],
+    specialties: [] as string[],
+    languages_spoken: [] as string[],
+    facilities: [] as string[],
 
     // Medical Aid & Payment
     accepts_medical_aid: false,
     medical_aid_providers: "",
-    payment_methods: [],
+    payment_methods: [] as string[],
     fee_structure: "medical_aid_rates", // Kept as working example uses it
 
     // Accreditation

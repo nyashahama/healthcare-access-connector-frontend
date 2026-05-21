@@ -18,13 +18,13 @@ import { useToast } from "hooks/useToast";
 const ReceptionistDashboard = ({ clinicId }: any) => {
   const navigate = useNavigate();
   const { showToast } = useToast();
-  const { getCurrentUser } = useAuth();
+  const { getCurrentUser } = useAuth() as any;
   const {
     getTodayAppointments,
     getPendingAppointments,
     todayAppointments,
     loading: appointmentsLoading,
-  } = useAppointment();
+  } = useAppointment() as any;
 
   const [dashboardStats, setDashboardStats] = useState({
     todayAppointments: 0,
@@ -188,7 +188,7 @@ const ReceptionistDashboard = ({ clinicId }: any) => {
             </div>
             <button
               onClick={() =>
-                navigate({ to: "/provider/appointments/" as any, search: { status: "pending" } })
+                navigate({ to: "/provider/appointments/", search: { status: "pending" } } as any)
               }
               className="ml-auto rounded-lg bg-blue-500 px-4 py-2 text-sm font-medium text-white hover:bg-blue-600"
             >
@@ -207,22 +207,12 @@ const ReceptionistDashboard = ({ clinicId }: any) => {
       <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-3">
         {/* Today's Schedule - Takes 2 columns */}
         <div className="lg:col-span-2">
-          <TodaySchedule
-            clinicId={clinicId}
-            appointments={todayAppointments}
-            loading={appointmentsLoading}
-            showReceptionistView={true}
-          />
+          <TodaySchedule {...{ clinicId, appointments: todayAppointments, loading: appointmentsLoading, showReceptionistView: true } as any} />
         </div>
 
         {/* Patient Queue - Takes 1 column */}
         <div>
-          <PatientQueue
-            clinicId={clinicId}
-            appointments={todayAppointments}
-            loading={appointmentsLoading}
-            showReceptionistView={true}
-          />
+          <PatientQueue {...{ clinicId, appointments: todayAppointments, loading: appointmentsLoading, showReceptionistView: true } as any} />
         </div>
       </div>
 

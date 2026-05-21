@@ -132,7 +132,7 @@ const LabResultCard = ({
                       {key.charAt(0).toUpperCase() + key.slice(1)}
                     </div>
                     <div className="mt-1 text-sm font-semibold text-navy-700 dark:text-white">
-                      {value}
+                      {value as any}
                     </div>
                   </div>
                 </div>

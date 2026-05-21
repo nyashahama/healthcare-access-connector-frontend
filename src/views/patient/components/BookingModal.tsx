@@ -38,7 +38,7 @@ const BookingModal = ({
   ];
 
   const getAvailableDates = () => {
-    const dates = [];
+    const dates: Date[] = [];
     const today = new Date();
     for (let i = 0; i < 7; i++) {
       const date = new Date(today);
@@ -84,17 +84,11 @@ const BookingModal = ({
   const handleRedirectToFullBooking = () => {
     onClose();
     showToast("Opening full booking form...", "info");
-    navigate({ to: `/patient/book-appointment?clinic=${clinic.id}`, state: { clinic } });
+    navigate({ to: `/patient/book-appointment?clinic=${(clinic as any).id}`, state: { clinic } } as any);
   };
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title="Book Appointment"
-      size={type === "quick" ? "md" : "lg"}
-      className="z-[1000]"
-    >
+    <Modal {...{ isOpen, onClose, title: "Book Appointment", size: type === "quick" ? "md" : "lg", className: "z-[1000]" } as any}>
       <div className="space-y-6">
         {/* Clinic Info */}
         <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">

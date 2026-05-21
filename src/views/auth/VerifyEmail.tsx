@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useNavigate, useSearchParams, Link } from "@tanstack/react-router";
+import { useNavigate, useSearch, Link } from "@tanstack/react-router";
 import { MdHealthAndSafety, MdCheckCircle, MdError } from "react-icons/md";
 import { useToast } from "hooks/useToast";
 import { useAuth } from "context/AuthContext";
@@ -7,7 +7,7 @@ import { useAuth } from "context/AuthContext";
 const VerifyEmail = () => {
   const [status, setStatus] = useState("verifying"); // verifying, success, error
   const [isLoading, setIsLoading] = useState(false);
-  const [searchParams] = useSearchParams();
+  const searchParams = new URLSearchParams(window.location.search);
   const navigate = useNavigate();
   const { showToast } = useToast();
   const { verifyEmail, resendVerification } = useAuth();
@@ -20,7 +20,7 @@ const VerifyEmail = () => {
     setIsLoading(true);
 
     try {
-      const result = await verifyEmail(token);
+      const result = await verifyEmail(token!);
 
       if (!isMounted.current) return;
 

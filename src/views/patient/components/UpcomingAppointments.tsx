@@ -96,9 +96,9 @@ function isTomorrowDate(isoString) {
 }
 
 const UpcomingAppointments = ({
-  appointments = [],
+  appointments = [] as any[],
   onViewDetails, // Callback to fetch full details when needed
-}) => {
+}: any) => {
   const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
 

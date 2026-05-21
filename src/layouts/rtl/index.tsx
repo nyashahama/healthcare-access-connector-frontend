@@ -55,13 +55,7 @@ export default function RTL(props: RTLProps) {
           className={`mx-[12px] h-full flex-none transition-all md:pe-2 xl:mr-[313px]`}
         >
           <div className="h-full">
-            <Navbar
-              onOpenSidenav={() => setOpen(true)}
-              logoText={'Horizon UI Tailwind React'}
-              brandText={currentRoute}
-              secondary={getActiveNavbar()}
-              {...rest}
-            />
+            <Navbar {...{ onOpenSidenav: () => setOpen(true), logoText: 'Horizon UI Tailwind React', brandText: currentRoute, secondary: getActiveNavbar(), ...rest } as any} />
             <div className="pt-5s mx-auto mb-auto h-full min-h-[84vh] p-2 md:pr-2">
               <Outlet />
             </div>

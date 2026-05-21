@@ -74,7 +74,7 @@ const ChangePassword = () => {
         new_password: formData.newPassword,
       };
 
-      const result = await updatePassword(user?._id, passwordData);
+      const result: any = await updatePassword((user as any)?._id, passwordData);
 
       if (!isMounted.current) return;
 

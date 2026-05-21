@@ -19,14 +19,14 @@ import { useToast } from "hooks/useToast";
 const DoctorDashboard = ({ clinicId }: any) => {
   const navigate = useNavigate();
   const { showToast } = useToast();
-  const { getCurrentUser } = useAuth();
+  const { getCurrentUser } = useAuth() as any;
   const {
     getTodayAppointments,
     getAppointmentsByClinic,
     todayAppointments,
     appointments,
     loading: appointmentsLoading,
-  } = useAppointment();
+  } = useAppointment() as any;
 
   const [dashboardStats, setDashboardStats] = useState({
     todayAppointments: 0,
@@ -220,32 +220,18 @@ const DoctorDashboard = ({ clinicId }: any) => {
       <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-3">
         {/* Today's Schedule - Takes 2 columns */}
         <div className="lg:col-span-2">
-          <TodaySchedule
-            clinicId={clinicId}
-            appointments={todayAppointments}
-            loading={appointmentsLoading}
-            showDoctorView={true}
-          />
+          <TodaySchedule {...{ clinicId, appointments: todayAppointments, loading: appointmentsLoading, showDoctorView: true } as any} />
         </div>
 
         {/* Patient Queue - Takes 1 column */}
         <div>
-          <PatientQueue
-            clinicId={clinicId}
-            appointments={todayAppointments}
-            loading={appointmentsLoading}
-            showDoctorView={true}
-          />
+          <PatientQueue {...{ clinicId, appointments: todayAppointments, loading: appointmentsLoading, showDoctorView: true } as any} />
         </div>
       </div>
 
       {/* Recent Consultations */}
       <div className="mt-5">
-        <RecentConsultations
-          clinicId={clinicId}
-          appointments={appointments}
-          loading={appointmentsLoading}
-        />
+        <RecentConsultations {...{ clinicId, appointments, loading: appointmentsLoading } as any} />
       </div>
 
       {/* Quick Actions */}

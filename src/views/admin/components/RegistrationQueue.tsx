@@ -97,7 +97,7 @@ const RegistrationQueue = ({ onApprove, onReject, onViewAll }: any) => {
       notes: `Clinic approved by ${currentUser.first_name || ""} ${
         currentUser.last_name || ""
       } on ${new Date().toLocaleDateString()}`,
-    });
+    }, "");
 
     if (result.success) {
       toast.success(

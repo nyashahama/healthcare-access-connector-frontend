@@ -42,7 +42,7 @@ const ConsentSettings = () => {
     setIsLoading(true);
 
     try {
-      const result = await getConsent(user._id);
+      const result: any = await getConsent((user as any)._id);
 
       if (!isMounted.current) return;
 

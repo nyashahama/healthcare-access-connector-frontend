@@ -3,7 +3,7 @@ import { IoMdMedical } from "react-icons/io";
 const HealthProfileCard = ({ patient, onViewProfile }: any) => {
   if (!patient) return null;
 
-  const profileItems = [];
+  const profileItems: any[] = [];
 
   if (patient.blood_type) {
     profileItems.push({

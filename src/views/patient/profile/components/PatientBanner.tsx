@@ -10,8 +10,8 @@ import { MdEdit, MdSave, MdCameraAlt } from "react-icons/md";
 
 const PatientBanner = () => {
   const { showToast } = useToast();
-  const { user } = useAuth();
-  const { patient } = usePatient();
+  const { user } = useAuth() as any;
+  const { patient } = usePatient() as any;
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [avatarModalOpen, setAvatarModalOpen] = useState(false);
 

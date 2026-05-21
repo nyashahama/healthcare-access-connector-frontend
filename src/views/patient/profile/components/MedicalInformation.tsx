@@ -5,7 +5,7 @@ import Modal from "components/modal/Modal";
 import { useToast } from "hooks/useToast";
 import { useAuth } from "context/AuthContext";
 import { usePatient } from "hooks/usePatient";
-import patientService from "api/services/patientService";
+import { patientService } from "api/services/patientService";
 import {
   MdEdit,
   MdAdd,
@@ -16,8 +16,8 @@ import {
 
 const MedicalInformation = () => {
   const { showToast } = useToast();
-  const { user } = useAuth();
-  const { patient, getPatientProfileByUserId } = usePatient();
+  const { user } = useAuth() as any;
+  const { patient, getPatientProfileByUserId } = usePatient() as any;
   
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [addMedicationModalOpen, setAddMedicationModalOpen] = useState(false);
@@ -62,12 +62,12 @@ const MedicalInformation = () => {
           ]);
 
         setMedicalData({
-          bloodType: medicalInfoRes.status === "fulfilled" ? medicalInfoRes.value?.blood_type || "" : "",
-          allergies: allergiesRes.status === "fulfilled" ? allergiesRes.value?.allergies || [] : [],
-          medications: medicationsRes.status === "fulfilled" ? medicationsRes.value?.medications || [] : [],
-          conditions: conditionsRes.status === "fulfilled" ? conditionsRes.value?.conditions || [] : [],
-          surgeries: surgeriesRes.status === "fulfilled" ? surgeriesRes.value?.surgeries || [] : [],
-          bloodTypeLastUpdated: medicalInfoRes.status === "fulfilled" ? medicalInfoRes.value?.updated_at || "" : "",
+          bloodType: medicalInfoRes.status === "fulfilled" ? (medicalInfoRes.value as any)?.blood_type || "" : "",
+          allergies: allergiesRes.status === "fulfilled" ? (allergiesRes.value as any)?.allergies || [] : [],
+          medications: medicationsRes.status === "fulfilled" ? (medicationsRes.value as any)?.medications || [] : [],
+          conditions: conditionsRes.status === "fulfilled" ? (conditionsRes.value as any)?.conditions || [] : [],
+          surgeries: surgeriesRes.status === "fulfilled" ? (surgeriesRes.value as any)?.surgeries || [] : [],
+          bloodTypeLastUpdated: medicalInfoRes.status === "fulfilled" ? (medicalInfoRes.value as any)?.updated_at || "" : "",
         });
       } catch (err) {
         // Silent — data just stays empty

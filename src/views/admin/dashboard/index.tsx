@@ -52,7 +52,7 @@ const SystemDashboard = () => {
   const [rejectReason, setRejectReason] = useState("");
 
   // Live stats state
-  const [liveStats, setLiveStats] = useState({
+  const [liveStats, setLiveStats] = useState<any>({
     totalClinics: 0,
     activeUsers: 0,
     systemStatus: "loading",
@@ -93,7 +93,7 @@ const SystemDashboard = () => {
         });
 
         // Build alerts from health data
-        const alerts = [];
+        const alerts: any[] = [];
         Object.entries(services).forEach(([name, status]) => {
           if (status !== "healthy" && status !== "disabled") {
             alerts.push({

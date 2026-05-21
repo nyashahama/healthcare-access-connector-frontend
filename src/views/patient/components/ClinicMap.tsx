@@ -3,7 +3,7 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
 // Fix for default icons in Leaflet
-delete L.Icon.Default.prototype._getIconUrl;
+delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: require("leaflet/dist/images/marker-icon-2x.png"),
   iconUrl: require("leaflet/dist/images/marker-icon.png"),
@@ -13,7 +13,7 @@ L.Icon.Default.mergeOptions({
 const ClinicMap = ({ clinics, userLocation, onClinicSelect }: any) => {
   const mapRef = useRef<any>(null);
   const mapInstanceRef = useRef<any>(null);
-  const markersRef = useRef([]);
+  const markersRef = useRef<any[]>([]);
   const [isMapReady, setIsMapReady] = useState(false);
 
   useEffect(() => {

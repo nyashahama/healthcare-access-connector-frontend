@@ -12,7 +12,7 @@ import Modal from "components/modal/Modal";
 import { useToast } from "hooks/useToast";
 import { useAuth } from "context/AuthContext";
 import { usePatient } from "hooks/usePatient";
-import patientService from "api/services/patientService";
+import { patientService } from "api/services/patientService";
 
 const EmergencyContact = () => {
   const { showToast } = useToast();
@@ -26,8 +26,8 @@ const EmergencyContact = () => {
   const [emergencyContacts, setEmergencyContacts] = useState<any[]>([]);
   
 
-  const { user } = useAuth();
-  const { patient, getPatientProfileByUserId } = usePatient();
+  const { user } = useAuth() as any;
+  const { patient, getPatientProfileByUserId } = usePatient() as any;
 
   // Fetch real emergency contacts on mount
   useEffect(() => {
@@ -43,7 +43,7 @@ const EmergencyContact = () => {
         if (!patientId) {
           return;
         }
-        const data = await patientService.getEmergencyContacts(patientId);
+        const data: any = await patientService.getEmergencyContacts(patientId);
         setEmergencyContacts(data?.emergency_contacts || data?.contacts || []);
       } catch (err) {
         // Silent

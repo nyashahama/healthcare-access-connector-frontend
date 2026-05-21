@@ -40,7 +40,7 @@ const PatientAppointments = () => {
   const navigate = useNavigate();
   const { showToast } = useToast();
 
-  const { user } = useAuth();
+  const { user } = useAuth() as any;
   const {
     getAppointmentsByPatient,
     rescheduleAppointment,
@@ -49,7 +49,7 @@ const PatientAppointments = () => {
     loading,
     error,
     appointments,
-  } = useAppointment();
+  } = useAppointment() as any;
 
   // Load appointments on component mount
   useEffect(() => {

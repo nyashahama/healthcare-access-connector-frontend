@@ -14,11 +14,12 @@ import Card from "components/card";
  * Shows appointments with emphasis on clinical workflow and patient management
  */
 const UpcomingList = ({
-  appointments = [],
+  appointments = [] as any[],
   onStart,
   onReschedule,
   onCancel,
-}) => {
+  ...props
+}: any) => {
   const [expandedId, setExpandedId] = useState<any>(null);
 
   // Filter and format upcoming appointments for providers

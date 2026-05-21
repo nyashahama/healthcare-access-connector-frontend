@@ -17,7 +17,7 @@ import Modal from "components/modal/Modal";
 import { useToast } from "hooks/useToast";
 
 const CommunityPost = () => {
-  const { id } = useParams();
+  const { id } = useParams({ strict: false }) as any;
   const navigate = useNavigate();
   const [comment, setComment] = useState("");
   const [comments, setComments] = useState([

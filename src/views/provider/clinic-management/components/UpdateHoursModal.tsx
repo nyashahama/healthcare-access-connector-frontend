@@ -6,7 +6,7 @@ const UpdateHoursModal = ({
   hoursForm,
   setHoursForm,
   onConfirm,
-}) => {
+}: any) => {
   return (
     <Modal
       isOpen={isOpen}
@@ -16,7 +16,7 @@ const UpdateHoursModal = ({
     >
       <div className="space-y-6">
         <div className="space-y-4">
-          {Object.entries(hoursForm).map(([day, hours]) => (
+          {Object.entries(hoursForm).map(([day, hours]: [string, any]) => (
             <div key={day} className="flex items-center justify-between">
               <span className="w-24 capitalize">{day}</span>
               <div className="flex items-center space-x-2">
